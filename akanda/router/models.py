@@ -1,10 +1,17 @@
+import abc
 import os
 import re
 
 import netaddr
 
+class  ModelBase(object):
+    __metaclass__ = abc.ABCMeta
 
-class Interface(object):
+    def __eq__(self, other):
+        return type(self) == type(other) and vars(self) == vars(other)
+
+
+class Interface(ModelBase):
     """
     """
     def __init__(self, ifname=None, addresses=[], groups=None, flags=None,
@@ -23,6 +30,15 @@ class Interface(object):
     def __repr__(self):
         return '<Interface: %s %s>' % (self.ifname,
                                        [str(a) for a in self.addresses])
+
+    def __eq__(self, other):
+        """Check model equality only on limit fields."""
+        return (type(self) == type(other) and
+                self.ifname==other.ifname and
+                self.addresses == other.addresses and
+                self.description == other.description and
+                self.mtu == other.mtu and
+                self.groups == other.groups)
 
     @property
     def description(self):
@@ -54,7 +70,7 @@ class Interface(object):
 
     @classmethod
     def from_dict(cls, d):
-        return Interface(**d)
+        return cls(**d)
 
     def to_dict(self, extended=False):
         include = ['ifname', 'groups', 'mtu', 'lladdr', 'media']
@@ -68,7 +84,7 @@ class Interface(object):
         return retval
 
 
-class FilterRule(object):
+class FilterRule(ModelBase):
     """
     """
     def __init__(self, action=None, interface=None, family=None,
@@ -155,7 +171,7 @@ class FilterRule(object):
         return vars(self)
 
 
-class Anchor(object):
+class Anchor(ModelBase):
     def __init__(self, name, rules=[]):
         self.name = name
         self.rules = rules
@@ -166,13 +182,14 @@ class Anchor(object):
         return "anchor %s {\n%s\n}\n" % (self.name, pf_rules)
 
     def external_pf_rule(self, base_dir):
+
         path = os.path.abspath(os.path.join(base_dir, self.name))
         return 'anchor %s\nload anchor %s from %s' % (self.name,
                                                       self.name,
                                                       path)
 
 
-class AddressBookEntry(object):
+class AddressBookEntry(ModelBase):
     def __init__(self, name, cidrs=[]):
         self.name = name
         self.cidrs = cidrs
@@ -198,14 +215,14 @@ class AddressBookEntry(object):
         return '\n'.join(map(str, self.cidrs))
 
 
-class Allocation(object):
-    def __init__(self, lladdr, hostname, ip_address):
+class Allocation(ModelBase):
+    def __init__(self, lladdr, ip_address, hostname):
         self.lladdr = lladdr
-        self.hostname = hostname
         self.ip_address = ip_address
+        self.hostname = hostname
 
 
-class StaticRoute(object):
+class StaticRoute(ModelBase):
     def __init__(self, destination, next_hop):
         self.destination = destination
         self.next_hop = next_hop
@@ -225,3 +242,98 @@ class StaticRoute(object):
     @next_hop.setter
     def next_hop(self, value):
         self._next_hop = netaddr.IPAddress(value)
+
+
+class Network(ModelBase):
+    STATIC = 'static'
+    RA = 'ra'
+    DHCP = 'dhcp'
+
+    def __init__(self, id_, interface, name=None, external_access=False,
+                 v4_conf_service=STATIC, v6_conf_service=STATIC,
+                 address_allocations=[]):
+        self.id = id_
+        self.interface = interface
+        self.name = name
+        self.external_access = external_access
+        self.v4_conf_service = v4_conf_service
+        self.v6_conf_service = v6_conf_service
+        self.address_allocations = address_allocations
+
+    @property
+    def v4_conf_service(self):
+        return self._v4_conf_service
+
+    @v4_conf_service.setter
+    def v4_conf_service(self, value):
+        if value not in (self.DHCP, self.STATIC):
+            msg = 'v4_conf_service must be one of dhcp|static not (%s).' % value
+            raise ValueError(msg)
+        self._v4_conf_service = value
+
+    @property
+    def v6_conf_service(self):
+        return self._v6_conf_service
+
+    @v6_conf_service.setter
+    def v6_conf_service(self, value):
+        if value not in (self.DHCP, self.RA, self.STATIC):
+            msg = ('v6_conf_service must be one of dhcp|ra|static not (%s).' %
+                    value)
+            raise ValueError(msg)
+        self._v6_conf_service = value
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['network_id'],
+            name=d['name'],
+            interface=Interface.from_dict(d['interface']),
+            external_access=bool(d.get('external_access')),
+            v6_conf_service=d.get('v6_conf_service', cls.STATIC),
+            v4_conf_service=d.get('v4_conf_service', cls.STATIC),
+            address_allocations=[Allocation(*a) for a in d['allocations']])
+
+
+class Configuration(ModelBase):
+    def __init__(self, conf_dict={}):
+        self.networks = [Network.from_dict(n) for n in conf_dict['networks']]
+        self.static_routes = [StaticRoute(*r) for r in
+                              conf_dict.get('static_routes', [])]
+
+        self.address_book = {}
+        for name, cidrs in conf_dict.get('address_book', {}).iteritems():
+            self.address_book[name] = AddressBookEntry(name, cidrs)
+
+        self.anchors = [
+            Anchor(a['name'], [FilterRule.from_dict(r) for r in a['rules']])
+            for a in conf_dict.get('anchors', [])]
+
+    def validate(self):
+        """Validate anchor rules to ensure that ifaces and tables exist."""
+
+        errors = []
+
+        for anchor in self.anchors:
+            for rule in anchor.rules:
+                interfaces = set(n.interface.ifname for n in self.networks)
+                for iface in (rule.interface, rule.destination_interface):
+                    if iface and iface not in interfaces:
+                        errors.append((rule, '%s does not exist' % iface))
+
+                for address in (rule.source, rule.destination):
+                    if not address or isinstance(address, netaddr.IPNetwork):
+                        pass
+                    elif address in self.address_book:
+                        pass
+                    else:
+                        reason = '%s is not in the address book' % address
+                        errors.append((rule, reason))
+
+        self.errors = ["'%s' %s" % e for e in errors]
+        return not bool(self.errors)
+
+    def to_dict(self):
+        fields = ('networks', 'address_book', 'anchors', 'static_routes')
+        return dict((f, getattr(self, f)) for f in fields)
+

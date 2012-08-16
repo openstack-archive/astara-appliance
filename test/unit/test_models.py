@@ -1,5 +1,6 @@
 from unittest2 import TestCase
 
+import mock
 import netaddr
 
 from akanda.router import models
@@ -34,6 +35,24 @@ class InterfaceModelTestCase(TestCase):
         iface = models.Interface(ifname='ge0', addresses=['192.168.1.1/24'])
         expected = "<Interface: ge0 ['192.168.1.1/24']>"
         self.assertEqual(expected, repr(iface))
+
+    def test_eq_other_none(self):
+        iface = models.Interface(ifname='ge0', addresses=['192.168.1.1/24'])
+        self.assertNotEqual(iface, None)
+
+    def test_eq_other_same_instance(self):
+        iface = models.Interface(ifname='ge0', addresses=['192.168.1.1/24'])
+        self.assertEqual(iface, iface)
+
+    def test_eq_other_same_values(self):
+        iface = models.Interface(ifname='ge0', addresses=['192.168.1.1/24'])
+        iface2 = models.Interface(ifname='ge0', addresses=['192.168.1.1/24'])
+        self.assertEqual(iface, iface2)
+
+    def test_eq_other_changed_values(self):
+        iface = models.Interface(ifname='ge0', addresses=['192.168.1.1/24'])
+        iface2 = models.Interface(ifname='ge1', addresses=['192.168.1.2/24'])
+        self.assertNotEqual(iface, iface2)
 
     def test_description(self):
         iface = models.Interface()
@@ -274,7 +293,7 @@ class AddressBookTestCase(TestCase):
 
 class AllocationTestCase(TestCase):
     def test_allocation(self):
-        a = models.Allocation('aa:bb:cc:dd:ee:ff', 'hosta.com', '192.168.1.1')
+        a = models.Allocation('aa:bb:cc:dd:ee:ff', '192.168.1.1', 'hosta.com')
         self.assertEqual(a.lladdr, 'aa:bb:cc:dd:ee:ff')
         self.assertEqual(a.hostname, 'hosta.com')
         self.assertEqual(a.ip_address, '192.168.1.1')
@@ -285,3 +304,174 @@ class StaticRouteTestCase(TestCase):
         sr = models.StaticRoute('0.0.0.0/0', '192.168.1.1')
         self.assertEqual(sr.destination, netaddr.IPNetwork('0.0.0.0/0'))
         self.assertEqual(sr.next_hop, netaddr.IPAddress('192.168.1.1'))
+
+    def test_eq_none(self):
+        sr = models.StaticRoute('0.0.0.0/0', '192.168.1.1')
+        self.assertNotEqual(sr, None)
+
+    def test_eq_equal(self):
+        sr1 = models.StaticRoute('0.0.0.0/0', '192.168.1.1')
+        sr2 = models.StaticRoute('0.0.0.0/0', '192.168.1.1')
+        self.assertEqual(sr1, sr2)
+
+    def test_eq_not_equal(self):
+        sr1 = models.StaticRoute('0.0.0.0/0', '192.168.1.1')
+        sr2 = models.StaticRoute('172.16.0.0/16', '192.168.1.1')
+        self.assertNotEqual(sr1, sr2)
+
+
+class NetworkTestCase(TestCase):
+    def test_network(self):
+        interface = mock.Mock()
+
+        n = models.Network('id', interface, 'name')
+
+        self.assertEqual(n.id, 'id')
+        self.assertEqual(n.interface, interface)
+        self.assertEqual(n.name, 'name')
+
+    def test_v4_conf_service_valid(self):
+        n = models.Network('id', None, v4_conf_service='dhcp')
+        self.assertEqual(n.v4_conf_service, 'dhcp')
+
+        n = models.Network('id', None, v4_conf_service='static')
+        self.assertEqual(n.v4_conf_service, 'static')
+
+    def test_v4_conf_service_invalid(self):
+        with self.assertRaises(ValueError):
+            n = models.Network('id', None, v4_conf_service='invalid')
+
+    def test_v6_conf_service_valid(self):
+        n = models.Network('id', None, v6_conf_service='dhcp')
+        self.assertEqual(n.v6_conf_service, 'dhcp')
+
+        n = models.Network('id', None, v6_conf_service='static')
+        self.assertEqual(n.v6_conf_service, 'static')
+
+        n = models.Network('id', None, v6_conf_service='ra')
+        self.assertEqual(n.v6_conf_service, 'ra')
+
+    def test_v6_conf_service_invalid(self):
+        with self.assertRaises(ValueError):
+            n = models.Network('id', None, v6_conf_service='invalid')
+
+
+class ConfigurationTestCase(TestCase):
+    def test_init_only_networks(self):
+        network = dict(
+            network_id='netid',
+            name='thenet',
+            interface=dict(ifname='ge0', addresses=['192.168.1.1/24']),
+            allocations=[])
+
+        c = models.Configuration(dict(networks=[network]))
+        self.assertEqual(len(c.networks), 1)
+        self.assertEqual(c.networks[0],
+                         models.Network.from_dict(network))
+
+    def test_init_only_static_routes(self):
+        routes = [('0.0.0.0/0', '192.168.1.1'),
+                  ('172.16.77.0/16', '192.168.1.254')]
+        c = models.Configuration(dict(networks=[], static_routes=routes))
+
+        self.assertEqual(len(c.static_routes), 2)
+        self.assertEqual(
+            c.static_routes,
+            [models.StaticRoute(*routes[0]), models.StaticRoute(*routes[1])])
+
+    def test_init_address_book(self):
+        ab = {"webservers": ["192.168.57.101/32", "192.168.57.230/32"]}
+
+        c = models.Configuration(dict(networks=[], address_book=ab))
+        self.assertEqual(
+            c.address_book.get('webservers'),
+            models.AddressBookEntry('webservers', ab['webservers']))
+
+    def test_init_empty_anchor(self):
+        anchor_dict = dict(
+            name='theanchor',
+            rules=[])
+
+        c = models.Configuration(dict(networks=[], anchors=[anchor_dict]))
+        self.assertEqual(len(c.anchors), 1)
+
+    def test_init_anchor(self):
+        test_rule = dict(action='block', source='192.168.1.1/32')
+        anchor_dict = dict(name='theanchor', rules=[test_rule])
+
+        c = models.Configuration(dict(networks=[], anchors=[anchor_dict]))
+        self.assertEqual(len(c.anchors), 1)
+        self.assertEqual(len(c.anchors[0].rules), 1)
+        self.assertEqual(c.anchors[0].rules[0].action, 'block')
+
+    def _validate_test_helper(self, rule_dict, expect_errors=False):
+        network = dict(
+            network_id='netid',
+            name='thenet',
+            interface=dict(ifname='ge0', addresses=['192.168.1.1/24']),
+            allocations=[])
+
+        ab = {"webservers": ["192.168.57.101/32", "192.168.57.230/32"]}
+        anchor_dict = dict(name='theanchor', rules=[rule_dict])
+
+        c = models.Configuration(
+            dict(networks=[network], anchors=[anchor_dict], address_book=ab))
+
+        if expect_errors:
+            self.assertFalse(c.validate())
+            return c.errors
+        else:
+            self.assertTrue(c.validate())
+            self.assertEqual(c.errors, [])
+
+    def test_validate_block_all(self):
+        rule = dict(action='block')
+        self._validate_test_helper(rule)
+
+    def test_validate_pass_all(self):
+        rule = dict(action='pass')
+        self._validate_test_helper(rule)
+
+    def test_validate_interface_valid(self):
+        rule = dict(action='pass', interface='ge0')
+        self._validate_test_helper(rule)
+
+    def test_validate_interface_invalid(self):
+        rule = dict(action='pass', interface='lo0')
+        errors = self._validate_test_helper(rule, True)
+        self.assertEqual(len(errors), 1)
+
+    def test_validate_source_valid_addressbook(self):
+        rule = dict(action='pass', source='webservers')
+        self._validate_test_helper(rule)
+
+    def test_validate_source_valid_cidr(self):
+        rule = dict(action='pass', source='192.168.1.1/32')
+        self._validate_test_helper(rule)
+
+    def test_validate_source_invalid(self):
+        rule = dict(action='pass', source='foo')
+        errors = self._validate_test_helper(rule, True)
+        self.assertEqual(len(errors), 1)
+
+    def test_validate_dest_valid_addressbook(self):
+        rule = dict(action='pass', destination='webservers')
+        self._validate_test_helper(rule)
+
+    def test_validate_dest_valid_cidr(self):
+        rule = dict(action='pass', destination='192.168.1.1/32')
+        self._validate_test_helper(rule)
+
+    def test_validate_destination_invalid(self):
+        rule = dict(action='pass', destination='foo')
+        errors = self._validate_test_helper(rule, True)
+        self.assertEqual(len(errors), 1)
+
+    def test_to_dict(self):
+        c = models.Configuration({'networks': []})
+        expected = dict(networks=[],
+                        address_book={},
+                        static_routes=[],
+                        anchors=[])
+
+        self.assertEqual(c.to_dict(), expected)
