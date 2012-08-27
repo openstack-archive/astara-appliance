@@ -4,8 +4,8 @@ Blueprint for version 1 of the firewall API.
 
 from flask import request
 
-from akanda import utils
-from akanda.routerapi.drivers import pf
+from akanda.router import utils
+from akanda.router.drivers import pf
 
 
 firewall = utils.blueprint_factory(__name__)
@@ -13,7 +13,7 @@ firewall = utils.blueprint_factory(__name__)
 
 @firewall.before_request
 def get_manager():
-    request.pf_mgr = pf.PfManager()
+    request.pf_mgr = pf.PFManager()
 
 
 @firewall.route('/rules')
