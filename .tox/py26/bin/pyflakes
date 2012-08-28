@@ -1,0 +1,4 @@
+#!/Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin/python2.6
+
+from pyflakes.scripts.pyflakes import main
+main()
