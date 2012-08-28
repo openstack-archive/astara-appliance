@@ -47,8 +47,8 @@ class Interface(object):
 
     @property
     def is_up(self):
-        if ('state' in self.extra_params
-            and self.extra_params['state'].lower() == 'up'):
+        if ('state' in self.extra_params and
+            self.extra_params['state'].lower() == 'up'):
             return 'UP'
         return 'UP' in self.flags
 
