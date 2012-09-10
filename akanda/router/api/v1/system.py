@@ -18,26 +18,21 @@ def check_route():
 
 
 @system.route('/interface/<ifname>')
+@utils.json_response
 def get_interface(ifname):
     '''
     Show interface parameters given an interface name.
     For example ge1, ge2 for generic ethernet
     '''
     if_mgr = ifconfig.InterfaceManager()
-    result = if_mgr.get_interface(ifname)
-    js = json.dumps({"interface": result.to_dict()}, cls=utils.ModelSerializer)
-    resp = Response(js, status=200, mimetype='application/json')
-    return resp
+    return dict(interface=if_mgr.get_interface(ifname))
 
 
 @system.route('/interfaces')
+@utils.json_response
 def get_interfaces():
     '''
     Show all interfaces and parameters
     '''
     if_mgr = ifconfig.InterfaceManager()
-    results = if_mgr.get_interfaces()
-    interfaces = [x.to_dict() for x in results]
-    js = json.dumps({"interfaces": interfaces}, cls=utils.ModelSerializer)
-    resp = Response(js, status=200, mimetype='application/json')
-    return resp
+    return dict(interfaces=if_mgr.get_interfaces())

@@ -1,10 +1,14 @@
-from json import JSONEncoder
+import functools
+import json
 import os
 import shlex
 import subprocess
 import tempfile
 
 import flask
+import netaddr
+
+from akanda.router import models
 
 
 def execute(args, root_helper=None):
@@ -31,19 +35,31 @@ def replace_file(file_name, data):
     os.rename(tmp_file.name, file_name)
 
 
-class ModelSerializer(JSONEncoder):
+class ModelSerializer(json.JSONEncoder):
     """
     """
     def default(self, obj):
-        # import here to avoid circualar imports... ugh; we may need to move
-        # this serializer as part of a long-term fix
-        import netaddr
-
         if isinstance(obj, set):
             return list(obj)
-        if isinstance(obj, netaddr.IPNetwork):
+        elif isinstance(obj, netaddr.IPNetwork):
             return str(obj)
+        elif isinstance(obj, netaddr.IPAddress):
+            return str(obj)
+        elif isinstance(obj, models.ModelBase):
+            if hasattr(obj, 'to_dict'):
+                return obj.to_dict()
+            else:
+                return vars(obj)
         return super(ModelSerializer, self).default(obj)
+
+
+def json_response(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        retval = f(*args, **kwargs)
+        return flask.Response(json.dumps(retval, cls=ModelSerializer),
+                              status=200)
+    return wrapper
 
 
 def blueprint_factory(name):

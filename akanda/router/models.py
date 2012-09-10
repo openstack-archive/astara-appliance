@@ -4,7 +4,8 @@ import re
 
 import netaddr
 
-class  ModelBase(object):
+
+class ModelBase(object):
     __metaclass__ = abc.ABCMeta
 
     def __eq__(self, other):
@@ -34,7 +35,7 @@ class Interface(ModelBase):
     def __eq__(self, other):
         """Check model equality only on limit fields."""
         return (type(self) == type(other) and
-                self.ifname==other.ifname and
+                self.ifname == other.ifname and
                 self.addresses == other.addresses and
                 self.description == other.description and
                 self.mtu == other.mtu and
@@ -167,9 +168,6 @@ class FilterRule(ModelBase):
     def from_dict(cls, d):
         return FilterRule(**d)
 
-    def to_dict(self):
-        return vars(self)
-
 
 class Anchor(ModelBase):
     def __init__(self, name, rules=[]):
@@ -243,6 +241,9 @@ class StaticRoute(ModelBase):
     def next_hop(self, value):
         self._next_hop = netaddr.IPAddress(value)
 
+    def to_dict(self):
+        return dict(destination=self.destination, next_hop=self.next_hop)
+
 
 class Network(ModelBase):
     STATIC = 'static'
@@ -267,7 +268,8 @@ class Network(ModelBase):
     @v4_conf_service.setter
     def v4_conf_service(self, value):
         if value not in (self.DHCP, self.STATIC):
-            msg = 'v4_conf_service must be one of dhcp|static not (%s).' % value
+            msg = ('v4_conf_service must be one of dhcp|static not (%s).' %
+                   value)
             raise ValueError(msg)
         self._v4_conf_service = value
 
@@ -279,7 +281,7 @@ class Network(ModelBase):
     def v6_conf_service(self, value):
         if value not in (self.DHCP, self.RA, self.STATIC):
             msg = ('v6_conf_service must be one of dhcp|ra|static not (%s).' %
-                    value)
+                   value)
             raise ValueError(msg)
         self._v6_conf_service = value
 
@@ -336,4 +338,3 @@ class Configuration(ModelBase):
     def to_dict(self):
         fields = ('networks', 'address_book', 'anchors', 'static_routes')
         return dict((f, getattr(self, f)) for f in fields)
-
