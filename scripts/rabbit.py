@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+#
+# Usage: python rabbit.py '#'
+#
 import pika
 import sys
 credentials = pika.PlainCredentials('guest', 'yetanothersecret')
