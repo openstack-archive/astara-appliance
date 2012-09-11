@@ -1,0 +1,101 @@
+actionid=py26
+msg=getenv
+cmdargs=[local('/Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin/pip'), 'install', '--download-cache=/Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/_download', '-r/Users/murraju/Development/DHC/repos/akanda/router_appliance/test_requirements.txt']
+env={'PYTHONIOENCODING': 'utf_8', 'AUTOFEATURE': 'true', 'LS_COLORS': 'no=00:fi=00:di=01;34:ln=00;36:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=41;33;01:ex=00;32:*.cmd=00;32:*.exe=01;32:*.com=01;32:*.bat=01;32:*.btm=01;32:*.dll=01;32:*.tar=00;31:*.tbz=00;31:*.tgz=00;31:*.rpm=00;31:*.deb=00;31:*.arj=00;31:*.taz=00;31:*.lzh=00;31:*.lzma=00;31:*.zip=00;31:*.zoo=00;31:*.z=00;31:*.Z=00;31:*.gz=00;31:*.bz2=00;31:*.tb2=00;31:*.tz2=00;31:*.tbz2=00;31:*.avi=01;35:*.bmp=01;35:*.fli=01;35:*.gif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mng=01;35:*.mov=01;35:*.mpg=01;35:*.pcx=01;35:*.pbm=01;35:*.pgm=01;35:*.png=01;35:*.ppm=01;35:*.tga=01;35:*.tif=01;35:*.xbm=01;35:*.xpm=01;35:*.dl=01;35:*.gl=01;35:*.wmv=01;35:*.aiff=00;32:*.au=00;32:*.mid=00;32:*.mp3=00;32:*.ogg=00;32:*.voc=00;32:*.wav=00;32:', 'rvm_version': '1.14.5 (stable)', 'VCPROMPT_EXECUTABLE': '/Users/murraju/.vcprompt/bin/vcprompt', '__CF_USER_TEXT_ENCODING': '0x1F5:0:0', 'VERSIONER_PYTHON_PREFER_32_BIT': 'no', 'rvm_path': '/Users/murraju/.rvm', 'TMPDIR': '/var/folders/0x/hmn4pk2s5bg2ymhdv46163080000gn/T/', 'escape_flag': '1', 'LOGNAME': 'murraju', 'USER': 'murraju', 'NVM_DIR': '/Users/murraju/.nvm', 'HOME': '/Users/murraju', 'PATH': '/Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin:/Users/murraju/.virtualenvs/akanda/bin:/Users/murraju/.rvm/gems/ruby-1.9.3-p194/bin:/Users/murraju/.rvm/gems/ruby-1.9.3-p194@global/bin:/Users/murraju/.rvm/rubies/ruby-1.9.3-p194/bin:/Users/murraju/.rvm/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/X11/bin:/Users/murraju/.gem/ruby/1.8/bin:/opt/nginx/sbin:/Users/murraju/.bash_it/plugins/available/todo', 'PS1': '\\[\\e[0;37;1m\\]\\u\\[\\e[39m\\]:\\[\\e[0;34m\\]\\W/\\[\\e[39m\\] \\[$(scm_prompt_info)\\]$ ', 'DISPLAY': '/tmp/launch-kjapbo/org.macosforge.xquartz:0', 'rvm_verbose_flag': '0', 'LANG': 'en_US.UTF-8', 'IRC_CLIENT': 'irssi', 'FAB_COMPLETION_CACHE_TASKS': 'true', 'SHELL': '/bin/bash', '_first': '0', 'VERSIONER_PYTHON_VERSION': '2.7', 'SHLVL': '1', '__array_start': '0', 'MACOSX_DEPLOYMENT_TARGET': '10.8', 'SECURITYSESSIONID': '186a5', 'VIRTUAL_ENV': '/Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26', 'HISTSIZE': '5000', 'GIT_HOSTING': 'git@github.com', 'ITERM_SESSION_ID': 'w0t0p0', 'EDITOR': 'vim', 'GREP_COLOR': '1;33', 'TERM_PROGRAM': 'iTerm.app', 'BASH_IT': '/Users/murraju/.bash_it', 'TODO_SRC_DIR': '/Users/murraju/.bash_it/plugins/available/todo', 'WORKON_HOME': '/Users/murraju/.virtualenvs', 'COMP_WORDBREAKS': ' \t\n"\'@><=;|&(', 'TODO_DIR': '/Users/murraju/.bash_it/custom', 'rvm_prefix': '/Users/murraju', 'rvm_debug_flag': '0', 'SSH_AUTH_SOCK': '/tmp/launch-Fend9v/Listeners', 'TERM': 'xterm-256color', 'IRBRC': '/Users/murraju/.rvm/rubies/ruby-1.9.3-p194/.irbrc', 'MY_RUBY_HOME': '/Users/murraju/.rvm/rubies/ruby-1.9.3-p194', 'Apple_PubSub_Socket_Render': '/tmp/launch-Q66aed/Render', 'TODOTXT_DEFAULT_ACTION': 'ls', 'ITERM_PROFILE': 'Default', 'TODO': 't', '_': '/Users/murraju/.virtualenvs/akanda/bin/tox', 'VIRTUALENVWRAPPER_LOG_DIR': '/Users/murraju/.virtualenvs', '_second': '1', 'VIRTUALENVWRAPPER_PROJECT_FILENAME': '.project', 'LSCOLORS': 'Gxfxcxdxbxegedabagacad', 'NGINX_PATH': '/opt/nginx', 'VIRTUALENVWRAPPER_HOOK_DIR': '/Users/murraju/.virtualenvs', 'RUBY_VERSION': 'ruby-1.9.3-p194', 'PYTHONSTARTUP': '/Users/murraju/.pystartup', 'OLDPWD': '/Users/murraju/Development/DHC/repos/akanda/router_appliance/akanda', 'FAB_COMPLETION_CACHED_TASKS_FILENAME': '.fab_tasks~', 'GEM_PATH': '/Users/murraju/.rvm/gems/ruby-1.9.3-p194:/Users/murraju/.rvm/gems/ruby-1.9.3-p194@global', 'HISTCONTROL': 'erasedups', 'Apple_Ubiquity_Message': '/tmp/launch-cSheru/Apple_Ubiquity_Message', 'PWD': '/Users/murraju/Development/DHC/repos/akanda/router_appliance', 'GREP_OPTIONS': '--color=auto', 'BASH_IT_THEME': 'clean', 'GIT_EDITOR': '/usr/bin/vim', 'rvm_bin_path': '/Users/murraju/.rvm/bin', 'GEM_HOME': '/Users/murraju/.rvm/gems/ruby-1.9.3-p194', 'COMMAND_MODE': 'unix2003'}
+Downloading/unpacking tox (from -r /Users/murraju/Development/DHC/repos/akanda/router_appliance/test_requirements.txt (line 1))
+  Storing download in cache at /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/_download/http%3A%2F%2Fpypi.python.org%2Fpackages%2Fsource%2Ft%2Ftox%2Ftox-1.4.2.zip
+  Running setup.py egg_info for package tox
+Downloading/unpacking unittest2 (from -r /Users/murraju/Development/DHC/repos/akanda/router_appliance/test_requirements.txt (line 2))
+  Storing download in cache at /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/_download/http%3A%2F%2Fpypi.python.org%2Fpackages%2Fsource%2Fu%2Funittest2%2Funittest2-0.5.1.zip
+  Running setup.py egg_info for package unittest2
+Downloading/unpacking nose (from -r /Users/murraju/Development/DHC/repos/akanda/router_appliance/test_requirements.txt (line 3))
+  Storing download in cache at /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/_download/http%3A%2F%2Fpypi.python.org%2Fpackages%2Fsource%2Fn%2Fnose%2Fnose-1.1.2.tar.gz
+  Running setup.py egg_info for package nose
+Downloading/unpacking coverage (from -r /Users/murraju/Development/DHC/repos/akanda/router_appliance/test_requirements.txt (line 4))
+  Storing download in cache at /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/_download/http%3A%2F%2Fpypi.python.org%2Fpackages%2Fsource%2Fc%2Fcoverage%2Fcoverage-3.5.2.tar.gz
+  Running setup.py egg_info for package coverage
+    no previously-included directories found matching 'test'
+Downloading/unpacking mock>=0.8.0 (from -r /Users/murraju/Development/DHC/repos/akanda/router_appliance/test_requirements.txt (line 5))
+  Storing download in cache at /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/_download/http%3A%2F%2Fpypi.python.org%2Fpackages%2Fsource%2Fm%2Fmock%2Fmock-1.0b1.zip
+  Running setup.py egg_info for package mock
+    warning: no files found matching '*.png' under directory 'docs'
+    warning: no files found matching '*.css' under directory 'docs'
+    warning: no files found matching '*.html' under directory 'docs'
+    warning: no files found matching '*.js' under directory 'docs'
+Downloading/unpacking pep8 (from -r /Users/murraju/Development/DHC/repos/akanda/router_appliance/test_requirements.txt (line 6))
+  Downloading pep8-1.3.3.tar.gz
+  Storing download in cache at /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/_download/http%3A%2F%2Fpypi.python.org%2Fpackages%2Fsource%2Fp%2Fpep8%2Fpep8-1.3.3.tar.gz
+  Running setup.py egg_info for package pep8
+Downloading/unpacking pyflakes (from -r /Users/murraju/Development/DHC/repos/akanda/router_appliance/test_requirements.txt (line 7))
+  Downloading pyflakes-0.5.0.tar.gz
+  Storing download in cache at /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/_download/http%3A%2F%2Fpypi.python.org%2Fpackages%2Fsource%2Fp%2Fpyflakes%2Fpyflakes-0.5.0.tar.gz
+  Running setup.py egg_info for package pyflakes
+Downloading/unpacking virtualenv>=1.7 (from tox->-r /Users/murraju/Development/DHC/repos/akanda/router_appliance/test_requirements.txt (line 1))
+  Storing download in cache at /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/_download/http%3A%2F%2Fpypi.python.org%2Fpackages%2Fsource%2Fv%2Fvirtualenv%2Fvirtualenv-1.7.2.tar.gz
+  Running setup.py egg_info for package virtualenv
+    warning: no previously-included files matching '*' found under directory 'docs/_templates'
+    warning: no previously-included files matching '*' found under directory 'docs/_build'
+Downloading/unpacking py>=1.4.9 (from tox->-r /Users/murraju/Development/DHC/repos/akanda/router_appliance/test_requirements.txt (line 1))
+  Storing download in cache at /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/_download/http%3A%2F%2Fpypi.python.org%2Fpackages%2Fsource%2Fp%2Fpy%2Fpy-1.4.9.zip
+  Running setup.py egg_info for package py
+Downloading/unpacking argparse (from tox->-r /Users/murraju/Development/DHC/repos/akanda/router_appliance/test_requirements.txt (line 1))
+  Storing download in cache at /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/_download/http%3A%2F%2Fargparse.googlecode.com%2Ffiles%2Fargparse-1.2.1.tar.gz
+  Running setup.py egg_info for package argparse
+    warning: no previously-included files matching '*.pyc' found anywhere in distribution
+    warning: no previously-included files matching '*.pyo' found anywhere in distribution
+    warning: no previously-included files matching '*.orig' found anywhere in distribution
+    warning: no previously-included files matching '*.rej' found anywhere in distribution
+    no previously-included directories found matching 'doc/_build'
+    no previously-included directories found matching 'env24'
+    no previously-included directories found matching 'env25'
+    no previously-included directories found matching 'env26'
+    no previously-included directories found matching 'env27'
+Requirement already satisfied (use --upgrade to upgrade): distribute in /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/lib/python2.6/site-packages/distribute-0.6.27-py2.6.egg (from pep8->-r /Users/murraju/Development/DHC/repos/akanda/router_appliance/test_requirements.txt (line 6))
+Installing collected packages: tox, unittest2, nose, coverage, mock, pep8, pyflakes, virtualenv, py, argparse
+  Running setup.py install for tox
+    Installing tox script to /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin
+  Running setup.py install for unittest2
+    changing mode of build/scripts-2.6/unit2.py from 644 to 755
+    changing mode of build/scripts-2.6/unit2 from 644 to 755
+    changing mode of /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin/unit2 to 755
+    changing mode of /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin/unit2.py to 755
+    Installing unit2-2.6 script to /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin
+    Installing unit2 script to /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin
+  Running setup.py install for nose
+    Installing nosetests-2.6 script to /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin
+    Installing nosetests script to /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin
+  Running setup.py install for coverage
+    building 'coverage.tracer' extension
+    clang -fno-strict-aliasing -fno-common -dynamic -g -Os -pipe -fno-common -fno-strict-aliasing -fwrapv -mno-fused-madd -DENABLE_DTRACE -DMACOSX -DNDEBUG -Wall -Wstrict-prototypes -Wshorten-64-to-32 -DNDEBUG -g -Os -Wall -Wstrict-prototypes -DENABLE_DTRACE -arch i386 -arch x86_64 -pipe -I/System/Library/Frameworks/Python.framework/Versions/2.6/include/python2.6 -c coverage/tracer.c -o build/temp.macosx-10.8-intel-2.6/coverage/tracer.o
+    clang: warning: argument unused during compilation: '-mno-fused-madd'
+    clang -Wl,-F. -bundle -undefined dynamic_lookup -arch i386 -arch x86_64 build/temp.macosx-10.8-intel-2.6/coverage/tracer.o -o build/lib.macosx-10.8-intel-2.6/coverage/tracer.so
+    no previously-included directories found matching 'test'
+    Installing coverage script to /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin
+  Running setup.py install for mock
+    warning: no files found matching '*.png' under directory 'docs'
+    warning: no files found matching '*.css' under directory 'docs'
+    warning: no files found matching '*.html' under directory 'docs'
+    warning: no files found matching '*.js' under directory 'docs'
+  Running setup.py install for pep8
+    Installing pep8 script to /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin
+  Running setup.py install for pyflakes
+    changing mode of build/scripts-2.6/pyflakes from 644 to 755
+    changing mode of /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin/pyflakes to 755
+  Running setup.py install for virtualenv
+    warning: no previously-included files matching '*' found under directory 'docs/_templates'
+    warning: no previously-included files matching '*' found under directory 'docs/_build'
+    Installing virtualenv script to /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin
+    Installing virtualenv-2.6 script to /Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/py26/bin
+  Running setup.py install for py
+  Running setup.py install for argparse
+    warning: no previously-included files matching '*.pyc' found anywhere in distribution
+    warning: no previously-included files matching '*.pyo' found anywhere in distribution
+    warning: no previously-included files matching '*.orig' found anywhere in distribution
+    warning: no previously-included files matching '*.rej' found anywhere in distribution
+    no previously-included directories found matching 'doc/_build'
+    no previously-included directories found matching 'env24'
+    no previously-included directories found matching 'env25'
+    no previously-included directories found matching 'env26'
+    no previously-included directories found matching 'env27'
+Successfully installed tox unittest2 nose coverage mock pep8 pyflakes virtualenv py argparse
+Cleaning up...

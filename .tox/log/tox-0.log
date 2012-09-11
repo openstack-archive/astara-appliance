@@ -1,0 +1,123 @@
+actionid=tox
+msg=packaging
+cmdargs=['/Users/murraju/.virtualenvs/akanda/bin/python', local('/Users/murraju/Development/DHC/repos/akanda/router_appliance/setup.py'), 'sdist', '--formats=zip', '--dist-dir', local('/Users/murraju/Development/DHC/repos/akanda/router_appliance/.tox/dist')]
+env=None
+running sdist
+running egg_info
+creating Akanda_Router_Appliance.egg-info
+writing requirements to Akanda_Router_Appliance.egg-info/requires.txt
+writing Akanda_Router_Appliance.egg-info/PKG-INFO
+writing namespace_packages to Akanda_Router_Appliance.egg-info/namespace_packages.txt
+writing top-level names to Akanda_Router_Appliance.egg-info/top_level.txt
+writing dependency_links to Akanda_Router_Appliance.egg-info/dependency_links.txt
+writing entry points to Akanda_Router_Appliance.egg-info/entry_points.txt
+writing manifest file 'Akanda_Router_Appliance.egg-info/SOURCES.txt'
+reading manifest file 'Akanda_Router_Appliance.egg-info/SOURCES.txt'
+writing manifest file 'Akanda_Router_Appliance.egg-info/SOURCES.txt'
+warning: sdist: standard file not found: should have one of README, README.txt
+
+creating Akanda Router Appliance-0.1.0
+creating Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info
+creating Akanda Router Appliance-0.1.0/akanda
+creating Akanda Router Appliance-0.1.0/akanda/router
+creating Akanda Router Appliance-0.1.0/akanda/router/api
+creating Akanda Router Appliance-0.1.0/akanda/router/api/v1
+creating Akanda Router Appliance-0.1.0/akanda/router/commands
+creating Akanda Router Appliance-0.1.0/akanda/router/drivers
+creating Akanda Router Appliance-0.1.0/test
+creating Akanda Router Appliance-0.1.0/test/unit
+creating Akanda Router Appliance-0.1.0/test/unit/api
+creating Akanda Router Appliance-0.1.0/test/unit/api/v1
+creating Akanda Router Appliance-0.1.0/test/unit/api/v1/payloads
+creating Akanda Router Appliance-0.1.0/test/unit/drivers
+making hard links in Akanda Router Appliance-0.1.0...
+hard linking setup.cfg -> Akanda Router Appliance-0.1.0
+hard linking setup.py -> Akanda Router Appliance-0.1.0
+hard linking Akanda_Router_Appliance.egg-info/PKG-INFO -> Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info
+hard linking Akanda_Router_Appliance.egg-info/SOURCES.txt -> Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info
+hard linking Akanda_Router_Appliance.egg-info/dependency_links.txt -> Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info
+hard linking Akanda_Router_Appliance.egg-info/entry_points.txt -> Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info
+hard linking Akanda_Router_Appliance.egg-info/namespace_packages.txt -> Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info
+hard linking Akanda_Router_Appliance.egg-info/not-zip-safe -> Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info
+hard linking Akanda_Router_Appliance.egg-info/requires.txt -> Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info
+hard linking Akanda_Router_Appliance.egg-info/top_level.txt -> Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info
+hard linking akanda/__init__.py -> Akanda Router Appliance-0.1.0/akanda
+hard linking akanda/router/__init__.py -> Akanda Router Appliance-0.1.0/akanda/router
+hard linking akanda/router/models.py -> Akanda Router Appliance-0.1.0/akanda/router
+hard linking akanda/router/utils.py -> Akanda Router Appliance-0.1.0/akanda/router
+hard linking akanda/router/api/__init__.py -> Akanda Router Appliance-0.1.0/akanda/router/api
+hard linking akanda/router/api/server.py -> Akanda Router Appliance-0.1.0/akanda/router/api
+hard linking akanda/router/api/v1/__init__.py -> Akanda Router Appliance-0.1.0/akanda/router/api/v1
+hard linking akanda/router/api/v1/base.py -> Akanda Router Appliance-0.1.0/akanda/router/api/v1
+hard linking akanda/router/api/v1/firewall.py -> Akanda Router Appliance-0.1.0/akanda/router/api/v1
+hard linking akanda/router/api/v1/system.py -> Akanda Router Appliance-0.1.0/akanda/router/api/v1
+hard linking akanda/router/commands/__init__.py -> Akanda Router Appliance-0.1.0/akanda/router/commands
+hard linking akanda/router/commands/management.py -> Akanda Router Appliance-0.1.0/akanda/router/commands
+hard linking akanda/router/drivers/__init__.py -> Akanda Router Appliance-0.1.0/akanda/router/drivers
+hard linking akanda/router/drivers/base.py -> Akanda Router Appliance-0.1.0/akanda/router/drivers
+hard linking akanda/router/drivers/dnsmasq.py -> Akanda Router Appliance-0.1.0/akanda/router/drivers
+hard linking akanda/router/drivers/ifconfig.py -> Akanda Router Appliance-0.1.0/akanda/router/drivers
+hard linking akanda/router/drivers/pf.py -> Akanda Router Appliance-0.1.0/akanda/router/drivers
+hard linking test/__init__.py -> Akanda Router Appliance-0.1.0/test
+hard linking test/unit/__init__.py -> Akanda Router Appliance-0.1.0/test/unit
+hard linking test/unit/test_models.py -> Akanda Router Appliance-0.1.0/test/unit
+hard linking test/unit/test_utils.py -> Akanda Router Appliance-0.1.0/test/unit
+hard linking test/unit/api/__init__.py -> Akanda Router Appliance-0.1.0/test/unit/api
+hard linking test/unit/api/v1/__init__.py -> Akanda Router Appliance-0.1.0/test/unit/api/v1
+hard linking test/unit/api/v1/fakes.py -> Akanda Router Appliance-0.1.0/test/unit/api/v1
+hard linking test/unit/api/v1/test_base.py -> Akanda Router Appliance-0.1.0/test/unit/api/v1
+hard linking test/unit/api/v1/test_firewall.py -> Akanda Router Appliance-0.1.0/test/unit/api/v1
+hard linking test/unit/api/v1/test_system.py -> Akanda Router Appliance-0.1.0/test/unit/api/v1
+hard linking test/unit/api/v1/payloads/__init__.py -> Akanda Router Appliance-0.1.0/test/unit/api/v1/payloads
+hard linking test/unit/api/v1/payloads/routerapi_firewall.py -> Akanda Router Appliance-0.1.0/test/unit/api/v1/payloads
+hard linking test/unit/api/v1/payloads/routerapi_system.py -> Akanda Router Appliance-0.1.0/test/unit/api/v1/payloads
+hard linking test/unit/drivers/__init__.py -> Akanda Router Appliance-0.1.0/test/unit/drivers
+hard linking test/unit/drivers/test_ifconfig_driver.py -> Akanda Router Appliance-0.1.0/test/unit/drivers
+copying setup.cfg -> Akanda Router Appliance-0.1.0
+Writing Akanda Router Appliance-0.1.0/setup.cfg
+creating .tox/dist
+creating '.tox/dist/Akanda Router Appliance-0.1.0.zip' and adding 'Akanda Router Appliance-0.1.0' to it
+adding 'Akanda Router Appliance-0.1.0/PKG-INFO'
+adding 'Akanda Router Appliance-0.1.0/setup.cfg'
+adding 'Akanda Router Appliance-0.1.0/setup.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/__init__.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/__init__.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/models.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/utils.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/api/__init__.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/api/server.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/api/v1/__init__.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/api/v1/base.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/api/v1/firewall.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/api/v1/system.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/commands/__init__.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/commands/management.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/drivers/__init__.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/drivers/base.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/drivers/dnsmasq.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/drivers/ifconfig.py'
+adding 'Akanda Router Appliance-0.1.0/akanda/router/drivers/pf.py'
+adding 'Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info/dependency_links.txt'
+adding 'Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info/entry_points.txt'
+adding 'Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info/namespace_packages.txt'
+adding 'Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info/not-zip-safe'
+adding 'Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info/PKG-INFO'
+adding 'Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info/requires.txt'
+adding 'Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info/SOURCES.txt'
+adding 'Akanda Router Appliance-0.1.0/Akanda_Router_Appliance.egg-info/top_level.txt'
+adding 'Akanda Router Appliance-0.1.0/test/__init__.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/__init__.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/test_models.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/test_utils.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/api/__init__.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/api/v1/__init__.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/api/v1/fakes.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/api/v1/test_base.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/api/v1/test_firewall.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/api/v1/test_system.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/api/v1/payloads/__init__.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/api/v1/payloads/routerapi_firewall.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/api/v1/payloads/routerapi_system.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/drivers/__init__.py'
+adding 'Akanda Router Appliance-0.1.0/test/unit/drivers/test_ifconfig_driver.py'
+removing 'Akanda Router Appliance-0.1.0' (and everything under it)
