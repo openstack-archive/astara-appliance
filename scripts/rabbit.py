@@ -5,8 +5,8 @@
 import pika
 import sys
 credentials = pika.PlainCredentials('guest', 'yetanothersecret')
-connection = pika.BlockingConnection(pika.ConnectionParameters(
-        host='192.168.57.100', credentials=credentials))
+connection = pika.BlockingConnection(pika.ConnectionParameters
+    (host='192.168.57.100', credentials=credentials))
 channel = connection.channel()
 
 channel.exchange_declare(exchange='quantum',
@@ -26,6 +26,7 @@ for binding_key in binding_keys:
                        routing_key=binding_key)
 
 print ' [*] Waiting for logs. To exit press CTRL+C'
+
 
 def callback(ch, method, properties, body):
     print " [x] %r:%r" % (method.routing_key, body,)
