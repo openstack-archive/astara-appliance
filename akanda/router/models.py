@@ -250,6 +250,8 @@ class Network(ModelBase):
     RA = 'ra'
     DHCP = 'dhcp'
 
+    # TODO(mark): add subnet support for Quantum subnet host routes
+
     def __init__(self, id_, interface, name=None, external_access=False,
                  v4_conf_service=STATIC, v6_conf_service=STATIC,
                  address_allocations=[]):
@@ -299,7 +301,8 @@ class Network(ModelBase):
 
 class Configuration(ModelBase):
     def __init__(self, conf_dict={}):
-        self.networks = [Network.from_dict(n) for n in conf_dict['networks']]
+        self.networks = [
+             Network.from_dict(n) for n in conf_dict.get('networks', [])]
         self.static_routes = [StaticRoute(*r) for r in
                               conf_dict.get('static_routes', [])]
 
@@ -332,8 +335,7 @@ class Configuration(ModelBase):
                         reason = '%s is not in the address book' % address
                         errors.append((rule, reason))
 
-        self.errors = ["'%s' %s" % e for e in errors]
-        return not bool(self.errors)
+        return ["'%s' %s" % e for e in errors]
 
     def to_dict(self):
         fields = ('networks', 'address_book', 'anchors', 'static_routes')

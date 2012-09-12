@@ -417,12 +417,12 @@ class ConfigurationTestCase(TestCase):
         c = models.Configuration(
             dict(networks=[network], anchors=[anchor_dict], address_book=ab))
 
+        errors = c.validate()
+
         if expect_errors:
-            self.assertFalse(c.validate())
-            return c.errors
+            return errors
         else:
-            self.assertTrue(c.validate())
-            self.assertEqual(c.errors, [])
+            self.assertEqual(errors, [])
 
     def test_validate_block_all(self):
         rule = dict(action='block')
