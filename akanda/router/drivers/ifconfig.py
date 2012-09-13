@@ -21,7 +21,7 @@ class InterfaceManager(base.Manager):
         self.host_mapping = {}
         self.generic_mapping = {}
 
-    def _ensure_mapping(self):
+    def ensure_mapping(self):
         if not self.host_mapping:
             self.get_interfaces()
 
@@ -50,15 +50,15 @@ class InterfaceManager(base.Manager):
         return retval
 
     def is_valid(self, ifname):
-        self._ensure_mapping()
+        self.ensure_mapping()
         return ifname in self.generic_mapping
 
     def generic_to_host(self, generic_name):
-        self._ensure_mapping()
+        self.ensure_mapping()
         return self.generic_mapping.get(generic_name)
 
     def host_to_generic(self, real_name):
-        self._ensure_mapping()
+        self.ensure_mapping()
         return self.host_mapping.get(real_name)
 
     def update_interfaces(self, interfaces):

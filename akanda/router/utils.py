@@ -35,6 +35,11 @@ def replace_file(file_name, data):
     os.rename(tmp_file.name, file_name)
 
 
+def ensure_directory(dir_path):
+    if not os.path.isdir(path):
+        os.makedirs(path, 0755)
+
+
 class ModelSerializer(json.JSONEncoder):
     """
     """

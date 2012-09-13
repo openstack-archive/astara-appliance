@@ -1,7 +1,8 @@
-from unittest2 import TestCase
+import textwrap
 
 import mock
 import netaddr
+from unittest2 import TestCase
 
 from akanda.router import models
 
@@ -261,12 +262,12 @@ class AnchorTestCase(TestCase):
 
     def test_anchor_pf_rule_empty(self):
         a = models.Anchor('foo', [])
-        self.assertEqual(a.pf_rule, 'anchor foo {\n\n}\n')
+        self.assertEqual(a.pf_rule, 'anchor foo {\n\n}')
 
     def test_anchor_pf_rule(self):
         fr = models.FilterRule(action='block', interface="ge0")
         a = models.Anchor('foo', [fr])
-        self.assertEqual(a.pf_rule, 'anchor foo {\nblock on ge0\n}\n')
+        self.assertEqual(a.pf_rule, 'anchor foo {\nblock on ge0\n}')
 
 
 class AddressBookTestCase(TestCase):
@@ -329,6 +330,23 @@ class NetworkTestCase(TestCase):
         self.assertEqual(n.id, 'id')
         self.assertEqual(n.interface, interface)
         self.assertEqual(n.name, 'name')
+
+    def test_network_type_valid(self):
+        n = models.Network('id', None, network_type='external')
+        self.assertEqual(n.network_type, 'external')
+
+        n = models.Network('id', None, network_type='internal')
+        self.assertEqual(n.network_type, 'internal')
+
+        n = models.Network('id', None, network_type='isolated')
+        self.assertEqual(n.network_type, 'isolated')
+
+        n = models.Network('id', None, network_type='management')
+        self.assertEqual(n.network_type, 'management')
+
+    def test_network_type_invalid(self):
+        with self.assertRaises(ValueError):
+            n = models.Network('id', None, network_type='invalid')
 
     def test_v4_conf_service_valid(self):
         n = models.Network('id', None, v4_conf_service='dhcp')
@@ -475,3 +493,97 @@ class ConfigurationTestCase(TestCase):
                         anchors=[])
 
         self.assertEqual(c.to_dict(), expected)
+
+    def test_pf_config_default(self):
+        c = models.Configuration({'networks': []})
+        self.assertEqual(c.pf_config, 'block')
+
+    def test_pf_config_nat(self):
+        ext_net = dict(network_id='ext',
+                       interface=dict(ifname='ge0'),
+                       network_type='external')
+        int_net = dict(network_id='int',
+                       interface=dict(ifname='ge1'),
+                       network_type='internal')
+
+        expected = textwrap.dedent("""
+        block
+        pass out on ge0 from ge1:network to any nat-to ge0
+        """).strip()
+
+        c = models.Configuration({'networks': [ext_net, int_net]})
+        self.assertEqual(c.pf_config, expected)
+
+    def test_pf_config_isolated(self):
+        ext_net = dict(network_id='ext',
+                       interface=dict(ifname='ge0'),
+                       network_type='external')
+        int_net = dict(network_id='int',
+                       interface=dict(ifname='ge1'),
+                       network_type='isolated')
+
+        expected = textwrap.dedent("""
+        block
+        block from ge1:network to any
+        """).strip()
+
+        c = models.Configuration({'networks': [ext_net, int_net]})
+        self.assertEqual(c.pf_config, expected)
+
+    def test_pf_config_management(self):
+        ext_net = dict(network_id='ext',
+                       interface=dict(ifname='ge0'),
+                       network_type='external')
+        int_net = dict(network_id='int',
+                       interface=dict(ifname='ge1'),
+                       network_type='management')
+
+        expected = textwrap.dedent("""
+        block
+        block from ge1:network to any
+        """).strip()
+
+        c = models.Configuration({'networks': [ext_net, int_net]})
+        self.assertEqual(c.pf_config, expected)
+
+    def test_pf_config_with_addressbook(self):
+        ext_net = dict(network_id='ext',
+                       interface=dict(ifname='ge0'),
+                       network_type='external')
+        int_net = dict(network_id='int',
+                       interface=dict(ifname='ge1'),
+                       network_type='management')
+        ab = dict(foo=['192.168.1.1/24'])
+
+        expected = textwrap.dedent("""
+        block
+        block from ge1:network to any
+        table <foo> {192.168.1.1/24}
+        """).strip()
+
+        c = models.Configuration(
+            {'networks': [ext_net, int_net], 'address_book': ab})
+        self.assertEqual(c.pf_config, expected)
+
+    def test_pf_config_with_anchor(self):
+        ext_net = dict(network_id='ext',
+                       interface=dict(ifname='ge0'),
+                       network_type='external')
+        int_net = dict(network_id='int',
+                       interface=dict(ifname='ge1'),
+                       network_type='management')
+        anchor = dict(name='foo',
+                      rules=[dict(action='pass',
+                                  protocol='tcp',
+                                  destination_port=22)])
+        expected = textwrap.dedent("""
+        block
+        block from ge1:network to any
+        anchor foo {
+        pass proto tcp to port 22
+        }
+        """).strip()
+
+        c = models.Configuration(
+            {'networks': [ext_net, int_net], 'anchors': [anchor]})
+        self.assertEqual(c.pf_config, expected)

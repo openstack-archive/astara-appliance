@@ -103,7 +103,7 @@ class IfconfigTestCase(TestCase):
         attr = 'get_interfaces'
         with mock.patch.object(ifconfig.InterfaceManager, attr) as get_ifaces:
             mgr = ifconfig.InterfaceManager()
-            mgr._ensure_mapping()
+            mgr.ensure_mapping()
 
             get_ifaces.assert_called_once_with()
 
@@ -112,7 +112,7 @@ class IfconfigTestCase(TestCase):
         with mock.patch.object(ifconfig.InterfaceManager, attr) as get_ifaces:
             mgr = ifconfig.InterfaceManager()
             mgr.host_mapping['em0'] = 'ge0'
-            mgr._ensure_mapping()
+            mgr.ensure_mapping()
 
             self.assertEqual(get_ifaces.call_count, 0)
 

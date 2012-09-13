@@ -1,6 +1,7 @@
 import abc
 import os
 import re
+import StringIO
 
 import netaddr
 
@@ -177,7 +178,7 @@ class Anchor(ModelBase):
     @property
     def pf_rule(self):
         pf_rules = '\n\t'.join([r.pf_rule for r in self.rules])
-        return "anchor %s {\n%s\n}\n" % (self.name, pf_rules)
+        return "anchor %s {\n%s\n}" % (self.name, pf_rules)
 
     def external_pf_rule(self, base_dir):
 
@@ -249,19 +250,37 @@ class Network(ModelBase):
     STATIC = 'static'
     RA = 'ra'
     DHCP = 'dhcp'
+    EXTERNAL = 'external'
+    INTERNAL = 'internal'
+    ISOLATED = 'isolated'
+    MANAGEMENT = 'management'
 
     # TODO(mark): add subnet support for Quantum subnet host routes
 
-    def __init__(self, id_, interface, name=None, external_access=False,
+    def __init__(self, id_, interface, name=None, network_type=ISOLATED,
                  v4_conf_service=STATIC, v6_conf_service=STATIC,
                  address_allocations=[]):
         self.id = id_
         self.interface = interface
         self.name = name
-        self.external_access = external_access
+        self.network_type = network_type
         self.v4_conf_service = v4_conf_service
         self.v6_conf_service = v6_conf_service
         self.address_allocations = address_allocations
+
+    @property
+    def network_type(self):
+        return self._network_type
+
+    @network_type.setter
+    def network_type(self, value):
+        network_types = (self.EXTERNAL, self.INTERNAL, self.ISOLATED,
+                         self.MANAGEMENT)
+        if value not in network_types:
+            msg = ('network must be one of %s not (%s).' %
+                   ('|'.join(network_types), value))
+            raise ValueError(msg)
+        self._network_type = value
 
     @property
     def v4_conf_service(self):
@@ -287,22 +306,35 @@ class Network(ModelBase):
             raise ValueError(msg)
         self._v6_conf_service = value
 
+    def to_dict(self):
+        return dict(
+            network_id=self.id,
+            interface=self.interface,
+            name=self.name,
+            network_type=self.network_type,
+            v4_conf_service=self.v4_conf_service,
+            v6_conf_service=self.v6_conf_service,
+            address_allocations=self.address_allocations
+        )
+
     @classmethod
     def from_dict(cls, d):
         return cls(
             d['network_id'],
-            name=d['name'],
+            name=d.get('name', ''),
             interface=Interface.from_dict(d['interface']),
-            external_access=bool(d.get('external_access')),
+            network_type=d.get('network_type', cls.ISOLATED),
             v6_conf_service=d.get('v6_conf_service', cls.STATIC),
             v4_conf_service=d.get('v4_conf_service', cls.STATIC),
-            address_allocations=[Allocation(*a) for a in d['allocations']])
+            address_allocations=[
+                Allocation(*a) for a in d.get('allocations', [])])
 
 
 class Configuration(ModelBase):
     def __init__(self, conf_dict={}):
         self.networks = [
-             Network.from_dict(n) for n in conf_dict.get('networks', [])]
+            Network.from_dict(n) for n in conf_dict.get('networks', [])]
+
         self.static_routes = [StaticRoute(*r) for r in
                               conf_dict.get('static_routes', [])]
 
@@ -316,7 +348,6 @@ class Configuration(ModelBase):
 
     def validate(self):
         """Validate anchor rules to ensure that ifaces and tables exist."""
-
         errors = []
 
         for anchor in self.anchors:
@@ -340,3 +371,44 @@ class Configuration(ModelBase):
     def to_dict(self):
         fields = ('networks', 'address_book', 'anchors', 'static_routes')
         return dict((f, getattr(self, f)) for f in fields)
+
+    @property
+    def interfaces(self):
+        return [n.interface for n in self.networks if n.iterface]
+
+    @property
+    def pf_config(self):
+        rv = ['block']
+
+        # add default deny all external networks and remember 1st for nat
+        ext_if = None
+        for n in self.networks:
+            if n.network_type == Network.EXTERNAL:
+                ext_if = n.interface.ifname
+                break
+
+        # add in nat rules
+        for network in self.networks:
+            if network.network_type == Network.EXTERNAL:
+                continue
+            elif network.network_type == Network.INTERNAL:
+                if ext_if:
+                    rv.append(
+                        _format_nat_rule(ext_if, network.interface.ifname))
+            else:
+                # isolated and management nets block all between interfaces
+                rv.append(_format_isolated_rule(network.interface.ifname))
+
+        # add address book tables
+        rv.extend(ab.pf_rule for ab in self.address_book.values())
+
+        # add anchors and rules
+        rv.extend(a.pf_rule for a in self.anchors)
+        return '\n'.join(rv)
+
+def _format_nat_rule(ext_if, int_if):
+    return ('pass out on %s from %s:network to any nat-to %s' %
+            (ext_if, int_if, ext_if))
+
+def _format_isolated_rule(int_if):
+    return 'block from %s:network to any' % int_if
