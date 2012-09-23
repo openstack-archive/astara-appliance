@@ -505,7 +505,7 @@ class ConfigurationTestCase(TestCase):
             OUTBOUND_TCP_PORTS=[80],
             OUTBOUND_UDP_PORTS = [53])
 
-        with mock.patch('akanda.router.defaults', **attrs) as defaults:
+        with mock.patch.multiple('akanda.router.defaults', **attrs) as defs:
             c = models.Configuration(conf_dict)
             self.assertEqual(c.pf_config, expected)
 
@@ -520,12 +520,11 @@ class ConfigurationTestCase(TestCase):
                        interface=dict(ifname='ge1'),
                        network_type='internal')
 
-        import pdb;pdb.set_trace()
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net]},
             ['pass out on ge0 from ge1:network to any nat-to ge0',
-             'pass in on ge1 proto tcp to any port { 22 }',
-             'pass in on ge1 proto udp to any port { 53 }'])
+             'pass in on ge1 proto tcp to any port {80}',
+             'pass in on ge1 proto udp to any port {53}'])
 
     def test_pf_config_isolated(self):
         ext_net = dict(network_id='ext',
@@ -535,13 +534,9 @@ class ConfigurationTestCase(TestCase):
                        interface=dict(ifname='ge1'),
                        network_type='isolated')
 
-        expected = textwrap.dedent("""
-        block
-        block from ge1:network to any
-        """).strip()
-
-        c = models.Configuration({'networks': [ext_net, int_net]})
-        self.assertEqual(c.pf_config, expected)
+        self._pf_config_test_helper(
+            {'networks': [ext_net, int_net]},
+            ['block from ge1:network to any'])
 
     def test_pf_config_management(self):
         ext_net = dict(network_id='ext',
@@ -551,44 +546,25 @@ class ConfigurationTestCase(TestCase):
                        interface=dict(ifname='ge1'),
                        network_type='management')
 
-        expected = textwrap.dedent("""
-        block
-        block from ge1:network to any
-        """).strip()
-
-        c = models.Configuration({'networks': [ext_net, int_net]})
-        self.assertEqual(c.pf_config, expected)
+        self._pf_config_test_helper(
+            {'networks': [ext_net, int_net]},
+            ['pass quick proto tcp from ge1:network to ge1 port { 22 }',
+             'block quick from !ge1 to ge1:network'])
 
     def test_pf_config_with_addressbook(self):
         ext_net = dict(network_id='ext',
                        interface=dict(ifname='ge0'),
                        network_type='external')
-        int_net = dict(network_id='int',
-                       interface=dict(ifname='ge1'),
-                       network_type='management')
         ab = dict(foo=['192.168.1.1/24'])
 
-        expected = textwrap.dedent("""
-        block
-        block from ge1:network to any
-        table <foo> {192.168.1.1/24}
-        """).strip()
-
-        with mock.patch.object(models, 'defaults') as defaults:
-            defaults.BASE_RULES = ['block']
-            defaults.MANAGEMENT_PORTS = [22]
-
-        c = models.Configuration(
-            {'networks': [ext_net, int_net], 'address_book': ab})
-        self.assertEqual(c.pf_config, expected)
+        self._pf_config_test_helper(
+            {'networks': [ext_net], 'address_book': ab},
+            ['table <foo> {192.168.1.1/24}'])
 
     def test_pf_config_with_anchor(self):
         ext_net = dict(network_id='ext',
                        interface=dict(ifname='ge0'),
                        network_type='external')
-        int_net = dict(network_id='int',
-                       interface=dict(ifname='ge1'),
-                       network_type='management')
         anchor = dict(name='foo',
                       rules=[dict(action='pass',
                                   protocol='tcp',
@@ -602,10 +578,6 @@ class ConfigurationTestCase(TestCase):
         }
         """).lstrip()
 
-        with mock.patch.object(models, 'defaults') as defaults:
-            defaults.BASE_RULES = ['block']
-            defaults.MANAGEMENT_PORTS = [22]
-
-            c = models.Configuration(
-                {'networks': [ext_net, int_net], 'anchors': [anchor]})
-            self.assertEqual(c.pf_config, expected)
+        self._pf_config_test_helper(
+            {'networks': [ext_net], 'anchors': [anchor]},
+            ['anchor foo {\npass proto tcp to port 22\n}'])

@@ -79,7 +79,7 @@ class InterfaceManager(base.Manager):
         real_ifname = self.generic_to_host(interface.ifname)
         old_interface = self.get_interface(interface.ifname)
 
-        #self._update_description(real_ifname, interface)
+        self._update_description(real_ifname, interface)
         self._update_groups(real_ifname, interface, old_interface)
         # Must update primary before aliases otherwise will lose address
         # in case where primary and alias are swapped.
@@ -145,8 +145,11 @@ def _parse_interfaces(data, filters=None):
         if not iface_data.strip():
             continue
 
+        # FIXME (mark): the logic works, but should be more readable
         for f in filters or ['']:
-            if iface_data.startswith(f) and iface_data[len(f)].isdigit():
+            if f == '':
+                break
+            elif iface_data.startswith(f) and iface_data[len(f)].isdigit():
                 break
         else:
             continue

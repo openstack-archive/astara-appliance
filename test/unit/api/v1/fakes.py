@@ -14,18 +14,18 @@ class FakeIFManager(object):
             media="Ethernet autoselect (1000baseT full-duplex,master)",
             state="up",
             ifname="ge1",
-            groups="egress",
+            groups=["egress"],
             lladdr="00:0c:29:e8:f9:2e",
             addresses=["fe80::20c:29ff:fee8:f92e/64", "192.168.229.129/24"])
 
     @classmethod
     def fake_get_interfaces(cls):
         iface1 = models.Interface(
-            media="null", state="down", ifname="ge0", groups="enc",
+            media="null", state="down", ifname="ge0", groups=["enc"],
             lladdr="null", addresses=[])
         iface2 = models.Interface(
             media="Ethernet autoselect (1000baseT full-duplex,master)",
-            state="up", ifname="ge1", groups="egress",
+            state="up", ifname="ge1", groups=["egress"],
             lladdr="00:0c:29:e8:f9:2e",
             addresses=["fe80::20c:29ff:fee8:f92e/64", "192.168.229.129/24"])
         iface3 = models.Interface(
