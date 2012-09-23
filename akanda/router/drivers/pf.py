@@ -48,8 +48,10 @@ class PFManager(base.Manager):
         return self._show('m')
 
     def update_conf(self, conf_data):
-        replace_file('/tmp/pf.ctl', conf_data)
-        execute(['mv', '/tmp/pf.ctl', '/etc/pf.ctl'], self.root_helper)
+        replace_file('/tmp/pf.conf', conf_data)
+        execute(['mv', '/tmp/pf.conf', '/etc/pf.conf'], self.root_helper)
+        self.sudo('-f', '/etc/pf.conf')
+
 
 
 class TableManager(base.Manager):

@@ -7,12 +7,16 @@ from akanda.router.drivers import dnsmasq, ifconfig, pf
 DHCP_DIR = 'dhcp'
 PF_FILENAME = 'pf.conf'
 
+
 class Manager(object):
     def __init__(self, state_path='.'):
         self.state_path = os.path.abspath(state_path)
         self.if_mgr = ifconfig.InterfaceManager()
         self.if_mgr.ensure_mapping()
         self._config = models.Configuration()
+
+    def management_address(self, ensure_configuration=False):
+        return self.if_mgr.get_management_address(ensure_configuration)
 
     @property
     def config(self):
@@ -29,7 +33,7 @@ class Manager(object):
         #TODO(mark): update_vpn
 
     def update_interfaces(self):
-        self.if_mgr.update_interfaces(sel.config.interfaces)
+        self.if_mgr.update_interfaces(self.config.interfaces)
 
     def update_dhcp(self):
         pass
@@ -63,7 +67,7 @@ class Manager(object):
         rules.extend(
             ['%s = "%s"' % i for i in self.if_mgr.generic_mapping.items()])
 
-        rules.append(re.sub('(\s)(ge\d+[\s:])', r'\1$\2', virt_data))
+        rules.append(re.sub('([\s!])(ge\d+([\s:]|$))', r'\1$\2', virt_data))
         return '\n'.join(rules)
 
 

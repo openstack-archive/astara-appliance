@@ -14,6 +14,7 @@ setup(
     install_requires=[
         'flask>=0.9',
         'netaddr>=0.7.7',
+        'python-daemon',
     ],
     namespace_packages=['akanda'],
     packages=find_packages(),
@@ -24,6 +25,7 @@ setup(
             'akanda-configure-ssh ='
             'akanda.router.commands.management:configure_ssh',
             'akanda-api-service =akanda.router.api.server:main',
+            'akanda-api-daemon =akanda.router.api.server:daemonize',
         ]
     },
 )

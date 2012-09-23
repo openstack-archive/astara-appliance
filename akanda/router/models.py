@@ -5,6 +5,9 @@ import StringIO
 
 import netaddr
 
+from akanda.router import defaults
+
+GROUP_NAME_LENGTH = 15
 
 class ModelBase(object):
     __metaclass__ = abc.ABCMeta
@@ -22,7 +25,7 @@ class Interface(ModelBase):
         self.ifname = ifname
         self.description = description
         self.addresses = addresses
-        self.groups = groups or []
+        self.groups = [g[:GROUP_NAME_LENGTH] for g in (groups or [])]
         self.flags = flags or []
         self.lladdr = lladdr
         self.mtu = mtu
@@ -374,11 +377,11 @@ class Configuration(ModelBase):
 
     @property
     def interfaces(self):
-        return [n.interface for n in self.networks if n.iterface]
+        return [n.interface for n in self.networks if n.interface]
 
     @property
     def pf_config(self):
-        rv = ['block']
+        rv = defaults.BASE_RULES[:]
 
         # add default deny all external networks and remember 1st for nat
         ext_if = None
@@ -387,14 +390,16 @@ class Configuration(ModelBase):
                 ext_if = n.interface.ifname
                 break
 
-        # add in nat rules
+        # add in nat and management rules
         for network in self.networks:
             if network.network_type == Network.EXTERNAL:
                 continue
             elif network.network_type == Network.INTERNAL:
                 if ext_if:
-                    rv.append(
+                    rv.extend(
                         _format_nat_rule(ext_if, network.interface.ifname))
+            elif network.network_type == Network.MANAGEMENT:
+                rv.extend(_format_mgt_rule(network.interface.ifname))
             else:
                 # isolated and management nets block all between interfaces
                 rv.append(_format_isolated_rule(network.interface.ifname))
@@ -404,11 +409,23 @@ class Configuration(ModelBase):
 
         # add anchors and rules
         rv.extend(a.pf_rule for a in self.anchors)
-        return '\n'.join(rv)
+
+        return '\n'.join(rv) + '\n'
 
 def _format_nat_rule(ext_if, int_if):
-    return ('pass out on %s from %s:network to any nat-to %s' %
-            (ext_if, int_if, ext_if))
+    tcp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_TCP_PORTS)
+    udp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_UDP_PORTS)
+    return [('pass out on %s from %s:network to any nat-to %s' %
+            (ext_if, int_if, ext_if)),
+            'pass in on %s proto tcp to any port {%s}' % (int_if, tcp_ports),
+            'pass in on %s proto udp to any port {%s}' % (int_if, udp_ports)]
+
+
+def _format_mgt_rule(mgt_if):
+    ports = ', '.join(str(p) for p in defaults.MANAGEMENT_PORTS)
+    return [('pass quick proto tcp from %s:network to %s port { %s }' %
+            (mgt_if, mgt_if, ports)),
+            'block quick from !%s to %s:network' % (mgt_if, mgt_if)]
 
 def _format_isolated_rule(int_if):
     return 'block from %s:network to any' % int_if

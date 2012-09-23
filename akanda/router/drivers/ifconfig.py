@@ -8,6 +8,7 @@ from akanda.router.drivers import base
 
 GENERIC_IFNAME = 'ge'
 PHYSICAL_INTERFACES = ['em', 're', 'en']
+ULA_PREFIX = 'fdca:3ba5:a17a:acda::/64'
 
 
 class InterfaceManager(base.Manager):
@@ -68,6 +69,7 @@ class InterfaceManager(base.Manager):
     def up(self, interface):
         real_ifname = self.generic_to_host(interface.ifname)
         self.sudo(real_ifname, 'up')
+        return self.get_interface(interface.ifname)
 
     def down(self, interface):
         real_ifname = self.generic_to_host(interface.ifname)
@@ -75,9 +77,9 @@ class InterfaceManager(base.Manager):
 
     def update_interface(self, interface):
         real_ifname = self.generic_to_host(interface.ifname)
-        old_interface = self.get_interface(real_ifname)
+        old_interface = self.get_interface(interface.ifname)
 
-        self._update_description(real_ifname, interface)
+        #self._update_description(real_ifname, interface)
         self._update_groups(real_ifname, interface, old_interface)
         # Must update primary before aliases otherwise will lose address
         # in case where primary and alias are swapped.
@@ -94,10 +96,14 @@ class InterfaceManager(base.Manager):
                          add, delete)
 
     def _update_addresses(self, real_ifname, interface, old_interface):
-        add = lambda a: (real_ifname, 'alias',
-                         str(a.ip), 'prefixlen', a.prefixlen)
-        delete = lambda a: (real_ifname, '-alias',
-                            str(a.ip), 'prefixlen', a.prefixlen)
+        #TODO (mark): add support for IPv6 inet inet6 add delete
+
+        family = {4: 'inet', 6: 'inet6'}
+
+        add = lambda a: (real_ifname, family[a.version], str(a.ip),
+                         'prefixlen', a.prefixlen, 'alias')
+        delete = lambda a: (real_ifname, family[a.version], str(a.ip),
+                            'prefixlen', a.prefixlen, '-alias')
 
         self._update_set(real_ifname, interface, old_interface,
                          'addresses', add, delete)
@@ -112,10 +118,25 @@ class InterfaceManager(base.Manager):
             return
 
         for item in (next_set - prev_set):
-            self.sudo(fmt_args_add(item))
+            self.sudo(*fmt_args_add(item))
 
         for item in (prev_set - next_set):
-            self.sudo(fmt_args_delete(item))
+            self.sudo(*fmt_args_delete(item))
+
+    def get_management_address(self, ensure_configuration=False):
+        primary = self.get_interface(GENERIC_IFNAME + '0')
+        prefix, prefix_len = ULA_PREFIX.split('/', 1)
+        eui = netaddr.EUI(primary.lladdr)
+        ip_str = str(eui.ipv6_link_local()).replace('fe80::', prefix[:-1])
+
+        if not primary.is_up:
+            self.up(primary)
+
+        ip = netaddr.IPNetwork('%s/%s' % (ip_str, prefix_len))
+        if ensure_configuration and ip not in primary.addresses:
+            primary.addresses.append(ip)
+            self.update_interface(primary)
+        return ip_str
 
 
 def _parse_interfaces(data, filters=None):
@@ -125,7 +146,7 @@ def _parse_interfaces(data, filters=None):
             continue
 
         for f in filters or ['']:
-            if iface_data.startswith(f):
+            if iface_data.startswith(f) and iface_data[len(f)].isdigit():
                 break
         else:
             continue
