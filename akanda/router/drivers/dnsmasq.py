@@ -3,8 +3,8 @@ import os
 import re
 from cStringIO import StringIO
 
-from akanda.drivers import base
-from akanda.utils import execute, replace_file
+from akanda.router.drivers import base
+from akanda.router.utils import execute, replace_file
 
 
 LOG = logging.getLogger(__name__)
