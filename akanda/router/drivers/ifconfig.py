@@ -86,7 +86,8 @@ class InterfaceManager(base.Manager):
         self._update_addresses(real_ifname, interface, old_interface)
 
     def _update_description(self, real_ifname, interface):
-        self.sudo(real_ifname, 'description', interface.description)
+        if interface.description:
+            self.sudo(real_ifname, 'description', interface.description)
 
     def _update_groups(self, real_ifname, interface, old_interface):
         add = lambda g: (real_ifname, 'group', g)
