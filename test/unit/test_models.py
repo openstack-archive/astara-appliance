@@ -292,6 +292,18 @@ class AddressBookTestCase(TestCase):
                          '192.168.1.0/24\n172.16.16.0/16')
 
 
+class LabelTestCase(TestCase):
+    def test_label(self):
+        l = models.Label('foo', ['192.168.1.0/24'])
+        self.assertEqual(l.name, 'foo')
+        self.assertEqual(l.cidrs, [netaddr.IPNetwork('192.168.1.0/24')])
+
+    def test_pf_rule(self):
+        l = models.Label('foo', ['192.168.1.0/24'])
+        self.assertEqual(l.pf_rule,
+                         'match out egress to {192.168.1.0/24} label "foo"')
+
+
 class AllocationTestCase(TestCase):
     def test_allocation(self):
         a = models.Allocation('aa:bb:cc:dd:ee:ff', '192.168.1.1', 'hosta.com')
@@ -404,6 +416,14 @@ class ConfigurationTestCase(TestCase):
         self.assertEqual(
             c.address_book.get('webservers'),
             models.AddressBookEntry('webservers', ab['webservers']))
+
+    def test_init_label(self):
+        labels = {"external": ["192.168.57.0/24"]}
+
+        c = models.Configuration(dict(networks=[], labels=labels))
+        self.assertEqual(
+            c.labels[0],
+            models.Label('external', ['192.168.57.0/24']))
 
     def test_init_empty_anchor(self):
         anchor_dict = dict(
@@ -569,15 +589,16 @@ class ConfigurationTestCase(TestCase):
                       rules=[dict(action='pass',
                                   protocol='tcp',
                                   destination_port=22)])
-        expected = textwrap.dedent("""
-        block
-        pass quick proto tcp from ge1:network to ge1 port { 22 }
-        block quick from !ge1 to ge1:network
-        anchor foo {
-        pass proto tcp to port 22
-        }
-        """).lstrip()
-
         self._pf_config_test_helper(
             {'networks': [ext_net], 'anchors': [anchor]},
             ['anchor foo {\npass proto tcp to port 22\n}'])
+
+    def test_pf_config_with_label(self):
+        ext_net = dict(network_id='ext',
+                       interface=dict(ifname='ge0'),
+                       network_type='external')
+        label = dict(foo=['192.168.1.0/24'])
+
+        self._pf_config_test_helper(
+            {'networks': [ext_net], 'labels': label},
+            ['match out egress to {192.168.1.0/24} label "foo"'])

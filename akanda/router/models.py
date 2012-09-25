@@ -249,6 +249,25 @@ class StaticRoute(ModelBase):
         return dict(destination=self.destination, next_hop=self.next_hop)
 
 
+class Label(ModelBase):
+    def __init__(self, name, cidrs=[]):
+        self.name = name
+        self.cidrs = cidrs
+
+    @property
+    def cidrs(self):
+        return self._cidrs
+
+    @cidrs.setter
+    def cidrs(self, values):
+        self._cidrs = [netaddr.IPNetwork(a) for a in values]
+
+    @property
+    def pf_rule(self):
+        return 'match out on egress to {%s} label "%s"' % (
+                ', '.join(map(str, self.cidrs)), self.name)
+
+
 class Network(ModelBase):
     STATIC = 'static'
     RA = 'ra'
@@ -349,6 +368,10 @@ class Configuration(ModelBase):
             Anchor(a['name'], [FilterRule.from_dict(r) for r in a['rules']])
             for a in conf_dict.get('anchors', [])]
 
+        self.labels = [
+            Label(name, cidr) for name, cidr in
+            conf_dict.get('labels', {}).iteritems()]
+
     def validate(self):
         """Validate anchor rules to ensure that ifaces and tables exist."""
         errors = []
@@ -409,6 +432,9 @@ class Configuration(ModelBase):
 
         # add anchors and rules
         rv.extend(a.pf_rule for a in self.anchors)
+
+        # add counters
+        rv.extend(l.pf_rule for l in self.labels)
 
         return '\n'.join(rv) + '\n'
 
