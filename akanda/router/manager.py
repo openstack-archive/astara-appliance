@@ -71,4 +71,13 @@ class Manager(object):
         return '\n'.join(rules)
 
 
-manager = Manager()
+class ManagerProxy(object):
+    def __init__(self):
+        self.instance = None
+
+    def __getattr__(self, name):
+        if not self.instance:
+            self.instance = Manager()
+        return getattr(self.instance, name)
+
+manager = ManagerProxy()
