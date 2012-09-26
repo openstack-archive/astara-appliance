@@ -301,7 +301,7 @@ class LabelTestCase(TestCase):
     def test_pf_rule(self):
         l = models.Label('foo', ['192.168.1.0/24'])
         self.assertEqual(l.pf_rule,
-                         'match out egress to {192.168.1.0/24} label "foo"')
+                         'match out on egress to {192.168.1.0/24} label "foo"')
 
 
 class AllocationTestCase(TestCase):
@@ -601,4 +601,4 @@ class ConfigurationTestCase(TestCase):
 
         self._pf_config_test_helper(
             {'networks': [ext_net], 'labels': label},
-            ['match out egress to {192.168.1.0/24} label "foo"'])
+            ['match out on egress to {192.168.1.0/24} label "foo"'])
