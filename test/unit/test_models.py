@@ -523,7 +523,7 @@ class ConfigurationTestCase(TestCase):
             BASE_RULES=base,
             MANAGEMENT_PORTS=[22],
             OUTBOUND_TCP_PORTS=[80],
-            OUTBOUND_UDP_PORTS = [53])
+            OUTBOUND_UDP_PORTS=[53])
 
         with mock.patch.multiple('akanda.router.defaults', **attrs) as defs:
             c = models.Configuration(conf_dict)

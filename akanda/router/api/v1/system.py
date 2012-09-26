@@ -44,6 +44,7 @@ def get_configuration():
 
     return dict(configuration=manager.config)
 
+
 @system.route('/config', methods=['PUT'])
 @utils.json_response
 def put_configuration():
@@ -65,4 +66,3 @@ def put_configuration():
 
     manager.update_config(config_candidate)
     return dict(configuration=manager.config)
-

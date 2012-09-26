@@ -190,7 +190,6 @@ class IfconfigTestCase(TestCase):
             mgr = ifconfig.InterfaceManager()
             mgr.update_interface(iface)
 
-
             mock_methods['generic_to_host'].assert_called_once_with('ge0')
             mock_methods['get_interface'].assert_called_once_with('ge0')
             mock_methods['_update_description'].assert_called_once_with(

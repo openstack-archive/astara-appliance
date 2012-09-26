@@ -9,6 +9,7 @@ from akanda.router import defaults
 
 GROUP_NAME_LENGTH = 15
 
+
 class ModelBase(object):
     __metaclass__ = abc.ABCMeta
 
@@ -264,8 +265,8 @@ class Label(ModelBase):
 
     @property
     def pf_rule(self):
-        return 'match out on egress to {%s} label "%s"' % (
-                ', '.join(map(str, self.cidrs)), self.name)
+        return ('match out on egress to {%s} label "%s"' %
+                (', '.join(map(str, self.cidrs)), self.name))
 
 
 class Network(ModelBase):
@@ -438,6 +439,7 @@ class Configuration(ModelBase):
 
         return '\n'.join(rv) + '\n'
 
+
 def _format_nat_rule(ext_if, int_if):
     tcp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_TCP_PORTS)
     udp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_UDP_PORTS)
@@ -452,6 +454,7 @@ def _format_mgt_rule(mgt_if):
     return [('pass quick proto tcp from %s:network to %s port { %s }' %
             (mgt_if, mgt_if, ports)),
             'block quick from !%s to %s:network' % (mgt_if, mgt_if)]
+
 
 def _format_isolated_rule(int_if):
     return 'block from %s:network to any' % int_if

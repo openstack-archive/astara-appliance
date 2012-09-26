@@ -53,7 +53,6 @@ class PFManager(base.Manager):
         self.sudo('-f', '/etc/pf.conf')
 
 
-
 class TableManager(base.Manager):
     """
     """
