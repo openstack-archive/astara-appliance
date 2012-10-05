@@ -15,7 +15,6 @@ setup(
         'flask>=0.9',
         'gunicorn>=0.14.6',
         'netaddr>=0.7.7',
-        'python-daemon',
     ],
     namespace_packages=['akanda'],
     packages=find_packages(),

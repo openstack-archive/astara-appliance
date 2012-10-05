@@ -209,77 +209,6 @@ EOF
     akanda
 EOF
 
-    echo "[*] Modifying rc.local..."
-    cat >>$WDIR/etc/rc.local <<EOF
-# If you have enough memory, this speeds up some bins, but you must
-# add /binmfs/bin and /binmfs/sbin to your path, before /bin and /sbin
-# mymem=`sysctl hw.physmem | cut -f 2 -d =`
-# if [ \$mymem -gt 268000000 ]
-# then
-#         mount_mfs -s 48000 swap /binmfs >/dev/null 2>&1
-#         mkdir /binmfs/bin
-#         mkdir /binmfs/sbin
-#         /bin/cp -rp /bin /binmfs
-#         /bin/cp -rp /sbin /binmfs
-# fi
-
-# set keyboard to US
-echo "Setting keyboard language to us:"
-/sbin/kbd us
-
-# set TZ
-rm /etc/localtime
-ln -sf /usr/share/zoneinfo/UTC /etc/localtime
-
-echo "Enabling forwarding..."
-sed 's/^#net.inet.ip.forw/net.inet.ip.forw/g' /etc/sysctl.conf > /etc/sysctl.temp
-mv /etc/sysctl.temp /etc/sysctl.conf
-sed 's/^#net.inet6.ip6.forw/net.inet6.ip6.forw/g' /etc/sysctl.conf > /etc/sysctl.temp
-mv /etc/sysctl.temp /etc/sysctl.conf
-
-echo "Configuring sshd for management interface..."
-/usr/local/bin/akanda-configure-ssh
-/usr/local/bin/akanda-configure-gunicorn
-
-# If you have enough memory, you can populate /usr/local to RAM
-if [ \$mymem -gt 500000000 ]
-then
-        echo -n "Do you want /usr/local loading to RAM (y/N)? "
-        read ownpack
-        if [ ! -z \$ownpack ]
-        then
-           if [ \$ownpack = "y" ] || [ \$ownpack = "Y" ] || [ \$ownpack = "yes" ] || [ \$ownpack = "Yes" ]
-           then
-              echo "Loading ... please wait ..."
-              if [ \$mymem -gt 800000000 ]
-              then
-                 mount_mfs -s 691200 -P /usr/local-cd swap /usr/local
-              else
-                 mount_mfs -s 473088 -P /usr/local-cd swap /usr/local
-              fi
-           fi
-         fi
-fi
-
-rm /etc/pf.conf
-
-cat > /etc/pf.conf <<EOF
-ge0 = "em0"
-set skip on lo
-match in all scrub (no-df)
-block log (all)
-pass proto icmp6 all
-pass inet proto icmp icmp-type { echoreq, unreach }
-pass proto tcp from \$ge0:network to \$ge0 port { 22, 5000}
-EOF
-
-/sbin/pfctl -vf /etc/pf.conf
-
-/etc/rc.d/sshd restart
-/usr/local/bin/gunicorn -c /etc/akanda_gunicorn_config akanda.router.api.server:app
-
-EOF
-
 echo "[*] Modifying the library path..."
 cat > $WDIR/root/.cshrc << EOF
 # Workaround for missing libraries:
@@ -366,12 +295,14 @@ inetd=NO
 amd_master=NO
 EOF
 
-#echo "[*] Add rc.local file...."
-#cp $HERE/etc/rc.local $WDIR/etc/rc.local
+echo "[*] Add rc.local file...."
+cp $HERE/etc/rc.local $WDIR/etc/rc.local
 
 echo "[*] Add up files...."
 cat "up" > $WDIR/etc/hostname.em0
+chmod 750 $WDIR/etc/hostname.em0
 cat "up" > $WDIR/etc/hostname.re0
+chmod 750 $WDIR/etc/hostname.re0
 
 #echo "[*] Entering Akanda livecd builder (chroot environment)."
 #echo "[*] Once you have finished your modifications, type \"exit\""
