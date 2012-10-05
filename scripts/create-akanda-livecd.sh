@@ -229,7 +229,7 @@ echo "Setting keyboard language to us:"
 
 # set TZ
 rm /etc/localtime
-ln -sf /usr/share/zoneinfo/$TZ /etc/localtime
+ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
 echo "Enabling forwarding..."
 sed 's/^#net.inet.ip.forw/net.inet.ip.forw/g' /etc/sysctl.conf > /etc/sysctl.temp
@@ -239,6 +239,7 @@ mv /etc/sysctl.temp /etc/sysctl.conf
 
 echo "Configuring sshd for management interface..."
 /usr/local/bin/akanda-configure-ssh
+/usr/local/bin/akanda-configure-gunicorn
 
 # If you have enough memory, you can populate /usr/local to RAM
 if [ \$mymem -gt 500000000 ]
@@ -259,6 +260,23 @@ then
            fi
          fi
 fi
+
+rm /etc/pf.conf
+
+cat > /etc/pf.conf <<EOF
+ge0 = "em0"
+set skip on lo
+match in all scrub (no-df)
+block log (all)
+pass proto icmp6 all
+pass inet proto icmp icmp-type { echoreq, unreach }
+pass proto tcp from \$ge0:network to \$ge0 port { 22, 5000}
+EOF
+
+/sbin/pfctl -vf /etc/pf.conf
+
+/etc/rc.d/sshd restart
+/usr/local/bin/gunicorn -c /etc/akanda_gunicorn_config akanda.router.api.server:app
 
 EOF
 
@@ -348,8 +366,8 @@ inetd=NO
 amd_master=NO
 EOF
 
-echo "[*] Add rc.local file...."
-cp $HERE/etc/rc.local $WDIR/etc/rc.local
+#echo "[*] Add rc.local file...."
+#cp $HERE/etc/rc.local $WDIR/etc/rc.local
 
 echo "[*] Add up files...."
 cat "up" > $WDIR/etc/hostname.em0

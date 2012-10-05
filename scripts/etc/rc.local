@@ -1,0 +1,22 @@
+#	$OpenBSD: rc.local,v 1.44 2011/04/22 06:08:14 ajacoutot Exp $
+
+# Site-specific startup actions, daemons, and other things which
+# can be done AFTER your system goes into securemode.  For actions
+# which should be done BEFORE your system has gone into securemode
+# please see /etc/rc.securelevel.
+
+rm /etc/pf.conf
+
+cat > /etc/pf.conf <<EOF
+ge0 = "em0"
+set skip on lo
+match in all scrub (no-df)
+block log (all)
+pass proto icmp6 all
+pass inet proto icmp icmp-type { echoreq, unreach }
+pass proto tcp from \$ge0:network to \$ge0 port { 22, 5000}
+EOF
+
+/sbin/pfctl -vf /etc/pf.conf
+
+/etc/rc.d/sshd restart
