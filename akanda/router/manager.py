@@ -20,6 +20,10 @@ class Manager(object):
 
     @property
     def config(self):
+        """Make config a read-only property.
+
+        To update the value, update_config() must called to change the global
+        state of router."""
         return self._config
 
     def update_config(self, config):
