@@ -17,7 +17,7 @@ class FirewallAPITestCase(TestCase):
     """
     def setUp(self):
         self.app = flask.Flask('firewall_test')
-        self.app.register_blueprint(v1.firewall)
+        self.app.register_blueprint(v1.firewall.blueprint)
         self.test_app = self.app.test_client()
 
     @patch.object(PFManager, 'get_rules', FakePFManager.fake_get_rules)

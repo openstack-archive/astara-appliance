@@ -20,8 +20,11 @@ def configure_ssh():
     config = open('/etc/ssh/sshd_config', 'r').read()
     config = re.sub('(^|\n)(#)?(ListenAddress|AddressFamily) .*', '', config)
     config += '\n'.join(['AddressFamily inet6', 'ListenAddress ' + listen_ip])
-    open('/etc/ssh/sshd_config', 'w+').write(config)
-    sys.stderr.write('sshd configured to listen on %s\n' % listen_ip)
+    try:
+        open('/etc/ssh/sshd_config', 'w+').write(config)
+        sys.stderr.write('sshd configured to listen on %s\n' % listen_ip)
+    except:
+        sys.stderr.write('Unable to write sshd configuration file.')
 
 
 def configure_gunicorn():
@@ -52,5 +55,8 @@ def configure_gunicorn():
     """
     config = textwrap.dedent(config % args).lstrip()
 
-    open('/etc/akanda_gunicorn_config', 'w+').write(config)
-    sys.stderr.write('http configured to listen on %s\n' % listen_ip)
+    try:
+        open('/etc/akanda_gunicorn_config', 'w+').write(config)
+        sys.stderr.write('http configured to listen on %s\n' % listen_ip)
+    except:
+        sys.stderr.write('Unable to write sshd configuration file.')

@@ -8,15 +8,15 @@ from akanda.router import utils
 from akanda.router.drivers import pf
 
 
-firewall = utils.blueprint_factory(__name__)
+blueprint = utils.blueprint_factory(__name__)
 
 
-@firewall.before_request
+@blueprint.before_request
 def get_manager():
     request.pf_mgr = pf.PFManager()
 
 
-@firewall.route('/rules')
+@blueprint.route('/rules')
 def get_rules():
     '''
     Show loaded firewall rules by pfctl
@@ -24,7 +24,7 @@ def get_rules():
     return request.pf_mgr.get_rules()
 
 
-@firewall.route('/states')
+@blueprint.route('/states')
 def get_states():
     '''
     Show firewall state table
@@ -32,7 +32,7 @@ def get_states():
     return request.pf_mgr.get_states()
 
 
-@firewall.route('/anchors')
+@blueprint.route('/anchors')
 def get_anchors():
     '''
     Show loaded firewall anchors by pfctl
@@ -40,7 +40,7 @@ def get_anchors():
     return request.pf_mgr.get_anchors()
 
 
-@firewall.route('/sources')
+@blueprint.route('/sources')
 def get_sources():
     '''
     Show loaded firewall sources by pfctl
@@ -48,7 +48,7 @@ def get_sources():
     return request.pf_mgr.get_sources()
 
 
-@firewall.route('/info')
+@blueprint.route('/info')
 def get_info():
     '''
     Show verbose running firewall information
@@ -56,7 +56,7 @@ def get_info():
     return request.pf_mgr.get_info()
 
 
-@firewall.route('/tables')
+@blueprint.route('/tables')
 def get_tables():
     '''
     Show loaded firewall tables by pfctl
@@ -64,7 +64,7 @@ def get_tables():
     return request.pf_mgr.get_tables()
 
 
-@firewall.route('/labels')
+@blueprint.route('/labels')
 def get_labels():
     '''
     Show loaded firewall labels by pfctl
@@ -72,7 +72,7 @@ def get_labels():
     return request.pf_mgr.get_labels()
 
 
-@firewall.route('/timeouts')
+@blueprint.route('/timeouts')
 def get_timeouts():
     '''
     Show firewall connection timeouts
@@ -80,7 +80,7 @@ def get_timeouts():
     return request.pf_mgr.get_timeouts()
 
 
-@firewall.route('/memory')
+@blueprint.route('/memory')
 def get_memory():
     '''
     Show firewall memory

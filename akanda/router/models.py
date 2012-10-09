@@ -270,18 +270,19 @@ class Label(ModelBase):
 
 
 class Network(ModelBase):
-    STATIC = 'static'
-    RA = 'ra'
-    DHCP = 'dhcp'
-    EXTERNAL = 'external'
-    INTERNAL = 'internal'
-    ISOLATED = 'isolated'
-    MANAGEMENT = 'management'
+    SERVICE_STATIC = 'static'
+    SERVICE_RA = 'ra'
+    SERVICE_DHCP = 'dhcp'
+    TYPE_EXTERNAL = 'external'
+    TYPE_INTERNAL = 'internal'
+    TYPE_ISOLATED = 'isolated'
+    TYPE_MANAGEMENT = 'management'
 
     # TODO(mark): add subnet support for Quantum subnet host routes
 
-    def __init__(self, id_, interface, name=None, network_type=ISOLATED,
-                 v4_conf_service=STATIC, v6_conf_service=STATIC,
+    def __init__(self, id_, interface, name='', network_type=TYPE_ISOLATED,
+                 v4_conf_service=SERVICE_STATIC,
+                 v6_conf_service=SERVICE_STATIC,
                  address_allocations=[]):
         self.id = id_
         self.interface = interface
@@ -297,8 +298,8 @@ class Network(ModelBase):
 
     @network_type.setter
     def network_type(self, value):
-        network_types = (self.EXTERNAL, self.INTERNAL, self.ISOLATED,
-                         self.MANAGEMENT)
+        network_types = (self.TYPE_EXTERNAL, self.TYPE_INTERNAL,
+                         self.TYPE_ISOLATED, self.TYPE_MANAGEMENT)
         if value not in network_types:
             msg = ('network must be one of %s not (%s).' %
                    ('|'.join(network_types), value))
@@ -311,7 +312,7 @@ class Network(ModelBase):
 
     @v4_conf_service.setter
     def v4_conf_service(self, value):
-        if value not in (self.DHCP, self.STATIC):
+        if value not in (self.SERVICE_DHCP, self.SERVICE_STATIC):
             msg = ('v4_conf_service must be one of dhcp|static not (%s).' %
                    value)
             raise ValueError(msg)
@@ -323,7 +324,8 @@ class Network(ModelBase):
 
     @v6_conf_service.setter
     def v6_conf_service(self, value):
-        if value not in (self.DHCP, self.RA, self.STATIC):
+        if value not in (self.SERVICE_DHCP, self.SERVICE_RA,
+                         self.SERVICE_STATIC):
             msg = ('v6_conf_service must be one of dhcp|ra|static not (%s).' %
                    value)
             raise ValueError(msg)
@@ -344,11 +346,11 @@ class Network(ModelBase):
     def from_dict(cls, d):
         return cls(
             d['network_id'],
-            name=d.get('name', ''),
             interface=Interface.from_dict(d['interface']),
-            network_type=d.get('network_type', cls.ISOLATED),
-            v6_conf_service=d.get('v6_conf_service', cls.STATIC),
-            v4_conf_service=d.get('v4_conf_service', cls.STATIC),
+            name=d.get('name', ''),
+            network_type=d.get('network_type', cls.TYPE_ISOLATED),
+            v6_conf_service=d.get('v6_conf_service', cls.SERVICE_STATIC),
+            v4_conf_service=d.get('v4_conf_service', cls.SERVICE_STATIC),
             address_allocations=[
                 Allocation(*a) for a in d.get('allocations', [])])
 
@@ -361,9 +363,9 @@ class Configuration(ModelBase):
         self.static_routes = [StaticRoute(*r) for r in
                               conf_dict.get('static_routes', [])]
 
-        self.address_book = {}
-        for name, cidrs in conf_dict.get('address_book', {}).iteritems():
-            self.address_book[name] = AddressBookEntry(name, cidrs)
+        self.address_book = dict(
+            (name, AddressBookEntry(name, cidrs)) for name, cidrs in
+            conf_dict.get('address_book', {}).iteritems())
 
         self.anchors = [
             Anchor(a['name'], [FilterRule.from_dict(r) for r in a['rules']])
@@ -377,9 +379,9 @@ class Configuration(ModelBase):
         """Validate anchor rules to ensure that ifaces and tables exist."""
         errors = []
 
+        interfaces = set(n.interface.ifname for n in self.networks)
         for anchor in self.anchors:
             for rule in anchor.rules:
-                interfaces = set(n.interface.ifname for n in self.networks)
                 for iface in (rule.interface, rule.destination_interface):
                     if iface and iface not in interfaces:
                         errors.append((rule, '%s does not exist' % iface))
@@ -410,19 +412,19 @@ class Configuration(ModelBase):
         # add default deny all external networks and remember 1st for nat
         ext_if = None
         for n in self.networks:
-            if n.network_type == Network.EXTERNAL:
+            if n.network_type == Network.TYPE_EXTERNAL:
                 ext_if = n.interface.ifname
                 break
 
         # add in nat and management rules
         for network in self.networks:
-            if network.network_type == Network.EXTERNAL:
+            if network.network_type == Network.TYPE_EXTERNAL:
                 continue
-            elif network.network_type == Network.INTERNAL:
+            elif network.network_type == Network.TYPE_INTERNAL:
                 if ext_if:
                     rv.extend(
                         _format_nat_rule(ext_if, network.interface.ifname))
-            elif network.network_type == Network.MANAGEMENT:
+            elif network.network_type == Network.TYPE_MANAGEMENT:
                 rv.extend(_format_mgt_rule(network.interface.ifname))
             else:
                 # isolated and management nets block all between interfaces

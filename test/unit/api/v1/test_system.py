@@ -21,7 +21,7 @@ class SystemAPITestCase(TestCase):
     """
     def setUp(self):
         self.app = flask.Flask('system_test')
-        self.app.register_blueprint(v1.system)
+        self.app.register_blueprint(v1.system.blueprint)
         self.test_app = self.app.test_client()
 
     @patch.object(IFManager, 'get_interface', FakeIFManager.fake_get_interface)

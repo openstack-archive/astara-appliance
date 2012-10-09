@@ -6,9 +6,9 @@ from akanda.router.api import v1
 from akanda.router.manager import manager
 
 app = flask.Flask(__name__)
-app.register_blueprint(v1.base)
-app.register_blueprint(v1.system)
-app.register_blueprint(v1.firewall)
+app.register_blueprint(v1.base.blueprint)
+app.register_blueprint(v1.system.blueprint)
+app.register_blueprint(v1.firewall.blueprint)
 
 
 @app.before_request

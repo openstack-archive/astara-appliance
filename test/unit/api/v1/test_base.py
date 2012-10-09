@@ -17,7 +17,7 @@ class BaseAPITestCase(TestCase):
     """
     def setUp(self):
         self.app = flask.Flask('base_test')
-        self.app.register_blueprint(v1.base)
+        self.app.register_blueprint(v1.base.blueprint)
         self.test_app = self.app.test_client()
 
     def test_root(self):

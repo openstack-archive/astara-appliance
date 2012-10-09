@@ -10,15 +10,15 @@ from akanda.router import models
 from akanda.router import utils
 from akanda.router.manager import manager
 
-system = utils.blueprint_factory(__name__)
+blueprint = utils.blueprint_factory(__name__)
 
 
-@system.route('/check_route')
+@blueprint.route('/check_route')
 def check_route():
     return Response("you got it! *** " + __name__ + " *** " + __file__)
 
 
-@system.route('/interface/<ifname>')
+@blueprint.route('/interface/<ifname>')
 @utils.json_response
 def get_interface(ifname):
     '''
@@ -28,7 +28,7 @@ def get_interface(ifname):
     return dict(interface=manager.get_interface(ifname))
 
 
-@system.route('/interfaces')
+@blueprint.route('/interfaces')
 @utils.json_response
 def get_interfaces():
     '''
@@ -37,7 +37,7 @@ def get_interfaces():
     return dict(interfaces=manager.get_interfaces())
 
 
-@system.route('/config', methods=['GET'])
+@blueprint.route('/config', methods=['GET'])
 @utils.json_response
 def get_configuration():
     """Return the current router configuration."""
@@ -45,7 +45,7 @@ def get_configuration():
     return dict(configuration=manager.config)
 
 
-@system.route('/config', methods=['PUT'])
+@blueprint.route('/config', methods=['PUT'])
 @utils.json_response
 def put_configuration():
     if request.content_type != 'application/json':
