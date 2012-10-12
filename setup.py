@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='Akanda Router Appliance',
+    name='akanda-router',
     version='0.1.0',
     description='A packet filter based router appliance',
     author='DreamHost',
