@@ -1,3 +1,4 @@
+import itertools
 import re
 
 import netaddr
@@ -75,9 +76,17 @@ class InterfaceManager(base.Manager):
         real_ifname = self.generic_to_host(interface.ifname)
         self.sudo(real_ifname, 'down')
 
-    def update_interface(self, interface):
+    def update_interface(self, interface, ignore_link_local=True,
+                         ignore_egress_group=True):
         real_ifname = self.generic_to_host(interface.ifname)
         old_interface = self.get_interface(interface.ifname)
+
+        if ignore_link_local:
+            old_interface.addresses = [a for a in old_interface.addresses
+                                       if not a.is_link_local()]
+        if ignore_egress_group:
+            old_interface.groups = [g for g in old_interface.groups
+                                    if g != 'egress']
 
         self._update_description(real_ifname, interface)
         self._update_groups(real_ifname, interface, old_interface)
@@ -97,23 +106,24 @@ class InterfaceManager(base.Manager):
                          add, delete)
 
     def _update_addresses(self, real_ifname, interface, old_interface):
-        #TODO (mark): add support for IPv6 inet inet6 add delete
-
         family = {4: 'inet', 6: 'inet6'}
 
-        add = lambda a: (real_ifname, family[a.version], str(a.ip),
-                         'prefixlen', a.prefixlen, 'alias')
-        delete = lambda a: (real_ifname, family[a.version], str(a.ip),
-                            'prefixlen', a.prefixlen, '-alias')
+        add = lambda a: (real_ifname, family[a[0].version], str(a[0]),
+                         'prefixlen', a[1], 'alias')
+        delete = lambda a: (real_ifname, family[a[0].version], str(a[0]),
+                            'prefixlen', a[1], '-alias')
+        mutator = lambda a: (a.ip, a.prefixlen)
 
         self._update_set(real_ifname, interface, old_interface,
-                         'addresses', add, delete)
+                         'addresses', add, delete, mutator)
 
     def _update_set(self, real_ifname, interface, old_interface, attribute,
-                    fmt_args_add, fmt_args_delete):
+                    fmt_args_add, fmt_args_delete, mutator=None):
 
-        next_set = set(getattr(interface, attribute))
-        prev_set = set(getattr(old_interface, attribute))
+        mutator = mutator or (lambda x: x)
+
+        next_set = set(mutator(i) for i in getattr(interface, attribute))
+        prev_set = set(mutator(i) for i in getattr(old_interface, attribute))
 
         if next_set == prev_set:
             return
@@ -177,7 +187,7 @@ def _parse_interface(data):
 def _parse_head(line):
     retval = {}
     m = re.match(
-        '(?P<ifname>\w*): flags=\d*<(?P<flags>[\w,]*)> mtu (?P<mtu>\d*)',
+        '(?P<ifname>\w*): flags=[0-9a-f]*<(?P<flags>[\w,]*)> mtu (?P<mtu>\d*)',
         line)
     if m:
         retval['ifname'] = m.group('ifname')
@@ -202,6 +212,8 @@ def _parse_other_params(line):
     if line.startswith('options'):  # pragma nocover
         m = re.match('options=[0-9a-f]*<(?P<options>[\w,]*)>', line)
         return m.groupdict()
+    elif line.startswith('groups'):
+        return [('groups', line.split()[1:])]
     else:
         key, value = line.split(' ', 1)
 

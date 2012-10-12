@@ -175,9 +175,11 @@ class IfconfigTestCase(TestCase):
     def test_update_interface(self):
         iface = mock.Mock()
         iface.ifname = 'ge0'
+        iface.addresses = []
 
         old_iface = mock.Mock(name='old')
         old_iface.ifname = 'ge0'
+        old_iface.addresses = []
 
         mock_methods = {
             'generic_to_host': mock.Mock(return_value='em0'),
@@ -229,7 +231,7 @@ class IfconfigTestCase(TestCase):
             mgr._update_addresses('em0', iface, old_iface)
 
             us.assert_called_once_with('em0', iface, old_iface, 'addresses',
-                                       mock.ANY, mock.ANY)
+                                       mock.ANY, mock.ANY, mock.ANY)
 
     def test_update_set(self):
         iface = mock.Mock()

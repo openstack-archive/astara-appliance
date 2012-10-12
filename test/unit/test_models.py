@@ -333,6 +333,18 @@ class StaticRouteTestCase(TestCase):
         self.assertNotEqual(sr1, sr2)
 
 
+class SubnetTestCase(TestCase):
+    def test_subnet(self):
+        s = models.Subnet('192.168.1.0/24', '192.168.1.1', True, ['8.8.8.8'],
+                          [])
+
+        self.assertEqual(s.cidr, netaddr.IPNetwork('192.168.1.0/24'))
+        self.assertEqual(s.gateway_ip, netaddr.IPAddress('192.168.1.1'))
+        self.assertTrue(s.dhcp_enabled)
+        self.assertEqual(s.dns_nameservers, [netaddr.IPAddress('8.8.8.8')])
+        self.assertEqual(s.host_routes, [])
+
+
 class NetworkTestCase(TestCase):
     def test_network(self):
         interface = mock.Mock()
@@ -388,11 +400,18 @@ class NetworkTestCase(TestCase):
 
 class ConfigurationTestCase(TestCase):
     def test_init_only_networks(self):
+        subnet = dict(
+            cidr='192.168.1.0/24',
+            gateway_ip='192.168.1.1',
+            dhcp_enabled=True,
+            dns_nameservers=['8.8.8.8'])
+
         network = dict(
             network_id='netid',
             name='thenet',
             interface=dict(ifname='ge0', addresses=['192.168.1.1/24']),
-            allocations=[])
+            allocations=[],
+            subnets=[subnet])
 
         c = models.Configuration(dict(networks=[network]))
         self.assertEqual(len(c.networks), 1)
@@ -543,6 +562,8 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net]},
             ['pass out on ge0 from ge1:network to any nat-to ge0',
+             'pass quick on ge1 proto udp from port 68 to port 67',
+             'pass quick on ge1 proto udp from port 546 to port 547',
              'pass in on ge1 proto tcp to any port {80}',
              'pass in on ge1 proto udp to any port {53}'])
 

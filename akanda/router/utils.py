@@ -16,7 +16,7 @@ def execute(args, root_helper=None):
         cmd = shlex.split(root_helper) + args
     else:
         cmd = args
-    return subprocess.check_output(map(str, cmd))
+    return subprocess.check_output(map(str, cmd), stderr=subprocess.STDOUT)
 
 
 def replace_file(file_name, data):
@@ -62,8 +62,11 @@ def json_response(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         retval = f(*args, **kwargs)
-        return flask.Response(json.dumps(retval, cls=ModelSerializer),
-                              status=200)
+        if isinstance(retval, flask.Response):
+            return retval
+        else:
+            return flask.Response(json.dumps(retval, cls=ModelSerializer),
+                                  status=200)
     return wrapper
 
 

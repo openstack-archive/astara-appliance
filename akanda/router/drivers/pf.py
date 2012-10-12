@@ -8,8 +8,8 @@ class PFManager(base.Manager):
     """
     EXECUTABLE = '/sbin/pfctl'
 
-    def _show(self, flag):
-        return self.sudo('-s' + flag)
+    def _show(self, flag, prefix=''):
+        return self.sudo('-%ss%s' %(prefix, flag))
 
     def get_rules(self):
         # -sr
@@ -35,9 +35,11 @@ class PFManager(base.Manager):
         # -sT
         return self._show('T')
 
-    def get_labels(self):
-        # -sl
-        return self._show('l')
+    def get_labels(self, reset=False):
+        prefix = 'vz' if reset else ''
+        data = self._show('l', prefix)
+        return [self._parse_label_line(l)
+                for l in data.strip().split('\n') if l]
 
     def get_timeouts(self):
         # -st
@@ -51,6 +53,17 @@ class PFManager(base.Manager):
         replace_file('/tmp/pf.conf', conf_data)
         execute(['mv', '/tmp/pf.conf', '/etc/pf.conf'], self.root_helper)
         self.sudo('-f', '/etc/pf.conf')
+
+    def _parse_label_line(self, line):
+        parts = line.strip().split()
+        values = [int(i) for i in parts[1:]]
+        return {'name': parts[0],
+                'total_packets': values[2],
+                'total_bytes': values[3],
+                'packets_in': values[4],
+                'bytes_in': values[5],
+                'packets_out': values[6],
+                'bytes_out': values[7]}
 
 
 class TableManager(base.Manager):

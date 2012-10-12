@@ -136,6 +136,12 @@ function cleanup {
     echo
 }
 
+function makedeps {
+    pkg_add -i bison
+    pkg_add -i m4
+    pkg_add -i gmake
+}
+
 
 # This is the main function that creates the OpenBSD livecd
 function livecd {
@@ -257,6 +263,46 @@ chmod +x $WDIR/tmp/packages.sh
 chroot $WDIR /tmp/packages.sh
 rm $WDIR/tmp/packages.sh
 
+echo "[*] Disabling services...."
+cat > $WDIR/etc/rc.conf.local <<EOF
+spamlogd_flags=NO
+inetd=NO
+amd_master=NO
+EOF
+
+echo "[*] Add bird and dnsmasq...."
+cd $WDIR/tmp
+tar -zxf $HERE/src/bird-1.3.8.tar.gz
+tar -zxf $HERE/src/dnsmasq-2.63.tar.gz
+cd bird-1.3.8
+./configure --enable-ipv6 --prefix=
+gmake
+cd ../dnsmasq-2.63
+make
+cd $HERE
+cp $WDIR/tmp/dnsmasq-2.63/src/dnsmasq $WDIR/usr/local/sbin/.
+cp $WDIR/tmp/bird-1.3.8/bird $WDIR/usr/local/sbin/.
+cp $WDIR/tmp/bird-1.3.8/birdc $WDIR/usr/local/sbin/.
+
+cat > $WDIR/etc/bird6.conf <<EOF
+log syslog {warning, error, info};
+EOF
+
+mkdir $WDIR/etc/dnsmasq.d
+cat > $WDIR/etc/dnsmasq.conf <<EOF
+bind-interfaces
+leasefile-ro
+domain-needed
+bogus-priv
+no-hosts
+no-poll
+strict-order
+no-resolv
+dhcp-lease-max=256
+conf-dir=/etc/dnsmasq.d
+EOF
+
+
 echo "[*] Installing akanda software..."
 cat > $WDIR/tmp/akanda.sh <<EOF
 #!/bin/sh
@@ -269,13 +315,6 @@ cd /tmp/router_appliance && python setup.py install
 
 EOF
 
-echo "[*] Disabling services...."
-cat > $WDIR/etc/rc.conf.local <<EOF
-spamlogd_flags=NO
-inetd=NO
-amd_master=NO
-EOF
-
 cp -r $HERE/../../router_appliance/ $WDIR/tmp
 
 chmod +x $WDIR/tmp/akanda.sh
@@ -285,8 +324,14 @@ rm $WDIR/tmp/akanda.sh
 rm -rf $WDIR/tmp
 mkdir $WDIR/tmp
 
-echo "[*] Add SSH autoconfig...."
+
+echo "[*] Add rc.d scripts...."
 cp $HERE/etc/rc.d/sshd $WDIR/etc/rc.d/sshd
+cp $HERE/etc/rc.d/bird $WDIR/etc/rc.d/bird
+cp $HERE/etc/rc.d/dnsmasq $WDIR/etc/rc.d/dnsmasq
+chmod 555 $WDIR/etc/rc.d/sshd
+chmod 555 $WDIR/etc/rc.d/bird
+chmod 555 $WDIR/etc/rc.d/dnsmasq
 
 echo "[*] Add rc.conf.local...."
 cat > $WDIR/etc/rc.conf.local <<EOF
@@ -419,7 +464,9 @@ for ARG ; do
         #echo $ARG
 done
 
+
 # Call (main-)function
+makedeps
 livecd
 
 #

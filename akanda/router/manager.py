@@ -2,7 +2,7 @@ import os
 import re
 
 from akanda.router import models, utils
-from akanda.router.drivers import dnsmasq, ifconfig, pf
+from akanda.router.drivers import bird, dnsmasq, ifconfig, pf, route
 
 DHCP_DIR = 'dhcp'
 PF_FILENAME = 'pf.conf'
@@ -33,6 +33,7 @@ class Manager(object):
 
         self.update_interfaces()
         self.update_dhcp()
+        self.update_ospf_and_radv()
         self.update_pf()
         self.update_routes()
 
@@ -42,13 +43,17 @@ class Manager(object):
         self.if_mgr.update_interfaces(self.config.interfaces)
 
     def update_dhcp(self):
-        pass
-        #dhcp_dir = os.path.join(self.state_path, 'dhcp')
-        #ifmgr = ifconfig.InterfaceManager()
-        #mgr = dnsmasq.DHCPManager(dhcp_dir)
-        #mgr.update([(ifmgr.generic_to_host(n.interface.name), n.allocations)
-        #            for n in self.config.networks
-        #            if n.v4_conf_service==models.Network.DHCP])
+        mgr = dnsmasq.DHCPManager()
+
+        for network in self.config.networks:
+            real_ifname = self.if_mgr.generic_to_host(network.interface.ifname)
+            mgr.update_network_dhcp_config(real_ifname, network)
+        mgr.restart()
+
+    def update_ospf_and_radv(self):
+        mgr = bird.BirdManager()
+        mgr.save_config(self.config, self.if_mgr.generic_mapping)
+        mgr.restart()
 
     def update_pf(self):
         pf_path = os.path.join(self.state_path, PF_FILENAME)
@@ -58,7 +63,8 @@ class Manager(object):
         mgr.update_conf(rule_data)
 
     def update_routes(self):
-        pass
+        mgr = route.RouteManager()
+        mgr.update_v4_default(self.config)
 
     def get_interfaces(self):
         return self.if_mgr.get_interfaces()
@@ -75,6 +81,11 @@ class Manager(object):
 
         rules.append(re.sub('([\s!])(ge\d+([\s:]|$))', r'\1$\2', virt_data))
         return '\n'.join(rules)
+
+    def _set_default_v4_gateway(self):
+        pass
+
+
 
 
 class ManagerProxy(object):

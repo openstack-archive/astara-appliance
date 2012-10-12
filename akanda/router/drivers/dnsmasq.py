@@ -1,113 +1,90 @@
 import logging
 import os
-import re
-from cStringIO import StringIO
+import time
 
 from akanda.router.drivers import base
 from akanda.router.utils import execute, replace_file
 
 
 LOG = logging.getLogger(__name__)
-RUN_DIR = '/var/run/dhcp'
-PID_FILE = os.path.join(RUN_DIR, 'dnsmasq.pid')
-HOSTS_FILE = os.path.join(RUN_DIR, 'dnsmasq.hosts')
-OPTS_FILE = os.path.join(RUN_DIR, 'dnsmasq.opts')
+CONF_DIR = '/etc/dnsmasq.d'
+RC_PATH = '/etc/rc.d/dnsmasq'
+DEFAULT_LEASE = 120
 
+class DHCPManager(base.Manager):
+    def __init__(self, root_helper='sudo'):
+        super(DHCPManager, self).__init__(root_helper)
 
-class DnsManager(base.Manager):
-    """
-    """
-    EXECUTABLE = '/sbin/dnsmasq'
+    def update_network_dhcp_config(self, ifname, network):
+        if network.is_tenant_network:
+            config_data = self._build_dhcp_config(ifname, network)
+        else:
+            config_data = self._build_disabled_config(ifname)
 
-    def __init__(self, interfaces, allocations,
-                 domain='akanda.local', root_helper='sudo'):
-        super(DnsManager, self).__init__(root_helper=root_helper)
-        self.interfaces = interfaces
-        self.allocations = allocations
-        self.domain = domain
-        # XXX self.tags is referenced in a couple places but never explicitly
-        # set; this should probably be done here; please fix
-        self._make_tags()
+        file_path = os.path.join(CONF_DIR, '%s.conf' % ifname)
+        replace_file('/tmp/dnsmasq.conf', config_data)
+        execute(['mv', '/tmp/dnsmasq.conf', file_path], self.root_helper)
 
-        cmd = [
-            '--no-hosts',
-            '--no-resolv',
-            '--strict-order',
-            '--bind-interfaces',
-            '--except-interface=lo',
-            '--domain=%s' % self.domain,
-            '--pid-file=%s' % PID_FILE,
-            '--dhcp-hostsfile=%s' % HOSTS_FILE,
-            '--dhcp-optsfile=%s' % OPTS_FILE,
-            '--leasefile-ro',
-        ]
+    def _build_disabled_config(self, ifname):
+        return 'except-interface=%s\n' % ifname
 
-        for interface in interfaces:
-            cmd.append('--interface=%s' % interface.ifname)
-            for address in interface.addresses:
-                cmd.append('--dhcp-range=set:%s,%s,%s,%ss' %
-                           (self.tags[address.ip],
-                            address.network,
-                            'static',
-                            120))
+        if not network.subnets or network.network_t:
+            data = ['interface=%s' % real_ifname]
+        else:
+            data = ['except-interface=%s' % real_ifname]
 
-        self._output_hosts_file()
-        self._output_opts_file()
+    def _build_dhcp_config(self, ifname, network):
+        config = ['interface=%s' % ifname]
 
-        self.sudo(cmd)
+        for index, subnet in enumerate(network.subnets):
+            if not subnet.dhcp_enabled:
+                continue
 
-    def __del__(self):
-        #FIXME: ensure the pid is actually dnsmasq
-        execute(['kill', '-9', self.pid], self.root_helper)
+            tag = '%s_%s' % (ifname, index)
 
-    @property
-    def pid(self):
+            config.append('dhcp-range=set:%s,%s,%s,%ss' %
+                          (tag,
+                           subnet.cidr.network,
+                           'static',
+                           DEFAULT_LEASE))
+
+        config.extend(
+            'dhcp-host=%s,%s,%s' % (a.lladdr, a.hostname, a.ip_address)
+            for a in network.address_allocations
+        )
+
+        if subnet.cidr.version == 6:
+            option_label = 'option6'
+        else:
+            option_label = 'option'
+
+        config.extend(
+            'dhcp-option=tag:%s,%s:dns-server,%s' % (tag, option_label, s.ip)
+            for s in subnet.dns_nameservers
+        )
+
+        config.extend(
+            'dhcp-option=tag:%s,%s:classless-static-router,%s' %
+            (tag, option_label, r.destination, r.next_hop)
+            for r in subnet.host_routes
+        )
+
+        return '\n'.join(config)
+
+    def restart(self):
         try:
-            return int(open(PID_FILE, 'r').read())
+            execute(['/etc/rc.d/dnsmasq', 'stop'], self.root_helper)
         except:
-            return
+            pass
 
-    def update_allocations(self, allocations):
-        """Rebuilds the dnsmasq config and signal the dnsmasq to reload."""
-        self.allocations = allocations
-        self._output_hosts_file()
-        execute(['kill', '-HUP', self.pid], self.root_helper)
-        LOG.debug('Reloading allocations')
-
-    def _make_tags(self):
-        i = 0
-        for interface in self.interfaces:
-            for address in self.addresses:
-                # XXX tags is not defined anywhere... please fix
-                if address in tags:
-                    raise ValueError('Duplicate network')
-                self.tags[address] = 'tag%d' % i
-                i += 1
-
-    def _output_hosts_file(self):
-        """Writes a dnsmasq compatible hosts file."""
-        r = re.compile('[:.]')
-        buf = StringIO()
-
-        for alloc in self.allocations:
-            name = '%s.%s' % (r.sub('-', alloc.ip_address),
-                              self.domain)
-            buf.write('%s,%s,%s\n' %
-                      (alloc.mac_address, name, alloc.ip_address))
-
-        replace_file(HOSTS_FILE, buf.getvalue())
-
-    def _output_opts_file(self):
-        """Write a dnsmasq compatible options file."""
-        # TODO (mark): add support for nameservers
-        options = []
-        for interface in self.interfaces:
-            options.append((self.tags[interface.ip],
-                            'option',
-                            'router',
-                            interface.ip))
-
-        # XXX name is never used; please fix (remove it or use it)
-        name = self.get_conf_file_name('opts')
-        replace_file(OPTS_FILE,
-                     '\n'.join(['tag:%s,%s:%s,%s' % o for o in options]))
+        # dnsmasq can get confused on startup
+        remaining = 5
+        while remaining:
+            remaining -= 1
+            try:
+                execute(['/etc/rc.d/dnsmasq', 'start'], self.root_helper)
+                return
+            except Exception, e:
+                if remaining <= 0:
+                    raise
+                time.sleep(1)

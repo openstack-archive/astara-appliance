@@ -65,11 +65,20 @@ def get_tables():
 
 
 @blueprint.route('/labels')
+@utils.json_response
 def get_labels():
     '''
     Show loaded firewall labels by pfctl
     '''
-    return request.pf_mgr.get_labels()
+    return dict(labels=request.pf_mgr.get_labels())
+
+@blueprint.route('/labels', methods=['POST'])
+@utils.json_response
+def reset_labels():
+    '''
+    Show loaded firewall labels by pfctl and reset the counters
+    '''
+    return dict(labels=request.pf_mgr.get_labels(True))
 
 
 @blueprint.route('/timeouts')

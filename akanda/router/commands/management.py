@@ -50,8 +50,8 @@ def configure_gunicorn():
     worker_class ="sync"
     debug = False
     daemon = True
-    pidfile ="/tmp/gunicorn.pid"
-    logfile ="/tmp/gunicorn.log"
+    pidfile = "/tmp/gunicorn.pid"
+    logfile = "/tmp/gunicorn.log"
     """
     config = textwrap.dedent(config % args).lstrip()
 
