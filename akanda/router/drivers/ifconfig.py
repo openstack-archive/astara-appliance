@@ -118,9 +118,7 @@ class InterfaceManager(base.Manager):
                          'addresses', add, delete, mutator)
 
     def _update_set(self, real_ifname, interface, old_interface, attribute,
-                    fmt_args_add, fmt_args_delete, mutator=None):
-
-        mutator = mutator or (lambda x: x)
+                    fmt_args_add, fmt_args_delete, mutator=lambda x: x):
 
         next_set = set(mutator(i) for i in getattr(interface, attribute))
         prev_set = set(mutator(i) for i in getattr(old_interface, attribute))

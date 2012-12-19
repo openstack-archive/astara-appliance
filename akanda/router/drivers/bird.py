@@ -80,9 +80,9 @@ def _build_ospf_config(config, interface_map):
 
     for net in config.networks:
         ifname = interface_map.get(net.interface.ifname)
-        if net.is_internal_network:
+        if ifname and net.is_internal_network:
             modifier = 'stub yes'
-        elif net.is_external_network:
+        elif ifname and net.is_external_network:
             modifier = 'type broadcast'
         else:
             continue
@@ -116,6 +116,10 @@ def _build_radv_config(config, interface_map):
             continue
 
         real_ifname = interface_map.get(net.interface.ifname)
+
+        if not real_ifname:
+            continue
+
         retval.extend([
             '\tinterface "%s" {' % real_ifname,
             '\t\tmax ra interval 10;',
@@ -125,7 +129,7 @@ def _build_radv_config(config, interface_map):
             retval.append('\t\tprefix %s {' % subnet.cidr)
             if subnet.dhcp_enabled:
                 retval.append('\t\t\tautonomous off;')
-            retval.append('\t\t};' % subnet.cidr)
+            retval.append('\t\t};')
 
             if subnet.dns_nameservers:
                 retval.append('\t\trdnss {')

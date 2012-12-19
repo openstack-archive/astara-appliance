@@ -76,8 +76,7 @@ class Interface(ModelBase):
 
     @property
     def first_v4(self):
-        addrs = [a.ip for a in self._addresses if a.version == 4]
-        addrs.sort()
+        addrs = sorted(a.ip for a in self._addresses if a.version == 4)
 
         if addrs:
             return addrs[0]
@@ -528,10 +527,15 @@ def _format_ext_rule(ext_if):
 def _format_nat_rule(ext_if, int_if):
     tcp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_TCP_PORTS)
     udp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_UDP_PORTS)
+
     return [
         ('pass out on %s from %s:network to any nat-to %s' %
         (ext_if, int_if, ext_if)),
+
+        # IPv4 DHCP: Server: 68 Client: 67
         'pass quick on %s proto udp from port 68 to port 67' % int_if,
+
+        # IPv6 DHCP: Server: 547 Client: 546
         'pass quick on %s proto udp from port 546 to port 547' % int_if,
         'pass in on %s proto tcp to any port {%s}' % (int_if, tcp_ports),
         'pass in on %s proto udp to any port {%s}' % (int_if, udp_ports)
