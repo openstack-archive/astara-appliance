@@ -2,9 +2,8 @@ import os
 import re
 
 from akanda.router import models, utils
-from akanda.router.drivers import bird, dnsmasq, ifconfig, pf, route
+from akanda.router.drivers import bird, dnsmasq, ifconfig, metadata, pf, route
 
-DHCP_DIR = 'dhcp'
 PF_FILENAME = 'pf.conf'
 
 
@@ -33,6 +32,7 @@ class Manager(object):
 
         self.update_interfaces()
         self.update_dhcp()
+        self.update_metadata()
         self.update_ospf_and_radv()
         self.update_pf()
         self.update_routes()
@@ -48,6 +48,11 @@ class Manager(object):
         for network in self.config.networks:
             real_ifname = self.if_mgr.generic_to_host(network.interface.ifname)
             mgr.update_network_dhcp_config(real_ifname, network)
+        mgr.restart()
+
+    def update_metadata(self):
+        mgr = metadata.MetadataManager()
+        mgr.save_config(self.config)
         mgr.restart()
 
     def update_ospf_and_radv(self):

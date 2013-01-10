@@ -69,8 +69,7 @@ class Interface(ModelBase):
 
     @property
     def is_up(self):
-        if ('state' in self.extra_params and
-            self.extra_params['state'].lower() == 'up'):
+        if self.extra_params.get('state', '').lower() == 'up':
             return 'UP'
         return 'UP' in self.flags
 
@@ -226,10 +225,24 @@ class AddressBookEntry(ModelBase):
 
 
 class Allocation(ModelBase):
-    def __init__(self, lladdr, ip_address, hostname):
-        self.lladdr = lladdr
-        self.ip_address = ip_address
+    def __init__(self, mac_address, ip_addresses, hostname, device_id):
+        self.mac_address = mac_address
+        self.ip_addresses = ip_addresses or {}
         self.hostname = hostname
+        self.device_id = device_id
+
+    @property
+    def dhcp_addresses(self):
+        return [ip for ip, dhcp in self.ip_addresses.items() if dhcp]
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['mac_address'],
+            d['ip_addresses'],
+            d['hostname'],
+            d['device_id'],
+        )
 
 
 class StaticRoute(ModelBase):
@@ -319,6 +332,7 @@ class Subnet(ModelBase):
             d['dhcp_enabled'],
             d['dns_nameservers'],
             host_routes)
+
 
 class Network(ModelBase):
     SERVICE_STATIC = 'static'
@@ -417,7 +431,7 @@ class Network(ModelBase):
             v6_conf_service=d.get('v6_conf_service', cls.SERVICE_STATIC),
             v4_conf_service=d.get('v4_conf_service', cls.SERVICE_STATIC),
             address_allocations=[
-                Allocation(*a) for a in d.get('allocations', [])],
+                Allocation.from_dict(a) for a in d.get('allocations', [])],
             subnets=[Subnet.from_dict(s) for s in d.get('subnets', [])])
 
 
@@ -473,8 +487,7 @@ class Configuration(ModelBase):
                  for n in self.networks if n.is_external_network]
 
         # remove any none
-        addrs = [a for a in addrs if a]
-        addrs.sort()
+        addrs = sorted(a for a in addrs if a)
 
         if addrs:
             return addrs[0]
@@ -506,7 +519,7 @@ class Configuration(ModelBase):
                 rv.extend(_format_mgt_rule(network.interface.ifname))
             else:
                 # isolated and management nets block all between interfaces
-                rv.append(_format_isolated_rule(network.interface.ifname))
+                rv.extend(_format_isolated_rule(network.interface.ifname))
 
         # add address book tables
         rv.extend(ab.pf_rule for ab in self.address_book.values())
@@ -529,6 +542,7 @@ def _format_nat_rule(ext_if, int_if):
     udp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_UDP_PORTS)
 
     return [
+        _format_metadata_rule(int_if),
         ('pass out on %s from %s:network to any nat-to %s' %
         (ext_if, int_if, ext_if)),
 
@@ -545,9 +559,23 @@ def _format_nat_rule(ext_if, int_if):
 def _format_mgt_rule(mgt_if):
     ports = ', '.join(str(p) for p in defaults.MANAGEMENT_PORTS)
     return [('pass quick proto tcp from %s:network to %s port { %s }' %
-            (mgt_if, mgt_if, ports)),
+             (mgt_if, mgt_if, ports)),
+            ('pass quick proto tcp from %s to %s:network port %s' %
+             (mgt_if, mgt_if, defaults.RUG_META_PORT)),
             'block in quick on !%s to %s:network' % (mgt_if, mgt_if)]
 
 
 def _format_isolated_rule(int_if):
-    return 'block from %s:network to any' % int_if
+    return [_format_metadata_rule(int_if),
+            'block from %s:network to any' % int_if]
+
+
+def _format_metadata_rule(int_if):
+    args = {
+        'ifname': int_if,
+        'dest_addr': defaults.METADATA_DEST_ADDRESS,
+        'local_port': defaults.internal_metadata_port(int_if)
+    }
+
+    return ('pass in quick on %(ifname)s proto tcp to %(dest_addr)s port http '
+            'rdr-to 127.0.0.1 port %(local_port)d') % args

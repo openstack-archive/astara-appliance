@@ -148,6 +148,12 @@ class InterfaceManager(base.Manager):
         return ip_str
 
 
+def get_rug_address():
+    """ Return the RUG address """
+    net = netaddr.IPNetwork(ULA_PREFIX)
+    return str(netaddr.IPAddress(net.first + 1))
+
+
 def _parse_interfaces(data, filters=None):
     retval = []
     for iface_data in re.split('(^|\n)(?=\w+\d{1,3}: flag)', data, re.M):

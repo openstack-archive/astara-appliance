@@ -273,14 +273,14 @@ EOF
 echo "[*] Add bird and dnsmasq...."
 cd $WDIR/tmp
 tar -zxf $HERE/src/bird-1.3.8.tar.gz
-tar -zxf $HERE/src/dnsmasq-2.63.tar.gz
+tar -zxf $HERE/src/dnsmasq-2.65.tar.gz
 cd bird-1.3.8
 ./configure --enable-ipv6 --prefix=
 gmake
-cd ../dnsmasq-2.63
+cd ../dnsmasq-2.65
 make
 cd $HERE
-cp $WDIR/tmp/dnsmasq-2.63/src/dnsmasq $WDIR/usr/local/sbin/.
+cp $WDIR/tmp/dnsmasq-2.65/src/dnsmasq $WDIR/usr/local/sbin/.
 cp $WDIR/tmp/bird-1.3.8/bird $WDIR/usr/local/sbin/.
 cp $WDIR/tmp/bird-1.3.8/birdc $WDIR/usr/local/sbin/.
 
@@ -311,11 +311,27 @@ export LD_LIBRARY_PATH=/usr/local/lib
 ln -sf /usr/local/bin/python2.7 /usr/local/bin/python
 ln -sf /usr/local/bin/pip-2.7 /usr/local/bin/pip
 
+cd /tmp/greenlet-0.4.0
+python setup.py install
+cd /tmp/eventlet-0.9.17
+python setup.py install
+
 cd /tmp/router_appliance && python setup.py install
 
 EOF
 
 cp -r $HERE/../../router_appliance/ $WDIR/tmp
+
+# build eventlet bundle so that we do not need CC on router image
+cd $WDIR/tmp
+tar -zxf $HERE/src/greenlet-0.4.0.tar.gz
+tar -zxf $HERE/src/eventlet-0.9.17.tar.gz
+cd greenlet-0.4.0
+python setup.py build
+cd ../eventlet-0.9.17
+python setup.py build
+cd $HERE
+
 
 chmod +x $WDIR/tmp/akanda.sh
 chroot $WDIR /tmp/akanda.sh
@@ -329,9 +345,11 @@ echo "[*] Add rc.d scripts...."
 cp $HERE/etc/rc.d/sshd $WDIR/etc/rc.d/sshd
 cp $HERE/etc/rc.d/bird $WDIR/etc/rc.d/bird
 cp $HERE/etc/rc.d/dnsmasq $WDIR/etc/rc.d/dnsmasq
+cp $HERE/etc/rc.d/metadata $WDIR/etc/rc.d/metadata
 chmod 555 $WDIR/etc/rc.d/sshd
 chmod 555 $WDIR/etc/rc.d/bird
 chmod 555 $WDIR/etc/rc.d/dnsmasq
+chmod 555 $WDIR/etc/rc.d/metadata
 
 echo "[*] Add rc.conf.local...."
 cat > $WDIR/etc/rc.conf.local <<EOF

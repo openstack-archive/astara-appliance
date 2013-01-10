@@ -20,7 +20,7 @@ def attach_config():
 
 
 def main():
-    app.debug = False
+    app.debug = True
     #TODO(mark): make this use a config file ie
     # app.config.from_object('akanda.router.config.Default')
     # manager.state_path = app.config['STATE_PATH']

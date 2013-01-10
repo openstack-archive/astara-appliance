@@ -49,7 +49,11 @@ class DHCPManager(base.Manager):
                            DEFAULT_LEASE))
 
         config.extend(
-            'dhcp-host=%s,%s,%s' % (a.lladdr, a.hostname, a.ip_address)
+            'dhcp-host=%s,%s,%s' % (
+                a.mac_address,
+                ','.join('[%]' % ip if ':' in ip else ip for ip in
+                         a.dhcp_addresses),
+                a.hostname)
             for a in network.address_allocations
         )
 
