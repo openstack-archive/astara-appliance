@@ -1,0 +1,12 @@
+.coverage
+*.py[co]
+*.sw[po]
+*.pyc
+*.egg-info
+.venv
+dropin.cache
+.tox
+build
+dist
+fpm.log*
+packages/
