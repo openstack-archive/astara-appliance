@@ -91,8 +91,6 @@ class Manager(object):
         pass
 
 
-
-
 class ManagerProxy(object):
     def __init__(self):
         self.instance = None

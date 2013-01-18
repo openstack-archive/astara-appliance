@@ -11,6 +11,7 @@ CONF_DIR = '/etc/dnsmasq.d'
 RC_PATH = '/etc/rc.d/dnsmasq'
 DEFAULT_LEASE = 120
 
+
 class DHCPManager(base.Manager):
     def __init__(self, root_helper='sudo'):
         super(DHCPManager, self).__init__(root_helper)

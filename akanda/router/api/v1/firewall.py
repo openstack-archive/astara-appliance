@@ -72,6 +72,7 @@ def get_labels():
     '''
     return dict(labels=request.pf_mgr.get_labels())
 
+
 @blueprint.route('/labels', methods=['POST'])
 @utils.json_response
 def reset_labels():
