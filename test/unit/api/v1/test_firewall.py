@@ -1,6 +1,7 @@
 """
 Base classes for Router API tests.
 """
+import json
 from unittest import TestCase
 
 import flask
@@ -59,8 +60,18 @@ class FirewallAPITestCase(TestCase):
     @patch.object(PFManager, 'get_labels', FakePFManager.fake_get_labels)
     def test_get_labels(self):
         result = self.test_app.get('/v1/firewall/labels').data.strip()
-        expected = payload.sample_pfctl_sl.strip()
-        self.assertEqual(result, expected)
+        expected = {
+            'labels': {
+                'name': 'test_label',
+                'total_packets': 10,
+                'total_bytes': 256,
+                'packets_in': 5,
+                'bytes_in': 128,
+                'packets_out': 50,
+                'bytes_out': 128
+            }
+        }
+        self.assertEqual(json.loads(result), expected)
 
     @patch.object(PFManager, 'get_tables', FakePFManager.fake_get_tables)
     def test_get_tables(self):

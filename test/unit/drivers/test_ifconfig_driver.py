@@ -172,15 +172,9 @@ class IfconfigTestCase(TestCase):
         self.mock_execute.assert_has_calls(
             [mock.call(['/sbin/ifconfig', 'em0', 'down'], 'sudo')])
 
-    def test_update_interface(self):
-        iface = mock.Mock()
-        iface.ifname = 'ge0'
-        iface.addresses = []
-
-        old_iface = mock.Mock(name='old')
-        old_iface.ifname = 'ge0'
-        old_iface.addresses = []
-
+    def _update_interface_test_hlpr(self, new_iface, old_iface,
+                                    ignore_link_local=True,
+                                    ignore_egress_group=True):
         mock_methods = {
             'generic_to_host': mock.Mock(return_value='em0'),
             'get_interface': mock.Mock(return_value=old_iface),
@@ -190,16 +184,94 @@ class IfconfigTestCase(TestCase):
 
         with mock.patch.multiple(ifconfig.InterfaceManager, **mock_methods):
             mgr = ifconfig.InterfaceManager()
-            mgr.update_interface(iface)
+            mgr.update_interface(
+                new_iface,
+                ignore_link_local=ignore_link_local,
+                ignore_egress_group=ignore_egress_group
+            )
 
             mock_methods['generic_to_host'].assert_called_once_with('ge0')
             mock_methods['get_interface'].assert_called_once_with('ge0')
             mock_methods['_update_description'].assert_called_once_with(
-                'em0', iface)
+                'em0', new_iface)
             mock_methods['_update_groups'].assert_called_once_with(
-                'em0', iface, old_iface)
+                'em0', new_iface, old_iface)
             mock_methods['_update_addresses'].assert_called_once_with(
-                'em0', iface, old_iface)
+                'em0', new_iface, old_iface)
+
+    def test_update_interface(self):
+        iface = mock.Mock()
+        iface.ifname = 'ge0'
+        iface.addresses = []
+
+        old_iface = mock.Mock(name='old')
+        old_iface.ifname = 'ge0'
+        old_iface.addresses = []
+        old_iface.groups = []
+
+        self._update_interface_test_hlpr(iface, old_iface)
+
+    def test_update_interface_ignore_link_local(self):
+        iface = mock.Mock()
+        iface.ifname = 'ge0'
+        iface.addresses = []
+
+        old_iface = mock.Mock(name='old')
+        old_iface.ifname = 'ge0'
+        old_iface.addresses = [netaddr.IPAddress('fe80::1')]
+        old_iface.groups = []
+
+        self._update_interface_test_hlpr(iface, old_iface)
+        self.assertEqual(old_iface.addresses, [])
+
+    def test_update_interface_do_not_ignore_link_local(self):
+        iface = mock.Mock()
+        iface.ifname = 'ge0'
+        iface.addresses = []
+
+        link_local = netaddr.IPAddress('fe80::1')
+
+        old_iface = mock.Mock(name='old')
+        old_iface.ifname = 'ge0'
+        old_iface.addresses = [link_local]
+        old_iface.groups = []
+
+        self._update_interface_test_hlpr(iface, old_iface, False)
+        self.assertEqual(old_iface.addresses, [link_local])
+
+    def test_update_interface_ignore_egress(self):
+        iface = mock.Mock()
+        iface.ifname = 'ge0'
+        iface.addresses = []
+        iface.groups = []
+
+        old_iface = mock.Mock(name='old')
+        old_iface.ifname = 'ge0'
+        old_iface.addresses = []
+        old_iface.groups = ['egress']
+
+        self._update_interface_test_hlpr(iface, old_iface)
+        self.assertEqual(old_iface.groups, [])
+
+    def test_update_interface_do_not_ignore_egress(self):
+        iface = mock.Mock()
+        iface.ifname = 'ge0'
+        iface.addresses = []
+        iface.groups = []
+
+        link_local = netaddr.IPAddress('fe80::1')
+
+        old_iface = mock.Mock(name='old')
+        old_iface.ifname = 'ge0'
+        old_iface.addresses = []
+        old_iface.groups = ['egress']
+
+        self._update_interface_test_hlpr(
+            iface,
+            old_iface,
+            ignore_egress_group=False
+        )
+        self.assertEqual(old_iface.groups, ['egress'])
 
     def test_update_description(self):
         iface = mock.Mock()

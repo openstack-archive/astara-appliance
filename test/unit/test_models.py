@@ -306,10 +306,16 @@ class LabelTestCase(TestCase):
 
 class AllocationTestCase(TestCase):
     def test_allocation(self):
-        a = models.Allocation('aa:bb:cc:dd:ee:ff', '192.168.1.1', 'hosta.com')
-        self.assertEqual(a.lladdr, 'aa:bb:cc:dd:ee:ff')
+        a = models.Allocation(
+            'aa:bb:cc:dd:ee:ff',
+            {'192.168.1.1': True},  # ipaddr: enable_dhcp
+            'hosta.com',
+            'device_id'
+        )
+        self.assertEqual(a.mac_address, 'aa:bb:cc:dd:ee:ff')
         self.assertEqual(a.hostname, 'hosta.com')
-        self.assertEqual(a.ip_address, '192.168.1.1')
+        self.assertEqual(a.ip_addresses, {'192.168.1.1': True})
+        self.assertEqual(a.device_id, 'device_id')
 
 
 class StaticRouteTestCase(TestCase):
@@ -561,7 +567,10 @@ class ConfigurationTestCase(TestCase):
 
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net]},
-            ['pass out on ge0 from ge1:network to any nat-to ge0',
+            ['pass on ge0 inet6 proto ospf',
+             ('pass in quick on ge1 proto tcp to 169.254.169.254 port http '
+              'rdr-to 127.0.0.1 port 9601'),
+             'pass out on ge0 from ge1:network to any nat-to ge0',
              'pass quick on ge1 proto udp from port 68 to port 67',
              'pass quick on ge1 proto udp from port 546 to port 547',
              'pass in on ge1 proto tcp to any port {80}',
@@ -577,7 +586,10 @@ class ConfigurationTestCase(TestCase):
 
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net]},
-            ['block from ge1:network to any'])
+            ['pass on ge0 inet6 proto ospf',
+             ('pass in quick on ge1 proto tcp to 169.254.169.254 port http '
+              'rdr-to 127.0.0.1 port 9601'),
+             'block from ge1:network to any'])
 
     def test_pf_config_management(self):
         ext_net = dict(network_id='ext',
@@ -589,8 +601,10 @@ class ConfigurationTestCase(TestCase):
 
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net]},
-            ['pass quick proto tcp from ge1:network to ge1 port { 22 }',
-             'block quick from !ge1 to ge1:network'])
+            ['pass on ge0 inet6 proto ospf',
+             'pass quick proto tcp from ge1:network to ge1 port { 22 }',
+             'pass quick proto tcp from ge1 to ge1:network port 9697',
+             'block in quick on !ge1 to ge1:network'])
 
     def test_pf_config_with_addressbook(self):
         ext_net = dict(network_id='ext',
@@ -600,7 +614,8 @@ class ConfigurationTestCase(TestCase):
 
         self._pf_config_test_helper(
             {'networks': [ext_net], 'address_book': ab},
-            ['table <foo> {192.168.1.1/24}'])
+            ['pass on ge0 inet6 proto ospf',
+             'table <foo> {192.168.1.1/24}'])
 
     def test_pf_config_with_anchor(self):
         ext_net = dict(network_id='ext',
@@ -612,7 +627,8 @@ class ConfigurationTestCase(TestCase):
                                   destination_port=22)])
         self._pf_config_test_helper(
             {'networks': [ext_net], 'anchors': [anchor]},
-            ['anchor foo {\npass proto tcp to port 22\n}'])
+            ['pass on ge0 inet6 proto ospf',
+             'anchor foo {\npass proto tcp to port 22\n}'])
 
     def test_pf_config_with_label(self):
         ext_net = dict(network_id='ext',
@@ -622,4 +638,5 @@ class ConfigurationTestCase(TestCase):
 
         self._pf_config_test_helper(
             {'networks': [ext_net], 'labels': label},
-            ['match out on egress to {192.168.1.0/24} label "foo"'])
+            ['pass on ge0 inet6 proto ospf',
+             'match out on egress to {192.168.1.0/24} label "foo"'])
