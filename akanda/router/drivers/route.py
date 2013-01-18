@@ -1,7 +1,6 @@
 import logging
 
 from akanda.router.drivers import base
-from akanda.router.utils import execute, replace_file
 
 
 LOG = logging.getLogger(__name__)
