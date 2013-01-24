@@ -11,6 +11,7 @@ CONF_DIR = '/etc/dnsmasq.d'
 RC_PATH = '/etc/rc.d/dnsmasq'
 DEFAULT_LEASE = 120
 
+
 class DHCPManager(base.Manager):
     def __init__(self, root_helper='sudo'):
         super(DHCPManager, self).__init__(root_helper)
@@ -27,11 +28,6 @@ class DHCPManager(base.Manager):
 
     def _build_disabled_config(self, ifname):
         return 'except-interface=%s\n' % ifname
-
-        if not network.subnets or network.network_t:
-            data = ['interface=%s' % real_ifname]
-        else:
-            data = ['except-interface=%s' % real_ifname]
 
     def _build_dhcp_config(self, ifname, network):
         config = ['interface=%s' % ifname]
@@ -88,7 +84,7 @@ class DHCPManager(base.Manager):
             try:
                 execute(['/etc/rc.d/dnsmasq', 'start'], self.root_helper)
                 return
-            except Exception, e:
+            except Exception:
                 if remaining <= 0:
                     raise
                 time.sleep(1)

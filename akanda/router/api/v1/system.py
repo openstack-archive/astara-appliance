@@ -1,8 +1,6 @@
 """
 Blueprint for the "system" portion of the version 1 of the API.
 """
-import json
-
 from flask import Response
 from flask import abort, request
 

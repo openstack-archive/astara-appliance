@@ -1,10 +1,8 @@
 import os
 import re
 
-from akanda.router import models, utils
+from akanda.router import models
 from akanda.router.drivers import bird, dnsmasq, ifconfig, metadata, pf, route
-
-PF_FILENAME = 'pf.conf'
 
 
 class Manager(object):
@@ -61,7 +59,6 @@ class Manager(object):
         mgr.restart()
 
     def update_pf(self):
-        pf_path = os.path.join(self.state_path, PF_FILENAME)
         rule_data = self.config.pf_config
         rule_data = self._map_virtual_to_real_interfaces(rule_data)
         mgr = pf.PFManager()
@@ -79,7 +76,6 @@ class Manager(object):
 
     def _map_virtual_to_real_interfaces(self, virt_data):
         rules = []
-        name_map = self.if_mgr.generic_mapping.items()
 
         rules.extend(
             ['%s = "%s"' % i for i in self.if_mgr.generic_mapping.items()])
@@ -89,8 +85,6 @@ class Manager(object):
 
     def _set_default_v4_gateway(self):
         pass
-
-
 
 
 class ManagerProxy(object):

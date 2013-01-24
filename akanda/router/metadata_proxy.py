@@ -35,7 +35,7 @@ class NetworkMetadataProxyHandler(object):
             response = self._proxy_request(request.remote_addr,
                                            request.path,
                                            request.query_string)
-        except Exception, e:
+        except Exception:
             LOG.exception("Unexpected error.")
             msg = ('An unknown error has occurred. '
                    'Please try your request again.')

@@ -29,5 +29,6 @@ BASE_METADATA_PORT = 9600
 # port for rug metadata service
 RUG_META_PORT = 9697
 
+
 def internal_metadata_port(ifname):
     return BASE_METADATA_PORT + int(ifname[2:])

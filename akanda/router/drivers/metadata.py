@@ -10,6 +10,7 @@ LOG = logging.getLogger(__name__)
 CONF_PATH = '/etc/metadata.conf'
 METADATA_PROXY = '/usr/local/bin/metadata_proxy'
 
+
 class MetadataManager(base.Manager):
     def __init__(self, root_helper='sudo'):
         super(MetadataManager, self).__init__(root_helper)

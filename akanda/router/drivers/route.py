@@ -1,13 +1,14 @@
 import logging
 
 from akanda.router.drivers import base
-from akanda.router.utils import execute, replace_file
 
 
 LOG = logging.getLogger(__name__)
 
+
 class RouteManager(base.Manager):
     EXECUTABLE = '/sbin/route'
+
     def __init__(self, root_helper='sudo'):
         super(RouteManager, self).__init__(root_helper)
 

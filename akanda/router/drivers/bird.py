@@ -12,6 +12,7 @@ BIRD = '/usr/local/sbin/bird'
 BIRDC = '/usr/local/bin/birdc'
 DEFAULT_AREA = 0
 
+
 class BirdManager(base.Manager):
     def __init__(self, root_helper='sudo'):
         super(BirdManager, self).__init__(root_helper)
@@ -44,16 +45,18 @@ def build_config(config, interface_map):
 
     return '\n'.join(config_data)
 
+
 def _find_external_v4_ip(config):
     v4_id = config.external_v4_id
 
     if v4_id:
         return v4_id
-    else: # fallback to random value
+    else:  # fallback to random value
         return '0.0.%d.%d' % (random.randInt(0, 255), random.randInt(0, 255))
 
+
 def _build_kernel_config():
-    config ="""
+    config = """
     protocol kernel {
         learn;
         scan time 20;
@@ -63,12 +66,15 @@ def _build_kernel_config():
 
     return textwrap.dedent(config)
 
+
 def _build_device_config():
     return 'protocol device {\n    scan time 10;\n}'
+
 
 def _build_static_config(config):
     # TODO: setup static routes
     return ''
+
 
 def _build_ospf_config(config, interface_map):
     retval = [
@@ -98,7 +104,7 @@ def _build_ospf_config(config, interface_map):
         '\t};',
         '};'
     ])
-    return '\n'.join(retval).replace('\t','    ')
+    return '\n'.join(retval).replace('\t', '    ')
 
 
 def _build_radv_config(config, interface_map):
@@ -142,4 +148,4 @@ def _build_radv_config(config, interface_map):
         retval.append('\t};')
 
     retval.append('}')
-    return '\n'.join(retval).replace('\t','    ')
+    return '\n'.join(retval).replace('\t', '    ')

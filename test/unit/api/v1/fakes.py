@@ -131,10 +131,13 @@ src.track                     0s
 
     @classmethod
     def fake_get_labels(self):
-        return ("""
-No ALTQ support in kernel
-ALTQ related functions disabled
-            """)
+        return {'name': 'test_label',
+                'total_packets': 10,
+                'total_bytes': 256,
+                'packets_in': 5,
+                'bytes_in': 128,
+                'packets_out': 50,
+                'bytes_out': 128}
 
     @classmethod
     def fake_get_memory(self):

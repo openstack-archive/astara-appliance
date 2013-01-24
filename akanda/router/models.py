@@ -1,7 +1,6 @@
 import abc
 import os
 import re
-import StringIO
 
 import netaddr
 

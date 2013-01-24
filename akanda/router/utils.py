@@ -36,8 +36,8 @@ def replace_file(file_name, data):
 
 
 def ensure_directory(dir_path):
-    if not os.path.isdir(path):
-        os.makedirs(path, 0755)
+    if not os.path.isdir(dir_path):
+        os.makedirs(dir_path, 0755)
 
 
 class ModelSerializer(json.JSONEncoder):
