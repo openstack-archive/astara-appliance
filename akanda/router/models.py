@@ -545,11 +545,14 @@ def _format_nat_rule(ext_if, int_if):
         ('pass out on %s from %s:network to any nat-to %s' %
         (ext_if, int_if, ext_if)),
 
-        # IPv4 DHCP: Server: 68 Client: 67
-        'pass quick on %s proto udp from port 68 to port 67' % int_if,
+        # IPv4 DHCP: Server: 68 Client: 67 need fwd/rev rules
+        'pass in quick on %s proto udp from port 68 to port 67' % int_if,
+        'pass out quick on %s proto udp from port 67 to port 68' % int_if,
 
-        # IPv6 DHCP: Server: 547 Client: 546
+        # IPv6 DHCP: Server: 547 Client: 546 need fwd/rev rules
         'pass quick on %s proto udp from port 546 to port 547' % int_if,
+        'pass quick on %s proto udp from port 547 to port 546' % int_if,
+
         'pass in on %s proto tcp to any port {%s}' % (int_if, tcp_ports),
         'pass in on %s proto udp to any port {%s}' % (int_if, udp_ports)
     ]
