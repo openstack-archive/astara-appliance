@@ -31,6 +31,7 @@ class Interface(ModelBase):
         self.mtu = mtu
         self.media = media
         self.extra_params = extra_params
+        self._aliases = []
 
     def __repr__(self):
         return '<Interface: %s %s>' % (self.ifname,
@@ -40,7 +41,7 @@ class Interface(ModelBase):
         """Check model equality only on limit fields."""
         return (type(self) == type(other) and
                 self.ifname == other.ifname and
-                self.addresses == other.addresses and
+                self.all_addresses == other.all_addresses and
                 self.description == other.description and
                 self.mtu == other.mtu and
                 self.groups == other.groups)
@@ -65,6 +66,18 @@ class Interface(ModelBase):
     @addresses.setter
     def addresses(self, value):
         self._addresses = [netaddr.IPNetwork(a) for a in value]
+
+    @property
+    def aliases(self):
+        return self._aliases
+
+    @aliases.setter
+    def aliases(self, value):
+        self._aliases = [netaddr.IPNetwork(a) for a in value]
+
+    @property
+    def all_addresses(self):
+        return self._addresses + self._aliases
 
     @property
     def is_up(self):
@@ -248,6 +261,7 @@ class FloatingIP(ModelBase):
     def __init__(self, floating_ip, fixed_ip):
         self.floating_ip = floating_ip
         self.fixed_ip = fixed_ip
+        self.network = None
 
     @property
     def floating_ip(self):
@@ -264,6 +278,20 @@ class FloatingIP(ModelBase):
     @fixed_ip.setter
     def fixed_ip(self, value):
         self._fixed_ip = netaddr.IPAddress(value)
+
+    @property
+    def pf_rule(self):
+        if self.network is None:
+            return ''
+        else:
+            return (
+                'pass on %s from %s to any binat-to %s' %
+                (
+                    self.network.interface.ifname,
+                    self.fixed_ip,
+                    self.floating_ip
+                )
+            )
 
     @classmethod
     def from_dict(cls, d):
@@ -488,6 +516,8 @@ class Configuration(ModelBase):
             for fip in conf_dict.get('floating_ips', [])
         ]
 
+        self._attach_floating_ips(self.floating_ips)
+
     def validate(self):
         """Validate anchor rules to ensure that ifaces and tables exist."""
         errors = []
@@ -509,6 +539,32 @@ class Configuration(ModelBase):
                         errors.append((rule, reason))
 
         return ["'%s' %s" % e for e in errors]
+
+    def _attach_floating_ips(self, floating_ips):
+        ext_cidr_map = {}
+        int_cidr_map = {}
+
+        for network in self.networks:
+            if network.is_external_network:
+                m = ext_cidr_map
+            elif network.is_internal_network:
+                m = int_cidr_map
+            else:
+                continue
+            m.update((s.cidr, network) for s in network.subnets)
+
+        for fip in floating_ips:
+            # add address to external interface
+            for ext_cidr, net in ext_cidr_map.items():
+                if fip.floating_ip in ext_cidr:
+                    addr = '%s/%s' % (fip.floating_ip, ext_cidr.prefixlen)
+                    net.interface.aliases += [netaddr.IPNetwork(addr)]
+                    break
+
+            # add to internal
+            for int_cidr, net in int_cidr_map.items():
+                if fip.fixed_ip in int_cidr:
+                    fip.network = net
 
     def to_dict(self):
         fields = ('networks', 'address_book', 'anchors', 'static_routes')
@@ -538,6 +594,7 @@ class Configuration(ModelBase):
         for n in self.networks:
             if n.network_type == Network.TYPE_EXTERNAL:
                 ext_if = n.interface.ifname
+                ext_v4_addr = n.interface.first_v4
                 break
 
         # add in nat and management rules
@@ -547,10 +604,9 @@ class Configuration(ModelBase):
             elif network.network_type == Network.TYPE_INTERNAL:
                 if ext_if:
                     rv.extend(
-                        _format_nat_rule(ext_if, network.interface.ifname)
-                    )
-                    rv.extend(
-                        _format_floating_rules(network, self.floating_ips)
+                        _format_nat_rule(
+                            ext_if, ext_v4_addr, network.interface.ifname
+                        )
                     )
             elif network.network_type == Network.TYPE_MANAGEMENT:
                 rv.extend(_format_mgt_rule(network.interface.ifname))
@@ -568,7 +624,7 @@ class Configuration(ModelBase):
         rv.extend(l.pf_rule for l in self.labels)
 
         # add floating ip
-
+        rv.extend(fip.pf_rule for fip in self.floating_ips)
 
         return '\n'.join(rv) + '\n'
 
@@ -577,14 +633,14 @@ def _format_ext_rule(ext_if):
     return [('pass on %s inet6 proto ospf' % ext_if)]
 
 
-def _format_nat_rule(ext_if, int_if):
+def _format_nat_rule(ext_if, ext_v4_addr, int_if):
     tcp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_TCP_PORTS)
     udp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_UDP_PORTS)
 
     return [
         _format_metadata_rule(int_if),
         ('pass out on %s from %s:network to any nat-to %s' %
-        (ext_if, int_if, ext_if)),
+        (ext_if, int_if, ext_v4_addr)),
 
         # IPv4 DHCP: Server: 68 Client: 67 need fwd/rev rules
         'pass in quick on %s proto udp from port 68 to port 67' % int_if,
@@ -623,17 +679,3 @@ def _format_metadata_rule(int_if):
     return ('pass in quick on %(ifname)s proto tcp to %(dest_addr)s port http '
             'rdr-to 127.0.0.1 port %(local_port)d') % args
 
-def _format_floating_rules(network, floating_ips):
-    retval = []
-
-    subnets = set(s.cidr for s in network.subnets)
-    for fip in floating_ips:
-        if any(fip.fixed_ip in s for s in subnets):
-            retval.append(
-                'pass on %s from %s to any binat-to %s' %
-                (network.interface.ifname,
-                 fip.fixed_ip,
-                 fip.floating_ip
-                )
-            )
-    return retval

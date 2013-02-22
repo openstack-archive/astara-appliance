@@ -114,7 +114,7 @@ class InterfaceManager(base.Manager):
         mutator = lambda a: (a.ip, a.prefixlen)
 
         self._update_set(real_ifname, interface, old_interface,
-                         'addresses', add, delete, mutator)
+                         'all_addresses', add, delete, mutator)
 
     def _update_set(self, real_ifname, interface, old_interface, attribute,
                     fmt_args_add, fmt_args_delete, mutator=lambda x: x):

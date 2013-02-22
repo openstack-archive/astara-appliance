@@ -78,13 +78,11 @@ class Manager(object):
         rules = []
 
         rules.extend(
-            ['%s = "%s"' % i for i in self.if_mgr.generic_mapping.items()])
+            '%s = "%s"' % i for i in self.if_mgr.generic_mapping.items()
+        )
 
         rules.append(re.sub('([\s!])(ge\d+([\s:]|$))', r'\1$\2', virt_data))
         return '\n'.join(rules)
-
-    def _set_default_v4_gateway(self):
-        pass
 
 
 class ManagerProxy(object):

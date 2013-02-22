@@ -75,6 +75,16 @@ class InterfaceModelTestCase(TestCase):
         iface = models.Interface(flags=['UP'])
         self.assertTrue(iface.is_up)
 
+    def test_aliases(self):
+        addr1 =  netaddr.IPNetwork('192.168.1.1/24')
+        addr2 =  netaddr.IPNetwork('192.168.1.2/24')
+
+        iface = models.Interface(ifname='ge0', addresses=[str(addr1)])
+        iface.aliases = [addr2]
+        self.assertEqual(iface.addresses, [addr1])
+        self.assertEqual(iface.aliases, [addr2])
+        self.assertEqual(iface.all_addresses, [addr1, addr2])
+
     def test_from_dict(self):
         d = {'ifname': 'ge0',
              'addresses': ['192.168.1.1/24'],
@@ -325,8 +335,18 @@ class FloatingIPTestCase(TestCase):
             '10.0.0.1',
         )
 
+        network = mock.Mock()
+        network.interface.ifname = 'ge1'
+
         self.assertEqual(fip.floating_ip, netaddr.IPAddress('9.9.9.9'))
         self.assertEqual(fip.fixed_ip, netaddr.IPAddress('10.0.0.1'))
+        self.assertEqual(fip.pf_rule, '')
+
+        fip.network = network
+        self.assertEqual(
+            fip.pf_rule,
+            'pass on ge1 from 10.0.0.1 to any binat-to 9.9.9.9'
+        )
 
 
 class StaticRouteTestCase(TestCase):
@@ -570,7 +590,7 @@ class ConfigurationTestCase(TestCase):
 
     def test_pf_config_nat(self):
         ext_net = dict(network_id='ext',
-                       interface=dict(ifname='ge0'),
+                       interface=dict(ifname='ge0', addresses=['9.9.9.1/24']),
                        network_type='external')
         int_net = dict(network_id='int',
                        interface=dict(ifname='ge1'),
@@ -582,7 +602,7 @@ class ConfigurationTestCase(TestCase):
                 'pass on ge0 inet6 proto ospf',
                 ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
                  'http rdr-to 127.0.0.1 port 9601'),
-                'pass out on ge0 from ge1:network to any nat-to ge0',
+                'pass out on ge0 from ge1:network to any nat-to 9.9.9.1',
                 'pass in quick on ge1 proto udp from port 68 to port 67',
                 'pass out quick on ge1 proto udp from port 67 to port 68',
                 'pass in quick on ge1 proto udp from port 546 to port 547',
@@ -675,7 +695,7 @@ class ConfigurationTestCase(TestCase):
     def test_pf_config_with_floating(self):
         ext_net = dict(
             network_id='ext',
-            interface=dict(ifname='ge0'),
+            interface=dict(ifname='ge0', addresses=['9.9.9.1/24']),
             network_type='external',
             subnets=[
                 {
@@ -711,7 +731,7 @@ class ConfigurationTestCase(TestCase):
                 'pass on ge0 inet6 proto ospf',
                 ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
                  'http rdr-to 127.0.0.1 port 9601'),
-                'pass out on ge0 from ge1:network to any nat-to ge0',
+                'pass out on ge0 from ge1:network to any nat-to 9.9.9.1',
                 'pass in quick on ge1 proto udp from port 68 to port 67',
                 'pass out quick on ge1 proto udp from port 67 to port 68',
                 'pass in quick on ge1 proto udp from port 546 to port 547',
