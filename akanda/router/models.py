@@ -244,6 +244,35 @@ class Allocation(ModelBase):
         )
 
 
+class FloatingIP(ModelBase):
+    def __init__(self, floating_ip, fixed_ip):
+        self.floating_ip = floating_ip
+        self.fixed_ip = fixed_ip
+
+    @property
+    def floating_ip(self):
+        return self._floating_ip
+
+    @floating_ip.setter
+    def floating_ip(self, value):
+        self._floating_ip = netaddr.IPAddress(value)
+
+    @property
+    def fixed_ip(self):
+        return self._fixed_ip
+
+    @fixed_ip.setter
+    def fixed_ip(self, value):
+        self._fixed_ip = netaddr.IPAddress(value)
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['floating_ip'],
+            d['fixed_ip']
+        )
+
+
 class StaticRoute(ModelBase):
     def __init__(self, destination, next_hop):
         self.destination = destination
@@ -454,6 +483,11 @@ class Configuration(ModelBase):
             Label(name, cidr) for name, cidr in
             conf_dict.get('labels', {}).iteritems()]
 
+        self.floating_ips = [
+            FloatingIP.from_dict(fip)
+            for fip in conf_dict.get('floating_ips', [])
+        ]
+
     def validate(self):
         """Validate anchor rules to ensure that ifaces and tables exist."""
         errors = []
@@ -513,7 +547,11 @@ class Configuration(ModelBase):
             elif network.network_type == Network.TYPE_INTERNAL:
                 if ext_if:
                     rv.extend(
-                        _format_nat_rule(ext_if, network.interface.ifname))
+                        _format_nat_rule(ext_if, network.interface.ifname)
+                    )
+                    rv.extend(
+                        _format_floating_rules(network, self.floating_ips)
+                    )
             elif network.network_type == Network.TYPE_MANAGEMENT:
                 rv.extend(_format_mgt_rule(network.interface.ifname))
             else:
@@ -528,6 +566,9 @@ class Configuration(ModelBase):
 
         # add counters
         rv.extend(l.pf_rule for l in self.labels)
+
+        # add floating ip
+
 
         return '\n'.join(rv) + '\n'
 
@@ -550,8 +591,8 @@ def _format_nat_rule(ext_if, int_if):
         'pass out quick on %s proto udp from port 67 to port 68' % int_if,
 
         # IPv6 DHCP: Server: 547 Client: 546 need fwd/rev rules
-        'pass quick on %s proto udp from port 546 to port 547' % int_if,
-        'pass quick on %s proto udp from port 547 to port 546' % int_if,
+        'pass in quick on %s proto udp from port 546 to port 547' % int_if,
+        'pass out quick on %s proto udp from port 547 to port 546' % int_if,
 
         'pass in on %s proto tcp to any port {%s}' % (int_if, tcp_ports),
         'pass in on %s proto udp to any port {%s}' % (int_if, udp_ports)
@@ -581,3 +622,18 @@ def _format_metadata_rule(int_if):
 
     return ('pass in quick on %(ifname)s proto tcp to %(dest_addr)s port http '
             'rdr-to 127.0.0.1 port %(local_port)d') % args
+
+def _format_floating_rules(network, floating_ips):
+    retval = []
+
+    subnets = set(s.cidr for s in network.subnets)
+    for fip in floating_ips:
+        if any(fip.fixed_ip in s for s in subnets):
+            retval.append(
+                'pass on %s from %s to any binat-to %s' %
+                (network.interface.ifname,
+                 fip.fixed_ip,
+                 fip.floating_ip
+                )
+            )
+    return retval
