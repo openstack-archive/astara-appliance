@@ -608,7 +608,8 @@ class ConfigurationTestCase(TestCase):
                 'pass in quick on ge1 proto udp from port 546 to port 547',
                 'pass out quick on ge1 proto udp from port 547 to port 546',
                 'pass in on ge1 proto tcp to any port {80}',
-                'pass in on ge1 proto udp to any port {53}'
+                'pass in on ge1 proto udp to any port {53}',
+                'pass inet6 proto tcp to ge1:network port {22}'
             ]
         )
 
@@ -738,6 +739,7 @@ class ConfigurationTestCase(TestCase):
                 'pass out quick on ge1 proto udp from port 547 to port 546',
                 'pass in on ge1 proto tcp to any port {80}',
                 'pass in on ge1 proto udp to any port {53}',
+                'pass inet6 proto tcp to ge1:network port {22}',
                 'pass on ge1 from 10.0.0.1 to any binat-to 9.9.9.9',
             ]
         )

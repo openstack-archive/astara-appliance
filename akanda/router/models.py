@@ -651,7 +651,8 @@ def _format_nat_rule(ext_if, ext_v4_addr, int_if):
         'pass out quick on %s proto udp from port 547 to port 546' % int_if,
 
         'pass in on %s proto tcp to any port {%s}' % (int_if, tcp_ports),
-        'pass in on %s proto udp to any port {%s}' % (int_if, udp_ports)
+        'pass in on %s proto udp to any port {%s}' % (int_if, udp_ports),
+        'pass inet6 proto tcp to %s:network port {22}' % (int_if)
     ]
 
 
