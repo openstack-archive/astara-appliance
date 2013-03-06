@@ -111,13 +111,14 @@ class Interface(ModelBase):
 class FilterRule(ModelBase):
     """
     """
-    def __init__(self, action=None, interface=None, family=None,
-                 protocol=None, source=None, source_port=None,
+    def __init__(self, action=None, direction=None, interface=None,
+                 family=None, protocol=None, source=None, source_port=None,
                  destination_interface=None,
                  destination=None, destination_port=None,
                  redirect=None, redirect_port=None):
 
         self.action = action
+        self.direction = direction
         self.interface = interface
         self.family = family
         self.protocol = protocol
@@ -139,6 +140,13 @@ class FilterRule(ModelBase):
         elif name in ('source', 'destination'):
             if '/' in value:
                 value = netaddr.IPNetwork(value)
+            elif value.lower() == 'any':
+                return  # any is the default so do not set
+        elif name == 'direction':
+            if value not in ('in', 'out'):
+                raise ValueError(
+                    "Direction must be 'in' or 'out' not '%s'" % value
+                )
         elif name == 'redirect':
             value = netaddr.IPAddress(value)
         elif name.endswith('_port'):
@@ -157,6 +165,8 @@ class FilterRule(ModelBase):
     @property
     def pf_rule(self):
         retval = [self.action]
+        if self.direction:
+            retval.append(self.direction)
         if self.interface:
             retval.append('on %s' % self.interface)
         if self.family:
@@ -166,7 +176,7 @@ class FilterRule(ModelBase):
         if self.source or self.source_port:
             retval.append('from')
             if self.source:
-                retval.append(str(self.source))
+                retval.append(self._format_ip_or_table(self.source))
             if self.source_port:
                 retval.append('port %s' % self.source_port)
         if (self.destination_interface
@@ -176,7 +186,7 @@ class FilterRule(ModelBase):
             if self.destination_interface:
                 retval.append(self.destination_interface)
             if self.destination:
-                retval.append(str(self.destination))
+                retval.append(self._format_ip_or_table(self.destination))
             if self.destination_port:
                 retval.append('port %s' % self.destination_port)
         if self.redirect or self.redirect_port:
@@ -190,6 +200,13 @@ class FilterRule(ModelBase):
     @classmethod
     def from_dict(cls, d):
         return FilterRule(**d)
+
+    @staticmethod
+    def _format_ip_or_table(obj):
+        if isinstance(obj, netaddr.IPNetwork):
+            return str(obj)
+        else:  # must be table name
+            return '<%s>' % obj
 
 
 class Anchor(ModelBase):
@@ -414,6 +431,7 @@ class Network(ModelBase):
         self.v6_conf_service = v6_conf_service
         self.address_allocations = address_allocations or []
         self.subnets = subnets or []
+        self.floating_ips = []
 
     @property
     def is_tenant_network(self):
@@ -559,6 +577,7 @@ class Configuration(ModelBase):
                 if fip.floating_ip in ext_cidr:
                     addr = '%s/%s' % (fip.floating_ip, ext_cidr.prefixlen)
                     net.interface.aliases += [netaddr.IPNetwork(addr)]
+                    net.floating_ips.append(fip)
                     break
 
             # add to internal
@@ -624,13 +643,22 @@ class Configuration(ModelBase):
         rv.extend(l.pf_rule for l in self.labels)
 
         # add floating ip
-        rv.extend(fip.pf_rule for fip in self.floating_ips)
+        for network in self.networks:
+            rv.extend(
+                _format_floating_ip(
+                    network.interface.ifname,
+                    network.floating_ips
+                )
+            )
 
         return '\n'.join(rv) + '\n'
 
 
 def _format_ext_rule(ext_if):
-    return [('pass on %s inet6 proto ospf' % ext_if)]
+    return [
+        'pass on %s inet6 proto ospf' % ext_if,
+        'pass out quick on %s proto udp to any port %d' % (ext_if, defaults.DNS)
+    ]
 
 
 def _format_nat_rule(ext_if, ext_v4_addr, int_if):
@@ -641,6 +669,8 @@ def _format_nat_rule(ext_if, ext_v4_addr, int_if):
         _format_metadata_rule(int_if),
         ('pass out on %s from %s:network to any nat-to %s' %
         (ext_if, int_if, ext_v4_addr)),
+        #('pass out on %s from %s to %s:network' %
+        #(int_if, ext_if, int_if)),
 
         # IPv4 DHCP: Server: 68 Client: 67 need fwd/rev rules
         'pass in quick on %s proto udp from port 68 to port 67' % int_if,
@@ -680,3 +710,9 @@ def _format_metadata_rule(int_if):
     return ('pass in quick on %(ifname)s proto tcp to %(dest_addr)s port http '
             'rdr-to 127.0.0.1 port %(local_port)d') % args
 
+def _format_floating_ip(ext_if, floating_ips):
+    return [
+        ('pass on %s from %s to any binat-to %s' %
+         (ext_if, fip.fixed_ip, fip.floating_ip))
+        for fip in floating_ips
+    ]
