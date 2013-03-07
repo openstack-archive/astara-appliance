@@ -141,7 +141,7 @@ class FilterRule(ModelBase):
             if '/' in value:
                 value = netaddr.IPNetwork(value)
             elif value.lower() == 'any':
-                return  # any is the default so do not set
+                value = None  # any is the default so conver to None
         elif name == 'direction':
             if value not in ('in', 'out'):
                 raise ValueError(
@@ -242,7 +242,9 @@ class AddressBookEntry(ModelBase):
 
     @property
     def pf_rule(self):
-        return 'table <%s> {%s}' % (self.name, ', '.join(map(str, self.cidrs)))
+        return 'table <%s> persist {%s}' % (
+            self.name, ', '.join(map(str, self.cidrs))
+        )
 
     def external_pf_rule(self, base_dir):
         path = os.path.abspath(os.path.join(base_dir, self.name))

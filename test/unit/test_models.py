@@ -288,7 +288,7 @@ class AddressBookTestCase(TestCase):
 
     def test_pf_rule(self):
         ab = models.AddressBookEntry('foo', ['192.168.1.0/24'])
-        self.assertEqual(ab.pf_rule, 'table <foo> {192.168.1.0/24}')
+        self.assertEqual(ab.pf_rule, 'table <foo> persist {192.168.1.0/24}')
 
     def test_external_pf_rule(self):
         ab = models.AddressBookEntry('foo', ['192.168.1.0/24'])
@@ -663,7 +663,7 @@ class ConfigurationTestCase(TestCase):
             [
                 'pass on ge0 inet6 proto ospf',
                 'pass out quick on ge0 proto udp to any port 53',
-                'table <foo> {192.168.1.1/24}'
+                'table <foo> persist {192.168.1.1/24}'
             ]
         )
 
