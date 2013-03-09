@@ -11,6 +11,7 @@ CONF_PATH = '/etc/bird6.conf'
 BIRD = '/usr/local/sbin/bird'
 BIRDC = '/usr/local/bin/birdc'
 DEFAULT_AREA = 0
+DEFAULT_AS = 65000
 
 
 class BirdManager(base.Manager):
@@ -39,7 +40,9 @@ def build_config(config, interface_map):
         _build_kernel_config(),
         _build_device_config(),
         _build_static_config(config),
-        _build_ospf_config(config, interface_map),
+        _build_direct_config(config, interface_map),
+        #_build_ospf_config(config, interface_map),
+        _build_bgp_config(config, interface_map),
         _build_radv_config(config, interface_map),
     ]
 
@@ -72,8 +75,17 @@ def _build_device_config():
 
 
 def _build_static_config(config):
+    retval = []
     # TODO: setup static routes
-    return ''
+    return '\n'.join(retval).replace('\t','    ')
+
+def _build_direct_config(config, interface_map):
+    retval = """
+    protocol direct {
+        interface %s;
+    }""" %  ','.join('"%s"' % i for i in interface_map.values())
+
+    return textwrap.dedent(retval)
 
 
 def _build_ospf_config(config, interface_map):
@@ -105,6 +117,58 @@ def _build_ospf_config(config, interface_map):
         '};'
     ])
     return '\n'.join(retval).replace('\t', '    ')
+
+
+def _build_bgp_config(config, interface_map):
+    """
+    """
+
+    # build the filter rule
+    retval = [
+        'filter bgp_out {',
+        '\tif ! (source = RTS_DEVICE) then reject;',
+        '\tif net ~ fc00::/7 then reject;',  # filter out private addresses
+    ]
+
+    for net in config.networks:
+        if not net.is_internal_network:
+            continue
+        retval.extend(
+            '\tif net = %s then accept;' % s.cidr
+             for s in net.subnets if s.cidr.version == 6 and s.gateway_ip
+        )
+
+    retval.extend(
+        [
+            '\telse reject;',
+            '}',
+            ''
+        ]
+    )
+
+
+    # build the bgp rule
+    for net in config.networks:
+        ifname = interface_map.get(net.interface.ifname)
+
+        if not net.is_external_network or not ifname:
+            continue
+
+        v6_subnets = (s for s in net.subnets
+                      if s.cidr.version == 6 and s.gateway_ip)
+
+        for subnet in v6_subnets:
+            retval.extend([
+                'protocol bgp {',
+                '\tlocal as %d;' % DEFAULT_AS,
+                '\tneighbor %s as %d;' % (subnet.gateway_ip, DEFAULT_AS),
+                '\timport all;',
+                '\texport filter bgp_out;',
+                '\trr client;',
+                '}'
+            ])
+
+    return '\n'.join(retval).replace('\t','    ')
 
 
 def _build_radv_config(config, interface_map):

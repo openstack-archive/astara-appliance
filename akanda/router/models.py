@@ -87,7 +87,14 @@ class Interface(ModelBase):
 
     @property
     def first_v4(self):
-        addrs = sorted(a.ip for a in self._addresses if a.version == 4)
+        return self._first_addr_for_version(4)
+
+    @property
+    def first_v6(self):
+        return self._first_addr_for_version(6)
+
+    def _first_addr_for_version(self, version):
+        addrs = sorted(a.ip for a in self._addresses if a.version == version)
 
         if addrs:
             return addrs[0]
@@ -626,7 +633,10 @@ class Configuration(ModelBase):
                 if ext_if:
                     rv.extend(
                         _format_nat_rule(
-                            ext_if, ext_v4_addr, network.interface.ifname
+                            ext_if,
+                            ext_v4_addr,
+                            network.interface.ifname,
+                            network.interface.first_v4
                         )
                     )
             elif network.network_type == Network.TYPE_MANAGEMENT:
@@ -658,26 +668,36 @@ class Configuration(ModelBase):
 
 def _format_ext_rule(ext_if):
     return [
-        'pass on %s inet6 proto ospf' % ext_if,
+         ('pass on %s inet6 proto tcp from %s:network to %s:network port 179' %
+         (ext_if, ext_if, ext_if)),
         'pass out quick on %s proto udp to any port %d' % (ext_if, defaults.DNS)
     ]
 
 
-def _format_nat_rule(ext_if, ext_v4_addr, int_if):
+def _format_nat_rule(ext_if, ext_v4_addr, int_if, has_v4):
     tcp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_TCP_PORTS)
     udp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_UDP_PORTS)
 
-    return [
-        _format_metadata_rule(int_if),
-        ('pass out on %s from %s:network to any nat-to %s' %
-        (ext_if, int_if, ext_v4_addr)),
+    retval = []
+
+    if has_v4:
+        retval.extend([
+            _format_metadata_rule(int_if),
+            ('pass out on %s from %s:network to any nat-to %s' %
+            (ext_if, int_if, ext_v4_addr)),
+
+            # IPv4 DHCP: Server: 68 Client: 67 need fwd/rev rules
+            'pass in quick on %s proto udp from port 68 to port 67' % int_if,
+            'pass out quick on %s proto udp from port 67 to port 68' % int_if,
+        ])
+
+    else:
+        import pdb;pdb.set_trace()
+
         #('pass out on %s from %s to %s:network' %
         #(int_if, ext_if, int_if)),
 
-        # IPv4 DHCP: Server: 68 Client: 67 need fwd/rev rules
-        'pass in quick on %s proto udp from port 68 to port 67' % int_if,
-        'pass out quick on %s proto udp from port 67 to port 68' % int_if,
-
+    retval.extend([
         # IPv6 DHCP: Server: 547 Client: 546 need fwd/rev rules
         'pass in quick on %s proto udp from port 546 to port 547' % int_if,
         'pass out quick on %s proto udp from port 547 to port 546' % int_if,
@@ -685,7 +705,9 @@ def _format_nat_rule(ext_if, ext_v4_addr, int_if):
         'pass in on %s proto tcp to any port {%s}' % (int_if, tcp_ports),
         'pass in on %s proto udp to any port {%s}' % (int_if, udp_ports),
         'pass inet6 proto tcp to %s:network port {22}' % (int_if)
-    ]
+    ])
+
+    return retval
 
 
 def _format_mgt_rule(mgt_if):

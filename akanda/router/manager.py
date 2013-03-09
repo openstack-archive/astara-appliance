@@ -31,7 +31,7 @@ class Manager(object):
         self.update_interfaces()
         self.update_dhcp()
         self.update_metadata()
-        self.update_ospf_and_radv()
+        self.update_bgp_and_radv()
         self.update_pf()
         self.update_routes()
 
@@ -53,7 +53,7 @@ class Manager(object):
         mgr.save_config(self.config)
         mgr.restart()
 
-    def update_ospf_and_radv(self):
+    def update_bgp_and_radv(self):
         mgr = bird.BirdManager()
         mgr.save_config(self.config, self.if_mgr.generic_mapping)
         mgr.restart()
