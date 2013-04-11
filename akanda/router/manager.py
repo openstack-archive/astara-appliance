@@ -66,7 +66,7 @@ class Manager(object):
 
     def update_routes(self):
         mgr = route.RouteManager()
-        mgr.update_v4_default(self.config)
+        mgr.update_default(self.config)
 
     def get_interfaces(self):
         return self.if_mgr.get_interfaces()

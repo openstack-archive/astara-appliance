@@ -11,7 +11,7 @@ CONF_PATH = '/etc/bird6.conf'
 BIRD = '/usr/local/sbin/bird'
 BIRDC = '/usr/local/bin/birdc'
 DEFAULT_AREA = 0
-DEFAULT_AS = 65000
+DEFAULT_AS = 64512
 
 
 class BirdManager(base.Manager):
