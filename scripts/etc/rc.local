@@ -15,10 +15,8 @@ rm /etc/localtime
 ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
 echo "Enabling forwarding..."
-sed 's/^#net.inet.ip.forw/net.inet.ip.forw/g' /etc/sysctl.conf > /etc/sysctl.temp
-mv /etc/sysctl.temp /etc/sysctl.conf
-sed 's/^#net.inet6.ip6.forw/net.inet6.ip6.forw/g' /etc/sysctl.conf > /etc/sysctl.temp
-mv /etc/sysctl.temp /etc/sysctl.conf
+sysctl -w net.inet.ip.forwarding=1
+sysctl -w net.inet6.ip6.forwarding=1
 
 echo "Configuring http for management interface..."
 /usr/local/bin/akanda-configure-gunicorn
