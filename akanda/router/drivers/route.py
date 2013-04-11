@@ -18,21 +18,19 @@ class RouteManager(base.Manager):
                 continue
 
             for subnet in net.subnets:
-                if subnet.cidr.version == 4 and subnet.gateway_ip:
-                    self._set_default_gateway(subnet.gateway_ip, '0.0.0.0/0')
-                elif subnet.cidr.version == 6 and subnet.gateway_ip:
-                    self._set_default_v6_gateway(subnet.gateway_ip, '::')
+                if subnet.gateway_ip:
+                    self._set_default_gateway(subnet.gateway_ip)
 
-    def _set_default_gateway(self, gateway_ip, prefix):
-        net = '-inet'
-        if ':' in prefix:
-            net += '6'
+    def _set_default_gateway(self, gateway_ip):
+        version = '-inet'
+        if gateway_ip.version == 6:
+            version += '6'
         try:
-            current = self.sudo('get', net, prefix)
+            current = self.sudo('get', version, 'default')
         except:
             current = None
 
         if current and 'no such process' not in current.lower():
-            return self.sudo('change', net, prefix, str(gateway_ip))
+            return self.sudo('change', version, 'default', str(gateway_ip))
         else:
-            return self.sudo('add', net, prefix, str(gateway_ip))
+            return self.sudo('add', version, 'default', str(gateway_ip))
