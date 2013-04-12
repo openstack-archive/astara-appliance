@@ -297,7 +297,6 @@ bogus-priv
 no-hosts
 no-poll
 strict-order
-no-resolv
 dhcp-lease-max=256
 conf-dir=/etc/dnsmasq.d
 EOF

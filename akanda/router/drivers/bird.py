@@ -54,7 +54,7 @@ def _find_external_v4_ip(config):
     if v4_id:
         return v4_id
     else:  # fallback to random value
-        return '0.0.%d.%d' % (random.randInt(0, 255), random.randInt(0, 255))
+        return '0.0.%d.%d' % (random.randint(0, 255), random.randint(0, 255))
 
 
 def _build_global_config(config):
