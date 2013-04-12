@@ -8,8 +8,6 @@ from unittest2 import TestCase
 
 from akanda.router.api import v1
 from akanda.router.drivers.pf import PFManager
-from .fakes import FakePFManager
-from .payloads import routerapi_firewall as payload
 
 
 class FirewallAPITestCase(TestCase):
