@@ -3,7 +3,7 @@ import random
 import textwrap
 
 from akanda.router.drivers import base
-from akanda.router.utils import execute, replace_file
+from akanda.router import utils
 
 
 LOG = logging.getLogger(__name__)
@@ -21,22 +21,21 @@ class BirdManager(base.Manager):
     def save_config(self, config, if_map):
         config_data = build_config(config, if_map)
 
-        replace_file('/tmp/bird6.conf', config_data)
-        execute(['mv', '/tmp/bird6.conf', CONF_PATH], self.root_helper)
+        utils.replace_file('/tmp/bird6.conf', config_data)
+        utils.execute(['mv', '/tmp/bird6.conf', CONF_PATH], self.root_helper)
 
     def restart(self):
         try:
-            execute(['/etc/rc.d/bird', 'stop'], self.root_helper)
-        except:
+            utils.execute(['/etc/rc.d/bird', 'stop'], self.root_helper)
+        except:  #pragma nocover
             # failure is ok here
             pass
-        execute(['/etc/rc.d/bird', 'start'], self.root_helper)
+        utils.execute(['/etc/rc.d/bird', 'start'], self.root_helper)
 
 
 def build_config(config, interface_map):
     config_data = [
-        'log syslog {warning, error, info};',
-        'router id %s;' % _find_external_v4_ip(config),
+        _build_global_config(config),
         _build_kernel_config(),
         _build_device_config(),
         _build_static_config(config),
@@ -58,6 +57,14 @@ def _find_external_v4_ip(config):
         return '0.0.%d.%d' % (random.randInt(0, 255), random.randInt(0, 255))
 
 
+def _build_global_config(config):
+    retval = [
+        'log syslog {warning, error, info};',
+        'router id %s;' % _find_external_v4_ip(config),
+    ]
+    return '\n'.join(retval)
+
+
 def _build_kernel_config():
     config = """
     protocol kernel {
@@ -67,7 +74,8 @@ def _build_kernel_config():
         export all;
     }"""
 
-    return textwrap.dedent(config)
+    return textwrap.dedent(config).strip()
+
 
 
 def _build_device_config():
@@ -77,14 +85,12 @@ def _build_device_config():
 def _build_static_config(config):
     retval = []
     # TODO: setup static routes
-    return '\n'.join(retval).replace('\t','    ')
+    return '\n'.join(retval).replace('\t', '    ')
+
 
 def _build_direct_config(config, interface_map):
-    retval = """
-    protocol direct {
-        interface %s;
-    }""" %  ','.join('"%s"' % i for i in interface_map.values())
-
+    tmpl = "protocol direct {\n    interface %s;\n}"
+    retval = tmpl % ','.join('"%s"' % i for i in interface_map.values())
     return textwrap.dedent(retval)
 
 
@@ -135,7 +141,7 @@ def _build_bgp_config(config, interface_map):
             continue
         retval.extend(
             '\tif net = %s then accept;' % s.cidr
-             for s in net.subnets if s.cidr.version == 6 and s.gateway_ip
+            for s in net.subnets if s.cidr.version == 6 and s.gateway_ip
         )
 
     retval.extend(
@@ -145,7 +151,6 @@ def _build_bgp_config(config, interface_map):
             ''
         ]
     )
-
 
     # build the bgp rule
     for net in config.networks:
@@ -168,7 +173,7 @@ def _build_bgp_config(config, interface_map):
                 '}'
             ])
 
-    return '\n'.join(retval).replace('\t','    ')
+    return '\n'.join(retval).replace('\t', '    ')
 
 
 def _build_radv_config(config, interface_map):
