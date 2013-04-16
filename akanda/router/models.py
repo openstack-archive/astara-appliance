@@ -692,7 +692,8 @@ def _format_nat_rule(ext_if, ext_v4_addr, int_if, has_v4):
         ])
 
     else:
-        import pdb;pdb.set_trace()
+        pass
+        #import pdb;pdb.set_trace()
 
         #('pass out on %s from %s to %s:network' %
         #(int_if, ext_if, int_if)),
@@ -735,8 +736,15 @@ def _format_metadata_rule(int_if):
             'rdr-to 127.0.0.1 port %(local_port)d') % args
 
 def _format_floating_ip(ext_if, floating_ips):
-    return [
+    bin_nat = [
         ('pass on %s from %s to any binat-to %s' %
          (ext_if, fip.fixed_ip, fip.floating_ip))
         for fip in floating_ips
     ]
+
+    bin_nat.extend(
+        ('pass out on %s to %s' % (fip.network.interface.ifname, fip.fixed_ip))
+        for fip in floating_ips
+    )
+
+    return bin_nat

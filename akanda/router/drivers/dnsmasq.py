@@ -3,7 +3,7 @@ import os
 import time
 
 from akanda.router.drivers import base
-from akanda.router.utils import execute, replace_file
+from akanda.router import utils
 
 
 LOG = logging.getLogger(__name__)
@@ -23,8 +23,8 @@ class DHCPManager(base.Manager):
             config_data = self._build_disabled_config(ifname)
 
         file_path = os.path.join(CONF_DIR, '%s.conf' % ifname)
-        replace_file('/tmp/dnsmasq.conf', config_data)
-        execute(['mv', '/tmp/dnsmasq.conf', file_path], self.root_helper)
+        utils.replace_file('/tmp/dnsmasq.conf', config_data)
+        utils.execute(['mv', '/tmp/dnsmasq.conf', file_path], self.root_helper)
 
     def _build_disabled_config(self, ifname):
         return 'except-interface=%s\n' % ifname
@@ -73,7 +73,7 @@ class DHCPManager(base.Manager):
 
     def restart(self):
         try:
-            execute(['/etc/rc.d/dnsmasq', 'stop'], self.root_helper)
+            utils.execute(['/etc/rc.d/dnsmasq', 'stop'], self.root_helper)
         except:
             pass
 
@@ -82,7 +82,7 @@ class DHCPManager(base.Manager):
         while remaining:
             remaining -= 1
             try:
-                execute(['/etc/rc.d/dnsmasq', 'start'], self.root_helper)
+                utils.execute(['/etc/rc.d/dnsmasq', 'start'], self.root_helper)
                 return
             except Exception:
                 if remaining <= 0:
