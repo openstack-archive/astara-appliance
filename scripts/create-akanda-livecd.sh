@@ -43,7 +43,6 @@ HERE=`pwd`
 # Mirror to use to download the OpenBSD files
 #BASEURL=http://ftp-stud.fht-esslingen.de/pub/OpenBSD
 BASEURL=http://openbsd.mirrors.pair.com
-BASEURL=http://192.168.57.254:8000/OpenBSD
 MIRROR=$BASEURL/$MAJ.$MIN/$ARCH
 PKG_PATH=$BASEURL/$MAJ.$MIN/packages/$ARCH
 DNS=8.8.8.8            # Google DNS Server to use in live cd (change accordingly)
