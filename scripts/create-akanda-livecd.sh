@@ -136,6 +136,7 @@ function cleanup {
 }
 
 function makedeps {
+    echo "[*] Installing dependencies for make"
     pkg_add -i bison
     pkg_add -i m4
     pkg_add -i gmake
@@ -223,6 +224,7 @@ cat > $WDIR/root/.profile << EOF
 # Workaround for missing libraries:
 export LD_LIBRARY_PATH=/usr/local/lib
 EOF
+mkdir -p $WDIR/etc/profile
 cat > $WDIR/etc/profile/.cshrc << EOF
 # Workaround for missing libraries:
 export LD_LIBRARY_PATH=/usr/local/lib
@@ -365,8 +367,8 @@ cp $HERE/etc/rc.local $WDIR/etc/rc.local
 #    chroot $WDIR
 
     echo "[*] Deleting sensitive information..."
-    cd $WDIR && rm -i root/{.history,.viminfo}
-    cd $WDIR && rm -i home/*/{.history,.viminfo}
+    cd $WDIR && rm -f root/{.history,.viminfo}
+    cd $WDIR && rm -f home/*/{.history,.viminfo}
 
     echo "[*] Empty log files..."
     for log_file in $(find $WDIR/var/log -type f)
@@ -378,12 +380,13 @@ cp $HERE/etc/rc.local $WDIR/etc/rc.local
     rm -rf $WDIR/usr/{src,ports,xenocara}/*
 
     echo "[*] Removing ssh host keys..."
-    rm $WDIR/etc/ssh/*key*
+    rm -f $WDIR/etc/ssh/*key*
 
     echo "[*] Saving creation timestamp..."
     date > $WDIR/etc/livecd-release
 
     echo "[*] Saving default timezone..."
+    rm -f $WDIR/etc/localtime
     ln -s /usr/share/zoneinfo/$TZ $WDIR/etc/localtime
 
 
