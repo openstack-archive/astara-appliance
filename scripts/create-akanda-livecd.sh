@@ -248,11 +248,11 @@ echo "[*] Setting default password..."
 cp $HERE/etc/master.passwd $WDIR/etc/master.passwd
 cp $HERE/etc/passwd $WDIR/etc/passwd
 cp $HERE/etc/group $WDIR/etc/group
-chroot $WDIR passwd root
+chroot $WDIR passwd root || exit 1
 
 echo "[*] Installing additional packages..."
 cat > $WDIR/tmp/packages.sh <<EOF
-#!/bin/sh
+#!/bin/sh -e
 export PKG_PATH=$(echo $PKG_PATH | sed 's#\ ##g')
 for i in $PACKAGES
 do
@@ -261,7 +261,7 @@ done
 EOF
 
 chmod +x $WDIR/tmp/packages.sh
-chroot $WDIR /tmp/packages.sh
+chroot $WDIR /tmp/packages.sh || exit 1
 rm $WDIR/tmp/packages.sh
 
 echo "[*] Disabling services...."
@@ -305,7 +305,7 @@ EOF
 
 echo "[*] Installing akanda software..."
 cat > $WDIR/tmp/akanda.sh <<EOF
-#!/bin/sh
+#!/bin/sh -e
 export LD_LIBRARY_PATH=/usr/local/lib
 
 ln -sf /usr/local/bin/python2.7 /usr/local/bin/python
@@ -334,7 +334,7 @@ cd $HERE
 
 
 chmod +x $WDIR/tmp/akanda.sh
-chroot $WDIR /tmp/akanda.sh
+chroot $WDIR /tmp/akanda.sh || exit 1
 rm $WDIR/tmp/akanda.sh
 
 rm -rf $WDIR/tmp
