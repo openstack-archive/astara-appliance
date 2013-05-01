@@ -43,7 +43,6 @@ HERE=`pwd`
 # Mirror to use to download the OpenBSD files
 #BASEURL=http://ftp-stud.fht-esslingen.de/pub/OpenBSD
 BASEURL=http://openbsd.mirrors.pair.com
-BASEURL=http://192.168.57.254:8000/OpenBSD
 MIRROR=$BASEURL/$MAJ.$MIN/$ARCH
 PKG_PATH=$BASEURL/$MAJ.$MIN/packages/$ARCH
 DNS=8.8.8.8            # Google DNS Server to use in live cd (change accordingly)
@@ -137,6 +136,7 @@ function cleanup {
 }
 
 function makedeps {
+    echo "[*] Installing dependencies for make"
     pkg_add -i bison
     pkg_add -i m4
     pkg_add -i gmake
@@ -224,6 +224,7 @@ cat > $WDIR/root/.profile << EOF
 # Workaround for missing libraries:
 export LD_LIBRARY_PATH=/usr/local/lib
 EOF
+mkdir -p $WDIR/etc/profile
 cat > $WDIR/etc/profile/.cshrc << EOF
 # Workaround for missing libraries:
 export LD_LIBRARY_PATH=/usr/local/lib
@@ -247,11 +248,11 @@ echo "[*] Setting default password..."
 cp $HERE/etc/master.passwd $WDIR/etc/master.passwd
 cp $HERE/etc/passwd $WDIR/etc/passwd
 cp $HERE/etc/group $WDIR/etc/group
-chroot $WDIR passwd root
+chroot $WDIR passwd root || exit 1
 
 echo "[*] Installing additional packages..."
 cat > $WDIR/tmp/packages.sh <<EOF
-#!/bin/sh
+#!/bin/sh -e
 export PKG_PATH=$(echo $PKG_PATH | sed 's#\ ##g')
 for i in $PACKAGES
 do
@@ -260,7 +261,7 @@ done
 EOF
 
 chmod +x $WDIR/tmp/packages.sh
-chroot $WDIR /tmp/packages.sh
+chroot $WDIR /tmp/packages.sh || exit 1
 rm $WDIR/tmp/packages.sh
 
 echo "[*] Disabling services...."
@@ -304,7 +305,7 @@ EOF
 
 echo "[*] Installing akanda software..."
 cat > $WDIR/tmp/akanda.sh <<EOF
-#!/bin/sh
+#!/bin/sh -e
 export LD_LIBRARY_PATH=/usr/local/lib
 
 ln -sf /usr/local/bin/python2.7 /usr/local/bin/python
@@ -333,7 +334,7 @@ cd $HERE
 
 
 chmod +x $WDIR/tmp/akanda.sh
-chroot $WDIR /tmp/akanda.sh
+chroot $WDIR /tmp/akanda.sh || exit 1
 rm $WDIR/tmp/akanda.sh
 
 rm -rf $WDIR/tmp
@@ -366,8 +367,8 @@ cp $HERE/etc/rc.local $WDIR/etc/rc.local
 #    chroot $WDIR
 
     echo "[*] Deleting sensitive information..."
-    cd $WDIR && rm -i root/{.history,.viminfo}
-    cd $WDIR && rm -i home/*/{.history,.viminfo}
+    cd $WDIR && rm -f root/{.history,.viminfo}
+    cd $WDIR && rm -f home/*/{.history,.viminfo}
 
     echo "[*] Empty log files..."
     for log_file in $(find $WDIR/var/log -type f)
@@ -379,12 +380,13 @@ cp $HERE/etc/rc.local $WDIR/etc/rc.local
     rm -rf $WDIR/usr/{src,ports,xenocara}/*
 
     echo "[*] Removing ssh host keys..."
-    rm $WDIR/etc/ssh/*key*
+    rm -f $WDIR/etc/ssh/*key*
 
     echo "[*] Saving creation timestamp..."
     date > $WDIR/etc/livecd-release
 
     echo "[*] Saving default timezone..."
+    rm -f $WDIR/etc/localtime
     ln -s /usr/share/zoneinfo/$TZ $WDIR/etc/localtime
 
 
