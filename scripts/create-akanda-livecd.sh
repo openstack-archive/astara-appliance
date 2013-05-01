@@ -297,7 +297,6 @@ bogus-priv
 no-hosts
 no-poll
 strict-order
-no-resolv
 dhcp-lease-max=256
 conf-dir=/etc/dnsmasq.d
 EOF
@@ -316,11 +315,11 @@ python setup.py install
 cd /tmp/eventlet-0.9.17
 python setup.py install
 
-cd /tmp/router_appliance && python setup.py install
+cd /tmp/akanda-appliance && python setup.py install
 
 EOF
 
-cp -r $HERE/../../router_appliance/ $WDIR/tmp
+cp -r $HERE/../../akanda-appliance/ $WDIR/tmp
 
 # build eventlet bundle so that we do not need CC on router image
 cd $WDIR/tmp

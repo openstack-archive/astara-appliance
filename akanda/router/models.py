@@ -31,6 +31,7 @@ class Interface(ModelBase):
         self.mtu = mtu
         self.media = media
         self.extra_params = extra_params
+        self._aliases = []
 
     def __repr__(self):
         return '<Interface: %s %s>' % (self.ifname,
@@ -40,7 +41,7 @@ class Interface(ModelBase):
         """Check model equality only on limit fields."""
         return (type(self) == type(other) and
                 self.ifname == other.ifname and
-                self.addresses == other.addresses and
+                self.all_addresses == other.all_addresses and
                 self.description == other.description and
                 self.mtu == other.mtu and
                 self.groups == other.groups)
@@ -67,6 +68,18 @@ class Interface(ModelBase):
         self._addresses = [netaddr.IPNetwork(a) for a in value]
 
     @property
+    def aliases(self):
+        return self._aliases
+
+    @aliases.setter
+    def aliases(self, value):
+        self._aliases = [netaddr.IPNetwork(a) for a in value]
+
+    @property
+    def all_addresses(self):
+        return self._addresses + self._aliases
+
+    @property
     def is_up(self):
         if self.extra_params.get('state', '').lower() == 'up':
             return 'UP'
@@ -74,7 +87,14 @@ class Interface(ModelBase):
 
     @property
     def first_v4(self):
-        addrs = sorted(a.ip for a in self._addresses if a.version == 4)
+        return self._first_addr_for_version(4)
+
+    @property
+    def first_v6(self):
+        return self._first_addr_for_version(6)
+
+    def _first_addr_for_version(self, version):
+        addrs = sorted(a.ip for a in self._addresses if a.version == version)
 
         if addrs:
             return addrs[0]
@@ -98,13 +118,14 @@ class Interface(ModelBase):
 class FilterRule(ModelBase):
     """
     """
-    def __init__(self, action=None, interface=None, family=None,
-                 protocol=None, source=None, source_port=None,
+    def __init__(self, action=None, direction=None, interface=None,
+                 family=None, protocol=None, source=None, source_port=None,
                  destination_interface=None,
                  destination=None, destination_port=None,
                  redirect=None, redirect_port=None):
 
         self.action = action
+        self.direction = direction
         self.interface = interface
         self.family = family
         self.protocol = protocol
@@ -126,6 +147,13 @@ class FilterRule(ModelBase):
         elif name in ('source', 'destination'):
             if '/' in value:
                 value = netaddr.IPNetwork(value)
+            elif value.lower() == 'any':
+                value = None  # any is the default so conver to None
+        elif name == 'direction':
+            if value not in ('in', 'out'):
+                raise ValueError(
+                    "Direction must be 'in' or 'out' not '%s'" % value
+                )
         elif name == 'redirect':
             value = netaddr.IPAddress(value)
         elif name.endswith('_port'):
@@ -144,6 +172,8 @@ class FilterRule(ModelBase):
     @property
     def pf_rule(self):
         retval = [self.action]
+        if self.direction:
+            retval.append(self.direction)
         if self.interface:
             retval.append('on %s' % self.interface)
         if self.family:
@@ -153,7 +183,7 @@ class FilterRule(ModelBase):
         if self.source or self.source_port:
             retval.append('from')
             if self.source:
-                retval.append(str(self.source))
+                retval.append(self._format_ip_or_table(self.source))
             if self.source_port:
                 retval.append('port %s' % self.source_port)
         if (self.destination_interface
@@ -163,7 +193,7 @@ class FilterRule(ModelBase):
             if self.destination_interface:
                 retval.append(self.destination_interface)
             if self.destination:
-                retval.append(str(self.destination))
+                retval.append(self._format_ip_or_table(self.destination))
             if self.destination_port:
                 retval.append('port %s' % self.destination_port)
         if self.redirect or self.redirect_port:
@@ -177,6 +207,13 @@ class FilterRule(ModelBase):
     @classmethod
     def from_dict(cls, d):
         return FilterRule(**d)
+
+    @staticmethod
+    def _format_ip_or_table(obj):
+        if isinstance(obj, netaddr.IPNetwork):
+            return str(obj)
+        else:  # must be table name
+            return '<%s>' % obj
 
 
 class Anchor(ModelBase):
@@ -212,7 +249,9 @@ class AddressBookEntry(ModelBase):
 
     @property
     def pf_rule(self):
-        return 'table <%s> {%s}' % (self.name, ', '.join(map(str, self.cidrs)))
+        return 'table <%s> persist {%s}' % (
+            self.name, ', '.join(map(str, self.cidrs))
+        )
 
     def external_pf_rule(self, base_dir):
         path = os.path.abspath(os.path.join(base_dir, self.name))
@@ -241,6 +280,50 @@ class Allocation(ModelBase):
             d['ip_addresses'],
             d['hostname'],
             d['device_id'],
+        )
+
+
+class FloatingIP(ModelBase):
+    def __init__(self, floating_ip, fixed_ip):
+        self.floating_ip = floating_ip
+        self.fixed_ip = fixed_ip
+        self.network = None
+
+    @property
+    def floating_ip(self):
+        return self._floating_ip
+
+    @floating_ip.setter
+    def floating_ip(self, value):
+        self._floating_ip = netaddr.IPAddress(value)
+
+    @property
+    def fixed_ip(self):
+        return self._fixed_ip
+
+    @fixed_ip.setter
+    def fixed_ip(self, value):
+        self._fixed_ip = netaddr.IPAddress(value)
+
+    @property
+    def pf_rule(self):
+        if self.network is None:
+            return ''
+        else:
+            return (
+                'pass on %s from %s to any binat-to %s' %
+                (
+                    self.network.interface.ifname,
+                    self.fixed_ip,
+                    self.floating_ip
+                )
+            )
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['floating_ip'],
+            d['fixed_ip']
         )
 
 
@@ -357,6 +440,7 @@ class Network(ModelBase):
         self.v6_conf_service = v6_conf_service
         self.address_allocations = address_allocations or []
         self.subnets = subnets or []
+        self.floating_ips = []
 
     @property
     def is_tenant_network(self):
@@ -454,6 +538,13 @@ class Configuration(ModelBase):
             Label(name, cidr) for name, cidr in
             conf_dict.get('labels', {}).iteritems()]
 
+        self.floating_ips = [
+            FloatingIP.from_dict(fip)
+            for fip in conf_dict.get('floating_ips', [])
+        ]
+
+        self._attach_floating_ips(self.floating_ips)
+
     def validate(self):
         """Validate anchor rules to ensure that ifaces and tables exist."""
         errors = []
@@ -475,6 +566,33 @@ class Configuration(ModelBase):
                         errors.append((rule, reason))
 
         return ["'%s' %s" % e for e in errors]
+
+    def _attach_floating_ips(self, floating_ips):
+        ext_cidr_map = {}
+        int_cidr_map = {}
+
+        for network in self.networks:
+            if network.is_external_network:
+                m = ext_cidr_map
+            elif network.is_internal_network:
+                m = int_cidr_map
+            else:
+                continue
+            m.update((s.cidr, network) for s in network.subnets)
+
+        for fip in floating_ips:
+            # add address to external interface
+            for ext_cidr, net in ext_cidr_map.items():
+                if fip.floating_ip in ext_cidr:
+                    addr = '%s/%s' % (fip.floating_ip, ext_cidr.prefixlen)
+                    net.interface.aliases += [netaddr.IPNetwork(addr)]
+                    net.floating_ips.append(fip)
+                    break
+
+            # add to internal
+            for int_cidr, net in int_cidr_map.items():
+                if fip.fixed_ip in int_cidr:
+                    fip.network = net
 
     def to_dict(self):
         fields = ('networks', 'address_book', 'anchors', 'static_routes')
@@ -504,6 +622,7 @@ class Configuration(ModelBase):
         for n in self.networks:
             if n.network_type == Network.TYPE_EXTERNAL:
                 ext_if = n.interface.ifname
+                ext_v4_addr = n.interface.first_v4
                 break
 
         # add in nat and management rules
@@ -513,7 +632,13 @@ class Configuration(ModelBase):
             elif network.network_type == Network.TYPE_INTERNAL:
                 if ext_if:
                     rv.extend(
-                        _format_nat_rule(ext_if, network.interface.ifname))
+                        _format_nat_rule(
+                            ext_if,
+                            ext_v4_addr,
+                            network.interface.ifname,
+                            network.interface.first_v4
+                        )
+                    )
             elif network.network_type == Network.TYPE_MANAGEMENT:
                 rv.extend(_format_mgt_rule(network.interface.ifname))
             else:
@@ -529,30 +654,62 @@ class Configuration(ModelBase):
         # add counters
         rv.extend(l.pf_rule for l in self.labels)
 
+        # add floating ip
+        for network in self.networks:
+            rv.extend(
+                _format_floating_ip(
+                    network.interface.ifname,
+                    network.floating_ips
+                )
+            )
+
         return '\n'.join(rv) + '\n'
 
 
 def _format_ext_rule(ext_if):
-    return [('pass on %s inet6 proto ospf' % ext_if)]
+    return [
+        ('pass on %s inet6 proto tcp from %s:network to %s:network port 179' %
+            (ext_if, ext_if, ext_if)),
+        ('pass out quick on %s proto udp to any port %d' %
+            (ext_if, defaults.DNS))
+    ]
 
 
-def _format_nat_rule(ext_if, int_if):
+def _format_nat_rule(ext_if, ext_v4_addr, int_if, has_v4):
     tcp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_TCP_PORTS)
     udp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_UDP_PORTS)
 
-    return [
-        _format_metadata_rule(int_if),
-        ('pass out on %s from %s:network to any nat-to %s' %
-        (ext_if, int_if, ext_if)),
+    retval = []
 
-        # IPv4 DHCP: Server: 68 Client: 67
-        'pass quick on %s proto udp from port 68 to port 67' % int_if,
+    if has_v4:
+        retval.extend([
+            _format_metadata_rule(int_if),
+            ('pass out on %s from %s:network to any nat-to %s' %
+            (ext_if, int_if, ext_v4_addr)),
 
-        # IPv6 DHCP: Server: 547 Client: 546
-        'pass quick on %s proto udp from port 546 to port 547' % int_if,
+            # IPv4 DHCP: Server: 68 Client: 67 need fwd/rev rules
+            'pass in quick on %s proto udp from port 68 to port 67' % int_if,
+            'pass out quick on %s proto udp from port 67 to port 68' % int_if,
+        ])
+
+    else:
+        pass
+        #import pdb;pdb.set_trace()
+
+        #('pass out on %s from %s to %s:network' %
+        #(int_if, ext_if, int_if)),
+
+    retval.extend([
+        # IPv6 DHCP: Server: 547 Client: 546 need fwd/rev rules
+        'pass in quick on %s proto udp from port 546 to port 547' % int_if,
+        'pass out quick on %s proto udp from port 547 to port 546' % int_if,
+
         'pass in on %s proto tcp to any port {%s}' % (int_if, tcp_ports),
-        'pass in on %s proto udp to any port {%s}' % (int_if, udp_ports)
-    ]
+        'pass in on %s proto udp to any port {%s}' % (int_if, udp_ports),
+        'pass inet6 proto tcp to %s:network port {22}' % (int_if)
+    ])
+
+    return retval
 
 
 def _format_mgt_rule(mgt_if):
@@ -578,3 +735,18 @@ def _format_metadata_rule(int_if):
 
     return ('pass in quick on %(ifname)s proto tcp to %(dest_addr)s port http '
             'rdr-to 127.0.0.1 port %(local_port)d') % args
+
+
+def _format_floating_ip(ext_if, floating_ips):
+    bin_nat = [
+        ('pass on %s from %s to any binat-to %s' %
+         (ext_if, fip.fixed_ip, fip.floating_ip))
+        for fip in floating_ips
+    ]
+
+    bin_nat.extend(
+        ('pass out on %s to %s' % (fip.network.interface.ifname, fip.fixed_ip))
+        for fip in floating_ips
+    )
+
+    return bin_nat

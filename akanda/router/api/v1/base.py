@@ -7,15 +7,9 @@ from akanda.router import utils
 blueprint = utils.blueprint_factory(__name__)
 
 
-@blueprint.before_request
-def attach_config():
-    #Use for attaching config prior to starting
-    pass
-
-
 @blueprint.route('/')
 def welcome():
     '''
     Show welcome message
     '''
-    return 'Welcome to the Akanda appliance'
+    return 'Akanda appliance API service is active'

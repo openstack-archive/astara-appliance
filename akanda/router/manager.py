@@ -31,7 +31,7 @@ class Manager(object):
         self.update_interfaces()
         self.update_dhcp()
         self.update_metadata()
-        self.update_ospf_and_radv()
+        self.update_bgp_and_radv()
         self.update_pf()
         self.update_routes()
 
@@ -53,7 +53,7 @@ class Manager(object):
         mgr.save_config(self.config)
         mgr.restart()
 
-    def update_ospf_and_radv(self):
+    def update_bgp_and_radv(self):
         mgr = bird.BirdManager()
         mgr.save_config(self.config, self.if_mgr.generic_mapping)
         mgr.restart()
@@ -66,7 +66,7 @@ class Manager(object):
 
     def update_routes(self):
         mgr = route.RouteManager()
-        mgr.update_v4_default(self.config)
+        mgr.update_default(self.config)
 
     def get_interfaces(self):
         return self.if_mgr.get_interfaces()
@@ -78,13 +78,11 @@ class Manager(object):
         rules = []
 
         rules.extend(
-            ['%s = "%s"' % i for i in self.if_mgr.generic_mapping.items()])
+            '%s = "%s"' % i for i in self.if_mgr.generic_mapping.items()
+        )
 
         rules.append(re.sub('([\s!])(ge\d+([\s:]|$))', r'\1$\2', virt_data))
         return '\n'.join(rules)
-
-    def _set_default_v4_gateway(self):
-        pass
 
 
 class ManagerProxy(object):

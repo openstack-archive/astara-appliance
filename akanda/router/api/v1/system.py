@@ -11,11 +11,6 @@ from akanda.router.manager import manager
 blueprint = utils.blueprint_factory(__name__)
 
 
-@blueprint.route('/check_route')
-def check_route():
-    return Response("you got it! *** " + __name__ + " *** " + __file__)
-
-
 @blueprint.route('/interface/<ifname>')
 @utils.json_response
 def get_interface(ifname):
@@ -39,7 +34,6 @@ def get_interfaces():
 @utils.json_response
 def get_configuration():
     """Return the current router configuration."""
-
     return dict(configuration=manager.config)
 
 

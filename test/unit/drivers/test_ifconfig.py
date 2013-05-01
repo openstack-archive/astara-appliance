@@ -302,8 +302,15 @@ class IfconfigTestCase(TestCase):
             mgr = ifconfig.InterfaceManager()
             mgr._update_addresses('em0', iface, old_iface)
 
-            us.assert_called_once_with('em0', iface, old_iface, 'addresses',
-                                       mock.ANY, mock.ANY, mock.ANY)
+            us.assert_called_once_with(
+                'em0',
+                iface,
+                old_iface,
+                'all_addresses',
+                mock.ANY,
+                mock.ANY,
+                mock.ANY
+            )
 
     def test_update_set(self):
         iface = mock.Mock()

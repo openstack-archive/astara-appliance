@@ -1,86 +1,68 @@
 """
 Base classes for Router API tests.
 """
-import json
-from unittest import TestCase
-
 import flask
-from mock import patch
+import json
+import mock
+from unittest2 import TestCase
 
 from akanda.router.api import v1
 from akanda.router.drivers.pf import PFManager
-from .fakes import FakePFManager
-from .payloads import routerapi_firewall as payload
 
 
 class FirewallAPITestCase(TestCase):
     """
     """
     def setUp(self):
+        pf_mgr_patch = mock.patch.object(v1.firewall.pf, 'PFManager')
+        self.pf_mgr = pf_mgr_patch.start().return_value
+        self.addCleanup(mock.patch.stopall)
         self.app = flask.Flask('firewall_test')
         self.app.register_blueprint(v1.firewall.blueprint)
         self.test_app = self.app.test_client()
 
-    @patch.object(PFManager, 'get_rules', FakePFManager.fake_get_rules)
+    def _test_passthrough_helper(self, resource_name, method_name,
+                                 response_code=200):
+        mock_method = getattr(self.pf_mgr, method_name)
+        mock_method.return_value = 'the_value'
+        result = self.test_app.get('/v1/firewall/%s' % resource_name)
+        self.assertEqual(response_code, result.status_code)
+        self.assertTrue(mock_method.called)
+        self.assertEqual(result.data, 'the_value')
+
     def test_get_rules(self):
-        result = self.test_app.get('/v1/firewall/rules').data.strip()
-        expected = payload.sample_pfctl_sr.strip()
-        self.assertEqual(result, expected)
+        self._test_passthrough_helper('rules', 'get_rules')
 
-    @patch.object(PFManager, 'get_states', FakePFManager.fake_get_states)
     def test_get_states(self):
-        result = self.test_app.get('/v1/firewall/states').data.strip()
-        expected = payload.sample_pfctl_ss.strip()
-        self.assertEqual(result, expected)
+        self._test_passthrough_helper('states', 'get_states')
 
-    @patch.object(PFManager, 'get_anchors', FakePFManager.fake_get_anchors)
     def test_get_anchors(self):
-        result = self.test_app.get('/v1/firewall/anchors').data.strip()
-        expected = payload.sample_pfctl_sA.strip()
-        self.assertEqual(result, expected)
+        self._test_passthrough_helper('anchors', 'get_anchors')
 
-    @patch.object(PFManager, 'get_sources', FakePFManager.fake_get_sources)
     def test_get_sources(self):
-        result = self.test_app.get('/v1/firewall/sources').data.strip()
-        expected = payload.sample_pfctl_sS.strip()
-        self.assertEqual(result, expected)
+        self._test_passthrough_helper('sources', 'get_sources')
 
-    @patch.object(PFManager, 'get_info', FakePFManager.fake_get_info)
     def test_get_info(self):
-        result = self.test_app.get('/v1/firewall/info').data.strip()
-        expected = payload.sample_pfctl_si.strip()
-        self.assertEqual(result, expected)
+        self._test_passthrough_helper('info', 'get_info')
 
-    @patch.object(PFManager, 'get_timeouts', FakePFManager.fake_get_timeouts)
     def test_get_timeouts(self):
-        result = self.test_app.get('/v1/firewall/timeouts').data.strip()
-        expected = payload.sample_pfctl_st.strip()
-        self.assertEqual(result, expected)
+        self._test_passthrough_helper('timeouts', 'get_timeouts')
 
-    @patch.object(PFManager, 'get_labels', FakePFManager.fake_get_labels)
-    def test_get_labels(self):
-        result = self.test_app.get('/v1/firewall/labels').data.strip()
-        expected = {
-            'labels': {
-                'name': 'test_label',
-                'total_packets': 10,
-                'total_bytes': 256,
-                'packets_in': 5,
-                'bytes_in': 128,
-                'packets_out': 50,
-                'bytes_out': 128
-            }
-        }
-        self.assertEqual(json.loads(result), expected)
-
-    @patch.object(PFManager, 'get_tables', FakePFManager.fake_get_tables)
     def test_get_tables(self):
-        result = self.test_app.get('/v1/firewall/tables').data.strip()
-        expected = payload.sample_pfctl_sT.strip()
-        self.assertEqual(result, expected)
+        self._test_passthrough_helper('tables', 'get_tables')
 
-    @patch.object(PFManager, 'get_memory', FakePFManager.fake_get_memory)
     def test_get_memory(self):
-        result = self.test_app.get('/v1/firewall/memory').data.strip()
-        expected = payload.sample_pfctl_sm.strip()
-        self.assertEqual(result, expected)
+        self._test_passthrough_helper('memory', 'get_memory')
+
+    def test_get_labels(self, reset_flag=False):
+        expected = {'labels': 'thelabels'}
+        self.pf_mgr.get_labels.return_value = 'thelabels'
+        method = 'post' if reset_flag else 'get'
+        args = (True, ) if reset_flag else ()
+        result = getattr(self.test_app, method)('/v1/firewall/labels')
+        self.assertEqual(result.status_code, 200)
+        self.pf_mgr.get_labels.assert_called_once_with(*args)
+        self.assertEqual(json.loads(result.data), expected)
+
+    def test_get_labels_reset(self):
+        self.test_get_labels(True)

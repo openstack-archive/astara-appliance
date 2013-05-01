@@ -4,13 +4,10 @@ Base classes for System Router API tests.
 from unittest import TestCase
 
 import flask
-from mock import patch
+import json
+import mock
 
 from akanda.router.api import v1
-from akanda.router.drivers.ifconfig import InterfaceManager as IFManager
-
-from .fakes import FakeIFManager
-from .payloads import routerapi_system as payload
 
 
 class SystemAPITestCase(TestCase):
@@ -24,15 +21,77 @@ class SystemAPITestCase(TestCase):
         self.app.register_blueprint(v1.system.blueprint)
         self.test_app = self.app.test_client()
 
-    @patch.object(IFManager, 'get_interface', FakeIFManager.fake_get_interface)
     def test_get_interface(self):
-        result = self.test_app.get('/v1/system/interface/ge1')
-        expected = payload.sample_system_interface
-        self.assertEqual(result.data, expected)
+        with mock.patch.object(v1.system.manager, 'get_interface') as get_if:
+            get_if.return_value = 'ge1'
+            result = self.test_app.get('/v1/system/interface/ge1')
+            get_if.assert_called_once_with('ge1')
+            self.assertEqual(
+                json.loads(result.data),
+                {'interface': 'ge1'}
+            )
 
-    @patch.object(
-        IFManager, 'get_interfaces', FakeIFManager.fake_get_interfaces)
     def test_get_interfaces(self):
-        result = self.test_app.get('/v1/system/interfaces')
-        expected = payload.sample_system_interfaces
-        self.assertEqual(result.data, expected)
+        with mock.patch.object(v1.system.manager, 'get_interfaces') as get_ifs:
+            get_ifs.return_value = ['ge0', 'ge1']
+            result = self.test_app.get('/v1/system/interfaces')
+            get_ifs.assert_called_once_with()
+            self.assertEqual(
+                json.loads(result.data),
+                {'interfaces': ['ge0', 'ge1']}
+            )
+
+    def test_get_configuration(self):
+        result = self.test_app.get('/v1/system/config')
+        expected = {
+            'configuration': {
+                'address_book': {},
+                'networks': [],
+                'static_routes': [],
+                'anchors': []
+            }
+        }
+        self.assertEqual(json.loads(result.data), expected)
+
+    def test_put_configuration_returns_405(self):
+        result = self.test_app.put(
+            '/v1/system/config',
+            data='plain text',
+            content_type='text/plain'
+        )
+        self.assertEqual(result.status_code, 415)
+
+    def test_put_configuration_returns_422_for_ValueError(self):
+        with mock.patch('akanda.router.models.Configuration') as Config:
+            Config.side_effect = ValueError
+            result = self.test_app.put(
+                '/v1/system/config',
+                data=json.dumps({'networks': [{}]}),  # malformed dict
+                content_type='application/json'
+            )
+            self.assertEqual(result.status_code, 422)
+
+    def test_put_configuration_returns_422_for_errors(self):
+        with mock.patch('akanda.router.models.Configuration') as Config:
+            Config.return_value.validate.return_value = ['error1']
+            result = self.test_app.put(
+                '/v1/system/config',
+                data=json.dumps({'networks': [{}]}),  # malformed dict
+                content_type='application/json'
+            )
+            self.assertEqual(result.status_code, 422)
+            self.assertEqual(
+                result.data,
+                'The config failed to validate.\nerror1'
+            )
+
+    def test_put_configuration_returns_200(self):
+        with mock.patch.object(v1.system.manager, 'update_config') as update:
+            result = self.test_app.put(
+                '/v1/system/config',
+                data=json.dumps({}),
+                content_type='application/json'
+            )
+
+            self.assertEqual(result.status_code, 200)
+            self.assertTrue(json.loads(result.data))
