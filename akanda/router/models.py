@@ -668,9 +668,10 @@ class Configuration(ModelBase):
 
 def _format_ext_rule(ext_if):
     return [
-         ('pass on %s inet6 proto tcp from %s:network to %s:network port 179' %
-         (ext_if, ext_if, ext_if)),
-        'pass out quick on %s proto udp to any port %d' % (ext_if, defaults.DNS)
+        ('pass on %s inet6 proto tcp from %s:network to %s:network port 179' %
+            (ext_if, ext_if, ext_if)),
+        ('pass out quick on %s proto udp to any port %d' %
+            (ext_if, defaults.DNS))
     ]
 
 
@@ -734,6 +735,7 @@ def _format_metadata_rule(int_if):
 
     return ('pass in quick on %(ifname)s proto tcp to %(dest_addr)s port http '
             'rdr-to 127.0.0.1 port %(local_port)d') % args
+
 
 def _format_floating_ip(ext_if, floating_ips):
     bin_nat = [

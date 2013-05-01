@@ -27,7 +27,7 @@ class BirdManager(base.Manager):
     def restart(self):
         try:
             utils.execute(['/etc/rc.d/bird', 'stop'], self.root_helper)
-        except:  #pragma nocover
+        except:  # pragma no cover
             # failure is ok here
             pass
         utils.execute(['/etc/rc.d/bird', 'start'], self.root_helper)
@@ -75,7 +75,6 @@ def _build_kernel_config():
     }"""
 
     return textwrap.dedent(config).strip()
-
 
 
 def _build_device_config():

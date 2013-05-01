@@ -76,8 +76,8 @@ class InterfaceModelTestCase(TestCase):
         self.assertTrue(iface.is_up)
 
     def test_aliases(self):
-        addr1 =  netaddr.IPNetwork('192.168.1.1/24')
-        addr2 =  netaddr.IPNetwork('192.168.1.2/24')
+        addr1 = netaddr.IPNetwork('192.168.1.1/24')
+        addr2 = netaddr.IPNetwork('192.168.1.2/24')
 
         iface = models.Interface(ifname='ge0', addresses=[str(addr1)])
         iface.aliases = [addr2]
@@ -599,7 +599,8 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net]},
             [
-                'pass on ge0 inet6 proto tcp from ge0:network to ge0:network port 179',
+                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
+                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
                  'http rdr-to 127.0.0.1 port 9601'),
@@ -625,7 +626,8 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net]},
             [
-                'pass on ge0 inet6 proto tcp from ge0:network to ge0:network port 179',
+                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
+                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
                  'http rdr-to 127.0.0.1 port 9601'),
@@ -644,7 +646,8 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net]},
             [
-                'pass on ge0 inet6 proto tcp from ge0:network to ge0:network port 179',
+                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
+                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 'pass quick proto tcp from ge1:network to ge1 port { 22 }',
                 'pass quick proto tcp from ge1 to ge1:network port 9697',
@@ -661,7 +664,8 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net], 'address_book': ab},
             [
-                'pass on ge0 inet6 proto tcp from ge0:network to ge0:network port 179',
+                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
+                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 'table <foo> persist {192.168.1.1/24}'
             ]
@@ -678,7 +682,8 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net], 'anchors': [anchor]},
             [
-                'pass on ge0 inet6 proto tcp from ge0:network to ge0:network port 179',
+                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
+                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 'anchor foo {\npass proto tcp to port 22\n}'
             ]
@@ -693,7 +698,8 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net], 'labels': label},
             [
-                'pass on ge0 inet6 proto tcp from ge0:network to ge0:network port 179',
+                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
+                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 'match out on egress to {192.168.1.0/24} label "foo"'
             ]
@@ -735,7 +741,8 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net], 'floating_ips': [fip]},
             [
-                'pass on ge0 inet6 proto tcp from ge0:network to ge0:network port 179',
+                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
+                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
                  'http rdr-to 127.0.0.1 port 9601'),
@@ -748,6 +755,6 @@ class ConfigurationTestCase(TestCase):
                 'pass in on ge1 proto udp to any port {53}',
                 'pass inet6 proto tcp to ge1:network port {22}',
                 'pass on ge0 from 10.0.0.1 to any binat-to 9.9.9.9',
+                'pass out on ge1 to 10.0.0.1'
             ]
         )
->>>>>>> 32eb250... update for floating ip support

@@ -84,4 +84,3 @@ class DnsmasqTestCase(TestCase):
             mock.call(['/etc/rc.d/dnsmasq', 'stop'], 'sudo'),
             mock.call(['/etc/rc.d/dnsmasq', 'start'], 'sudo')
         ])
-

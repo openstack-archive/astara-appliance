@@ -95,4 +95,3 @@ class SystemAPITestCase(TestCase):
 
             self.assertEqual(result.status_code, 200)
             self.assertTrue(json.loads(result.data))
-
