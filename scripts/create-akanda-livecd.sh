@@ -189,7 +189,7 @@ function livecd {
     echo "[*] Creating fstab entries..."
     cat >/$WDIR/etc/fstab <<EOF
     swap /tmp mfs rw,auto,-s=120000 0 0
-    swap /var mfs rw,auto,-P/mfsvar 0 0
+    swap /var mfs rw,auto,-P/mfsvar,-s=32000 0 0
     swap /etc mfs rw,auto,-P/mfsetc 0 0
     swap /root mfs rw,auto,-P/mfsroot 0 0
     swap /dev mfs rw,auto,-P/mfsdev 0 0
