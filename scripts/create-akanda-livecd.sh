@@ -360,12 +360,6 @@ EOF
 echo "[*] Add rc.local file...."
 cp $HERE/etc/rc.local $WDIR/etc/rc.local
 
-echo "[*] Add up files...."
-cat "up" > $WDIR/etc/hostname.em0
-chmod 750 $WDIR/etc/hostname.em0
-cat "up" > $WDIR/etc/hostname.re0
-chmod 750 $WDIR/etc/hostname.re0
-
 #echo "[*] Entering Akanda livecd builder (chroot environment)."
 #echo "[*] Once you have finished your modifications, type \"exit\""
 
