@@ -42,13 +42,15 @@ HERE=`pwd`
 
 # Mirror to use to download the OpenBSD files
 #BASEURL=http://ftp-stud.fht-esslingen.de/pub/OpenBSD
-BASEURL=http://openbsd.mirrors.pair.com
+#BASEURL=http://openbsd.mirrors.pair.com
+BASEURL=ftp://ftp3.usa.openbsd.org/pub/OpenBSD
 MIRROR=$BASEURL/$MAJ.$MIN/$ARCH
 PKG_PATH=$BASEURL/$MAJ.$MIN/packages/$ARCH
 DNS=8.8.8.8            # Google DNS Server to use in live cd (change accordingly)
 
 
-CLEANUP=no                    # Clean up downloaded files and workdir (disabled by default)
+#CLEANUP=no                    # Clean up downloaded files and workdir (disabled by default)
+CLEANUP=yes
 
 # End of user configuration
 ###############################################################################
@@ -167,10 +169,23 @@ function livecd {
     echo "[*] Downloading files needed for CD Boot..."
     CDBOOTFILES="cdbr cdboot bsd"
     cd $CDBOOTDIR && for i in $CDBOOTFILES; do test -f $CDBOOTDIR/$i || ftp -o $CDBOOTDIR/$i -m $MIRROR/$i; done
-
+    typeset missing=""
+    cd $CDBOOTDIR && for i in $CDBOOTFILES; do test -f $CDBOOTDIR/$i || missing="$missing $i"; done
+    if [ ! -z "$missing" ]
+    then
+        echo "Missing download files: $missing" 1>&2
+        exit 1
+    fi
 
     echo "[*] Downloading file sets ($SETS)..."
     cd $WDIR && for i in $SETS; do test -f $WDIR/$i$MAJ$MIN.tgz || ftp -o $WDIR/$i$MAJ$MIN.tgz -m $MIRROR/$i$MAJ$MIN.tgz; done
+    typeset missing=""
+    cd $WDIR && for i in $SETS; do test -f $WDIR/$i$MAJ$MIN.tgz || missing="$missing $i$MAJ$MIN.tgz"; done
+    if [ ! -z "$missing" ]
+    then
+        echo "Missing download file sets: $missing" 1>&2
+        exit 1
+    fi
 
     echo "[*] Extracting file sets ($SETS)..."
     cd $WDIR && for i in $SETS; do tar xzpf $WDIR/$i$MAJ$MIN.tgz; done
