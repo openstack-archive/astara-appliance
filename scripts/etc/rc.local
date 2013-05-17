@@ -21,18 +21,8 @@ sysctl -w net.inet6.ip6.forwarding=1
 echo "Configuring http for management interface..."
 /usr/local/bin/akanda-configure-gunicorn
 
-rm /etc/pf.conf
-
-cat > /etc/pf.conf <<EOF
-ge0 = "em0"
-set skip on lo
-match in all scrub (no-df)
-block log (all)
-pass proto icmp6 all
-pass inet proto icmp icmp-type { echoreq, unreach }
-pass proto tcp from \$ge0:network to \$ge0 port { 22, 5000}
-EOF
-
+echo "Configuring pf rules for start up..."
+/usr/local/bin/akanda-configure-default-pf
 /sbin/pfctl -vf /etc/pf.conf
 
 /etc/rc.d/sshd restart

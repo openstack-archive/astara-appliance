@@ -77,8 +77,8 @@ class BirdTestCase(TestCase):
     def test_restart(self):
         self.mgr.restart()
         self.mock_execute.assert_has_calls([
-            mock.call(['/etc/rc.d/bird', 'stop'], 'sudo'),
-            mock.call(['/etc/rc.d/bird', 'start'], 'sudo')
+            mock.call(['/etc/rc.d/bird6', 'stop'], 'sudo'),
+            mock.call(['/etc/rc.d/bird6', 'start'], 'sudo')
         ])
 
     def test_build_config(self):

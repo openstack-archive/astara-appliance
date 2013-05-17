@@ -26,11 +26,11 @@ class BirdManager(base.Manager):
 
     def restart(self):
         try:
-            utils.execute(['/etc/rc.d/bird', 'stop'], self.root_helper)
+            utils.execute(['/etc/rc.d/bird6', 'stop'], self.root_helper)
         except:  # pragma no cover
             # failure is ok here
             pass
-        utils.execute(['/etc/rc.d/bird', 'start'], self.root_helper)
+        utils.execute(['/etc/rc.d/bird6', 'start'], self.root_helper)
 
 
 def build_config(config, interface_map):
