@@ -133,9 +133,6 @@ def main():
                                           config['ip_instance_map'])
         socket = eventlet.listen(('127.0.0.1', config['listen_port']),
                                  backlog=128)
-        eventlet.spawn_n(eventlet.wsgi.server, socket, app, custom_pool=pool)
-
-        while True:
-            eventlet.sleep(10)
+        pool.spawn_n(eventlet.wsgi.server, socket, app, custom_pool=pool)
 
     pool.waitall()
