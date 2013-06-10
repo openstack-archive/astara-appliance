@@ -26,9 +26,9 @@ setup(
             'akanda.router.commands.management:configure_ssh',
             'akanda-configure-gunicorn = '
             'akanda.router.commands.management:configure_gunicorn',
-            'akanda-akanda-configure-default-pf = '
+            'akanda-configure-default-pf = '
             'akanda.router.commands.management:configure_default_pf',
-            'akanda-api-dev-server =akanda.router.api.server:main',
+            'akanda-api-dev-server = akanda.router.api.server:main',
             'akanda-metadata-proxy = akanda.router.metadata_proxy:main',
         ]
     },
