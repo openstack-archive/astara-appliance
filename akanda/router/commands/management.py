@@ -59,4 +59,30 @@ def configure_gunicorn():
         open('/etc/akanda_gunicorn_config', 'w+').write(config)
         sys.stderr.write('http configured to listen on %s\n' % listen_ip)
     except:
-        sys.stderr.write('Unable to write sshd configuration file.')
+        sys.stderr.write('Unable to write gunicorn configuration file.')
+
+
+def configure_default_pf():
+    """
+    """
+
+    mgr = ifconfig.InterfaceManager()
+    args = {'ifname': mgr.generic_to_host('ge0')}
+
+    config = """
+    ge0 = "%(ifname)s"
+    set skip on lo
+    match in all scrub (no-df)
+    block log (all)
+    pass proto icmp6 all
+    pass inet proto icmp icmp-type { echoreq, unreach }
+    pass proto tcp from $ge0:network to $ge0 port { 22, 5000}
+    """
+
+    config = textwrap.dedent(config % args).lstrip()
+
+    try:
+        open('/etc/pf.conf', 'w+').write(config)
+        sys.stderr.write('Default PF rules configured\n')
+    except:
+        sys.stderr.write('Unable to write pf configuration file.')

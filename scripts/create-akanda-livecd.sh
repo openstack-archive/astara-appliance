@@ -26,13 +26,13 @@
 # Defaults
 ###############################################################################
 MAJ=5                    # Version major number
-MIN=1                    # Version minor number
+MIN=3                    # Version minor number
 ARCH=amd64                # Architecture
 TZ=UTC                   # Time zones are in /usr/share/zoneinfo
 # The base sets that should be installed on the akanda live cd
 SETS="base etc man"
 # Additional packages that should be installed on the akanda live cd
-PACKAGES="ntp python-2.7.1p12 py-pip wget"
+PACKAGES="ntp python-2.7.3p1 py-pip wget dnsmasq bird-v6-1.3.9p0"
 
 
 WDIR=/usr/local/akanda-livecdx            # Working directory
@@ -268,11 +268,14 @@ chroot $WDIR passwd root || exit 1
 echo "[*] Installing additional packages..."
 cat > $WDIR/tmp/packages.sh <<EOF
 #!/bin/sh -e
+export LD_LIBRARY_PATH=/usr/local/lib
+/sbin/ldconfig
 export PKG_PATH=$(echo $PKG_PATH | sed 's#\ ##g')
 for i in $PACKAGES
 do
    pkg_add -i \$i
 done
+/sbin/ldconfig
 EOF
 
 chmod +x $WDIR/tmp/packages.sh
@@ -284,24 +287,6 @@ cat > $WDIR/etc/rc.conf.local <<EOF
 spamlogd_flags=NO
 inetd=NO
 amd_master=NO
-EOF
-
-echo "[*] Add bird and dnsmasq...."
-cd $WDIR/tmp
-tar -zxf $HERE/src/bird-1.3.8.tar.gz
-tar -zxf $HERE/src/dnsmasq-2.65.tar.gz
-cd bird-1.3.8
-./configure --enable-ipv6 --prefix=
-gmake
-cd ../dnsmasq-2.65
-make
-cd $HERE
-cp $WDIR/tmp/dnsmasq-2.65/src/dnsmasq $WDIR/usr/local/sbin/.
-cp $WDIR/tmp/bird-1.3.8/bird $WDIR/usr/local/sbin/.
-cp $WDIR/tmp/bird-1.3.8/birdc $WDIR/usr/local/sbin/.
-
-cat > $WDIR/etc/bird6.conf <<EOF
-log syslog {warning, error, info};
 EOF
 
 mkdir $WDIR/etc/dnsmasq.d
@@ -328,7 +313,7 @@ ln -sf /usr/local/bin/pip-2.7 /usr/local/bin/pip
 
 cd /tmp/greenlet-0.4.0
 python setup.py install
-cd /tmp/eventlet-0.9.17
+cd /tmp/eventlet-0.12.1
 python setup.py install
 
 cd /tmp/akanda-appliance && python setup.py install
@@ -340,13 +325,12 @@ cp -r $HERE/../../akanda-appliance/ $WDIR/tmp
 # build eventlet bundle so that we do not need CC on router image
 cd $WDIR/tmp
 tar -zxf $HERE/src/greenlet-0.4.0.tar.gz
-tar -zxf $HERE/src/eventlet-0.9.17.tar.gz
+tar -zxf $HERE/src/eventlet-0.12.1.tar.gz
 cd greenlet-0.4.0
 python setup.py build
-cd ../eventlet-0.9.17
+cd ../eventlet-0.12.1
 python setup.py build
 cd $HERE
-
 
 chmod +x $WDIR/tmp/akanda.sh
 chroot $WDIR /tmp/akanda.sh || exit 1
@@ -358,12 +342,8 @@ mkdir $WDIR/tmp
 
 echo "[*] Add rc.d scripts...."
 cp $HERE/etc/rc.d/sshd $WDIR/etc/rc.d/sshd
-cp $HERE/etc/rc.d/bird $WDIR/etc/rc.d/bird
-cp $HERE/etc/rc.d/dnsmasq $WDIR/etc/rc.d/dnsmasq
 cp $HERE/etc/rc.d/metadata $WDIR/etc/rc.d/metadata
 chmod 555 $WDIR/etc/rc.d/sshd
-chmod 555 $WDIR/etc/rc.d/bird
-chmod 555 $WDIR/etc/rc.d/dnsmasq
 chmod 555 $WDIR/etc/rc.d/metadata
 
 echo "[*] Add rc.conf.local...."

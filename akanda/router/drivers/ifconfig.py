@@ -7,7 +7,7 @@ from akanda.router.drivers import base
 
 
 GENERIC_IFNAME = 'ge'
-PHYSICAL_INTERFACES = ['em', 're', 'en']
+PHYSICAL_INTERFACES = ['em', 're', 'en', 'vio']
 ULA_PREFIX = 'fdca:3ba5:a17a:acda::/64'
 
 
