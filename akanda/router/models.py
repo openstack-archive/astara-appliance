@@ -7,6 +7,7 @@ import netaddr
 from akanda.router import defaults
 
 GROUP_NAME_LENGTH = 15
+DEFAULT_AS = 64512
 
 
 class ModelBase(object):
@@ -520,6 +521,8 @@ class Network(ModelBase):
 
 class Configuration(ModelBase):
     def __init__(self, conf_dict={}):
+        self.asn = conf_dict.get('asn', DEFAULT_AS)
+        self.neighbor_asn = conf_dict.get('neighbor_asn', self.asn)
         self.networks = [
             Network.from_dict(n) for n in conf_dict.get('networks', [])]
 
