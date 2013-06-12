@@ -39,6 +39,8 @@ mgt_net.interface.ifname = 'ge2'
 
 CONFIG = mock.Mock()
 CONFIG.networks = [ext_net, int_net, mgt_net]
+CONFIG.asn = 4321
+CONFIG.neighbor_asn = 65000
 IF_MAP = {'ge0': 'en0', 'ge1': 'en1', 'ge2': 'en2'}
 
 
@@ -182,8 +184,8 @@ class BirdTestCase(TestCase):
             }
 
             protocol bgp {
-                local as 64512;
-                neighbor dead:beef::1 as 64512;
+                local as 4321;
+                neighbor dead:beef::1 as 65000;
                 import all;
                 export filter bgp_out;
                 rr client;

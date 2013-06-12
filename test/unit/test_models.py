@@ -498,6 +498,23 @@ class ConfigurationTestCase(TestCase):
         self.assertEqual(len(c.anchors[0].rules), 1)
         self.assertEqual(c.anchors[0].rules[0].action, 'block')
 
+    def test_asn_default(self):
+        c = models.Configuration({'networks': []})
+        self.assertEqual(c.asn, 64512)
+        self.assertEqual(c.neighbor_asn, 64512)
+
+    def test_asn_provided_with_neighbor_fallback(self):
+        c = models.Configuration({'networks': [], 'asn': 12345})
+        self.assertEqual(c.asn, 12345)
+        self.assertEqual(c.neighbor_asn, 12345)
+
+    def test_asn_provided_with_neighbor_different(self):
+        c = models.Configuration(
+            {'networks': [], 'asn': 12, 'neighbor_asn': 34}
+        )
+        self.assertEqual(c.asn, 12)
+        self.assertEqual(c.neighbor_asn, 34)
+
     def _validate_test_helper(self, rule_dict, expect_errors=False):
         network = dict(
             network_id='netid',

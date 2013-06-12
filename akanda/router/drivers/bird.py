@@ -11,7 +11,6 @@ CONF_PATH = '/etc/bird6.conf'
 BIRD = '/usr/local/sbin/bird'
 BIRDC = '/usr/local/bin/birdc'
 DEFAULT_AREA = 0
-DEFAULT_AS = 64512
 
 
 class BirdManager(base.Manager):
@@ -164,8 +163,9 @@ def _build_bgp_config(config, interface_map):
         for subnet in v6_subnets:
             retval.extend([
                 'protocol bgp {',
-                '\tlocal as %d;' % DEFAULT_AS,
-                '\tneighbor %s as %d;' % (subnet.gateway_ip, DEFAULT_AS),
+                '\tlocal as %d;' % config.asn,
+                '\tneighbor %s as %d;' % (subnet.gateway_ip,
+                                          config.neighbor_asn),
                 '\timport all;',
                 '\texport filter bgp_out;',
                 '\trr client;',
