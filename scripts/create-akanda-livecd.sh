@@ -154,6 +154,11 @@ function livecd {
     echo "[*] This script is released under the BSD License."
     uname -a | grep OpenBSD || echo "[*] WARNING: This software should run on an OpenBSD System!"
     date
+    if [ -d $WDIR ]
+    then
+        echo "[*] Cleaning up from previous build..."
+        rm -rf $WDIR
+    fi
     echo "[*] Setting up the build environment..."
     mkdir -p $WDIR
 
@@ -263,7 +268,8 @@ echo "[*] Setting default password..."
 cp $HERE/etc/master.passwd $WDIR/etc/master.passwd
 cp $HERE/etc/passwd $WDIR/etc/passwd
 cp $HERE/etc/group $WDIR/etc/group
-chroot $WDIR passwd root || exit 1
+cp /root/akanda-master-password $WDIR/etc
+pwd_mkdb -d $WDIR/etc akanda-master-password || exit 1
 
 echo "[*] Installing additional packages..."
 cat > $WDIR/tmp/packages.sh <<EOF
@@ -313,14 +319,16 @@ ln -sf /usr/local/bin/pip-2.7 /usr/local/bin/pip
 
 cd /tmp/greenlet-0.4.0
 python setup.py install
+
 cd /tmp/eventlet-0.12.1
 python setup.py install
 
-cd /tmp/akanda-appliance && python setup.py install
+cd /tmp/akanda-appliance
+python setup.py install
 
 EOF
 
-cp -r $HERE/../../akanda-appliance/ $WDIR/tmp
+cp -r `dirname $HERE` $WDIR/tmp
 
 # build eventlet bundle so that we do not need CC on router image
 cd $WDIR/tmp
@@ -400,19 +408,6 @@ cp $HERE/etc/rc.local $WDIR/etc/rc.local
 
     echo "[*] Your modified Akanda iso is in $OUTDIR/livecd$MAJ$MIN-$ARCH.iso"
     ls -lh $OUTDIR/livecd$MAJ$MIN-$ARCH.iso
-
-    if [ $CLEANUP="yes" ];then
-        echo "[*] Cleanup"
-        echo -n "Do you want to delete the working directory $WDIR? (y/N): "
-        read deletewdir
-        if [ ! -z $deletewdir ]
-        then
-            if [ $deletewdir = "y" ] || [ $deletewdir = "Y" ] || [ $deletewdir = "yes"] || [ $deletewdir = "Yes" ]
-            then
-                rm -rf $WDIR
-               fi
-        fi
-    fi
 
     echo "[*] Please support the OpenBSD project by buying official cd sets or donating some money!"
     echo "[*] Enjoy Akanda!"
