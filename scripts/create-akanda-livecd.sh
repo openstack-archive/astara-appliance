@@ -318,14 +318,16 @@ ln -sf /usr/local/bin/pip-2.7 /usr/local/bin/pip
 
 cd /tmp/greenlet-0.4.0
 python setup.py install
+
 cd /tmp/eventlet-0.12.1
 python setup.py install
 
-cd /tmp/akanda-appliance && python setup.py install
+cd /tmp/akanda-appliance
+python setup.py install
 
 EOF
 
-cp -r $HERE/../../akanda-appliance/ $WDIR/tmp
+cp -r `dirname $HERE` $WDIR/tmp
 
 # build eventlet bundle so that we do not need CC on router image
 cd $WDIR/tmp
