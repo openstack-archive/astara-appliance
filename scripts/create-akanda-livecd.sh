@@ -268,7 +268,8 @@ echo "[*] Setting default password..."
 cp $HERE/etc/master.passwd $WDIR/etc/master.passwd
 cp $HERE/etc/passwd $WDIR/etc/passwd
 cp $HERE/etc/group $WDIR/etc/group
-chroot $WDIR passwd root || exit 1
+cp /root/akanda-master-password $WDIR/etc
+pwd_mkdb -d $WDIR/etc akanda-master-password || exit 1
 
 echo "[*] Installing additional packages..."
 cat > $WDIR/tmp/packages.sh <<EOF
