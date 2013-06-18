@@ -14,7 +14,7 @@ setup(
         'gunicorn>=0.14.6',
         'netaddr>=0.7.7',
         'eventlet>=0.9.17',
-        'requests>=0.14.1',
+        'requests>=0.14.1,<=1.2.0',
     ],
     namespace_packages=['akanda'],
     packages=find_packages(),
