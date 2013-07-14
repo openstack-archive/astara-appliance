@@ -635,7 +635,7 @@ class Configuration(ModelBase):
             elif network.network_type == Network.TYPE_INTERNAL:
                 if ext_if:
                     rv.extend(
-                        _format_nat_rule(
+                        _format_int_to_ext_rule(
                             ext_if,
                             ext_v4_addr,
                             network.interface.ifname,
@@ -678,7 +678,7 @@ def _format_ext_rule(ext_if):
     ]
 
 
-def _format_nat_rule(ext_if, ext_v4_addr, int_if, has_v4):
+def _format_int_to_ext_rule(ext_if, ext_v4_addr, int_if, has_v4):
     tcp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_TCP_PORTS)
     udp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_UDP_PORTS)
 
@@ -688,24 +688,20 @@ def _format_nat_rule(ext_if, ext_v4_addr, int_if, has_v4):
         retval.extend([
             _format_metadata_rule(int_if),
             ('pass out on %s from %s:network to any nat-to %s' %
-            (ext_if, int_if, ext_v4_addr)),
+                (ext_if, int_if, ext_v4_addr)),
 
             # IPv4 DHCP: Server: 68 Client: 67 need fwd/rev rules
             'pass in quick on %s proto udp from port 68 to port 67' % int_if,
             'pass out quick on %s proto udp from port 67 to port 68' % int_if,
         ])
 
-    else:
-        pass
-        #import pdb;pdb.set_trace()
-
-        #('pass out on %s from %s to %s:network' %
-        #(int_if, ext_if, int_if)),
-
     retval.extend([
         # IPv6 DHCP: Server: 547 Client: 546 need fwd/rev rules
         'pass in quick on %s proto udp from port 546 to port 547' % int_if,
         'pass out quick on %s proto udp from port 547 to port 546' % int_if,
+
+        # Allow IPv6 from this network out via egress
+        'pass out on %s inet6 from %s:network' % (ext_if, int_if),
 
         'pass in on %s proto tcp to any port {%s}' % (int_if, tcp_ports),
         'pass in on %s proto udp to any port {%s}' % (int_if, udp_ports),
