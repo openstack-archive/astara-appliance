@@ -361,6 +361,11 @@ inetd=NO
 amd_master=NO
 EOF
 
+echo "[*] Add some stuff to sysctl.conf"
+cat > $WDIR/etc/sysctl.conf <<EOF
+net.inet6.ip6.dad_count=0
+EOF
+
 echo "[*] Add rc.local file...."
 cp $HERE/etc/rc.local $WDIR/etc/rc.local
 
