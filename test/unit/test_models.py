@@ -594,9 +594,7 @@ class ConfigurationTestCase(TestCase):
 
         attrs = dict(
             BASE_RULES=base,
-            MANAGEMENT_PORTS=[22],
-            OUTBOUND_TCP_PORTS=[80],
-            OUTBOUND_UDP_PORTS=[53])
+            MANAGEMENT_PORTS=[22])
 
         with mock.patch.multiple('akanda.router.defaults', **attrs) as defs:
             c = models.Configuration(conf_dict)
@@ -627,8 +625,8 @@ class ConfigurationTestCase(TestCase):
                 'pass in quick on ge1 proto udp from port 546 to port 547',
                 'pass out quick on ge1 proto udp from port 547 to port 546',
                 'pass out on ge0 inet6 from ge1:network',
-                'pass in on ge1 proto tcp to any port {80}',
-                'pass in on ge1 proto udp to any port {53}',
+                'pass in on ge1 proto tcp to any',
+                'pass in on ge1 proto udp to any',
                 'pass inet6 proto tcp to ge1:network port {22}'
             ]
         )
@@ -770,8 +768,8 @@ class ConfigurationTestCase(TestCase):
                 'pass in quick on ge1 proto udp from port 546 to port 547',
                 'pass out quick on ge1 proto udp from port 547 to port 546',
                 'pass out on ge0 inet6 from ge1:network',
-                'pass in on ge1 proto tcp to any port {80}',
-                'pass in on ge1 proto udp to any port {53}',
+                'pass in on ge1 proto tcp to any',
+                'pass in on ge1 proto udp to any',
                 'pass inet6 proto tcp to ge1:network port {22}',
                 'pass on ge0 from 10.0.0.1 to any binat-to 9.9.9.9',
                 'pass out on ge1 to 10.0.0.1'

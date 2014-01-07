@@ -679,9 +679,6 @@ def _format_ext_rule(ext_if):
 
 
 def _format_int_to_ext_rule(ext_if, ext_v4_addr, int_if, has_v4):
-    tcp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_TCP_PORTS)
-    udp_ports = ', '.join(str(p) for p in defaults.OUTBOUND_UDP_PORTS)
-
     retval = []
 
     if has_v4:
@@ -703,8 +700,8 @@ def _format_int_to_ext_rule(ext_if, ext_v4_addr, int_if, has_v4):
         # Allow IPv6 from this network out via egress
         'pass out on %s inet6 from %s:network' % (ext_if, int_if),
 
-        'pass in on %s proto tcp to any port {%s}' % (int_if, tcp_ports),
-        'pass in on %s proto udp to any port {%s}' % (int_if, udp_ports),
+        'pass in on %s proto tcp to any' % int_if,
+        'pass in on %s proto udp to any' % int_if,
         'pass inet6 proto tcp to %s:network port {22}' % (int_if)
     ])
 
