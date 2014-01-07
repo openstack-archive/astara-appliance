@@ -638,8 +638,7 @@ class Configuration(ModelBase):
                         _format_int_to_ext_rule(
                             ext_if,
                             ext_v4_addr,
-                            network.interface.ifname,
-                            network.interface.first_v4
+                            network.interface
                         )
                     )
             elif network.network_type == Network.TYPE_MANAGEMENT:
@@ -678,31 +677,34 @@ def _format_ext_rule(ext_if):
     ]
 
 
-def _format_int_to_ext_rule(ext_if, ext_v4_addr, int_if, has_v4):
+def _format_int_to_ext_rule(ext_if, ext_v4_addr, interface):
     retval = []
+    name = interface.ifname
 
-    if has_v4:
+    if interface.first_v4:
         retval.extend([
-            _format_metadata_rule(int_if),
+            _format_metadata_rule(name),
             ('pass out on %s from %s:network to any nat-to %s' %
-                (ext_if, int_if, ext_v4_addr)),
+                (ext_if, name, ext_v4_addr)),
 
             # IPv4 DHCP: Server: 68 Client: 67 need fwd/rev rules
-            'pass in quick on %s proto udp from port 68 to port 67' % int_if,
-            'pass out quick on %s proto udp from port 67 to port 68' % int_if,
+            'pass in quick on %s proto udp from port 68 to port 67' % name,
+            'pass out quick on %s proto udp from port 67 to port 68' % name,
+        ])
+    if interface.first_v6:
+        retval.extend([
+            # IPv6 DHCP: Server: 547 Client: 546 need fwd/rev rules
+            'pass in quick on %s proto udp from port 546 to port 547' % name,
+            'pass out quick on %s proto udp from port 547 to port 546' % name,
+
+            # Allow IPv6 from this network out via egress
+            'pass out on %s inet6 from %s:network' % (ext_if, name),
+            'pass inet6 proto tcp to %s:network port {22}' % (name)
         ])
 
     retval.extend([
-        # IPv6 DHCP: Server: 547 Client: 546 need fwd/rev rules
-        'pass in quick on %s proto udp from port 546 to port 547' % int_if,
-        'pass out quick on %s proto udp from port 547 to port 546' % int_if,
-
-        # Allow IPv6 from this network out via egress
-        'pass out on %s inet6 from %s:network' % (ext_if, int_if),
-
-        'pass in on %s proto tcp to any' % int_if,
-        'pass in on %s proto udp to any' % int_if,
-        'pass inet6 proto tcp to %s:network port {22}' % (int_if)
+        'pass in on %s proto tcp to any' % name,
+        'pass in on %s proto udp to any' % name,
     ])
 
     return retval

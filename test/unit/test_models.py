@@ -622,12 +622,41 @@ class ConfigurationTestCase(TestCase):
                 'pass out on ge0 from ge1:network to any nat-to 9.9.9.1',
                 'pass in quick on ge1 proto udp from port 68 to port 67',
                 'pass out quick on ge1 proto udp from port 67 to port 68',
-                'pass in quick on ge1 proto udp from port 546 to port 547',
-                'pass out quick on ge1 proto udp from port 547 to port 546',
-                'pass out on ge0 inet6 from ge1:network',
+                'pass in on ge1 proto tcp to any',
+                'pass in on ge1 proto udp to any'
+            ]
+        )
+
+    def test_pf_config_nat_with_ip6(self):
+        ext_net = dict(network_id='ext',
+                       interface=dict(ifname='ge0', addresses=['9.9.9.1/24']),
+                       network_type='external')
+        int_net = dict(network_id='int',
+                       interface=dict(ifname='ge1', addresses=['10.0.0.0/8']),
+                       network_type='internal')
+        v6_net = dict(network_id='v6_int',
+                      interface=dict(ifname='ge2', addresses=['fe80::1/64']),
+                      network_type='internal')
+
+        self._pf_config_test_helper(
+            {'networks': [ext_net, int_net, v6_net]},
+            [
+                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
+                 'port 179'),
+                'pass out quick on ge0 proto udp to any port 53',
+                ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
+                 'http rdr-to 127.0.0.1 port 9601'),
+                'pass out on ge0 from ge1:network to any nat-to 9.9.9.1',
+                'pass in quick on ge1 proto udp from port 68 to port 67',
+                'pass out quick on ge1 proto udp from port 67 to port 68',
                 'pass in on ge1 proto tcp to any',
                 'pass in on ge1 proto udp to any',
-                'pass inet6 proto tcp to ge1:network port {22}'
+                'pass in quick on ge2 proto udp from port 546 to port 547',
+                'pass out quick on ge2 proto udp from port 547 to port 546',
+                'pass out on ge0 inet6 from ge2:network',
+                'pass inet6 proto tcp to ge2:network port {22}',
+                'pass in on ge2 proto tcp to any',
+                'pass in on ge2 proto udp to any',
             ]
         )
 
@@ -765,12 +794,8 @@ class ConfigurationTestCase(TestCase):
                 'pass out on ge0 from ge1:network to any nat-to 9.9.9.1',
                 'pass in quick on ge1 proto udp from port 68 to port 67',
                 'pass out quick on ge1 proto udp from port 67 to port 68',
-                'pass in quick on ge1 proto udp from port 546 to port 547',
-                'pass out quick on ge1 proto udp from port 547 to port 546',
-                'pass out on ge0 inet6 from ge1:network',
                 'pass in on ge1 proto tcp to any',
                 'pass in on ge1 proto udp to any',
-                'pass inet6 proto tcp to ge1:network port {22}',
                 'pass on ge0 from 10.0.0.1 to any binat-to 9.9.9.9',
                 'pass out on ge1 to 10.0.0.1'
             ]
