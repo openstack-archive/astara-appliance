@@ -27,7 +27,7 @@
 ###############################################################################
 MAJ=5                    # Version major number
 MIN=3                    # Version minor number
-ARCH=amd64                # Architecture
+ARCH=$(uname -p)         # Architecture
 TZ=UTC                   # Time zones are in /usr/share/zoneinfo
 # The base sets that should be installed on the akanda live cd
 SETS="base etc man"
