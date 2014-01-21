@@ -47,4 +47,5 @@ def build_config(config):
             'ip_instance_map': ip_instance_map
         }
 
+    config_data['tenant_id'] = config.tenant_id
     return config_data

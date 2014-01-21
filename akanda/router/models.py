@@ -545,6 +545,7 @@ class Configuration(ModelBase):
             FloatingIP.from_dict(fip)
             for fip in conf_dict.get('floating_ips', [])
         ]
+        self.tenant_id = conf_dict.get('tenant_id')
 
         self._attach_floating_ips(self.floating_ips)
 

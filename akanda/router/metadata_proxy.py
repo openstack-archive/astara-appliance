@@ -23,7 +23,8 @@ class NetworkMetadataProxyHandler(object):
        isolated tenant context.
     """
 
-    def __init__(self, network_id, ip_instance_map):
+    def __init__(self, tenant_id, network_id, ip_instance_map):
+        self.tenant_id = tenant_id
         self.network_id = network_id
         self.ip_instance_map = ip_instance_map
 
@@ -47,7 +48,8 @@ class NetworkMetadataProxyHandler(object):
         headers = {
             'X-Forwarded-For': remote_address,
             'X-Instance-ID': self.ip_instance_map.get(remote_address, ''),
-            'X-Quantum-Network-ID': self.network_id
+            'X-Quantum-Network-ID': self.network_id,
+            'X-Tenant-ID': self.tenant_id
         }
 
         url = urlparse.urlunsplit((
@@ -128,8 +130,10 @@ def main():
 
     pool = eventlet.GreenPool(1000)
 
+    tenant_id = config_dict.pop('tenant_id')
     for network_id, config in config_dict.items():
-        app = NetworkMetadataProxyHandler(network_id,
+        app = NetworkMetadataProxyHandler(tenant_id,
+                                          network_id,
                                           config['ip_instance_map'])
         socket = eventlet.listen(('127.0.0.1', config['listen_port']),
                                  backlog=128)
