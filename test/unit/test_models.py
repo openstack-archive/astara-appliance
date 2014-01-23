@@ -455,6 +455,10 @@ class ConfigurationTestCase(TestCase):
         self.assertEqual(c.networks[0],
                          models.Network.from_dict(network))
 
+    def test_init_tenant_id(self):
+        c = models.Configuration({'tenant_id': 'abc123'})
+        self.assertEqual(c.tenant_id, 'abc123')
+
     def test_init_only_static_routes(self):
         routes = [('0.0.0.0/0', '192.168.1.1'),
                   ('172.16.77.0/16', '192.168.1.254')]
