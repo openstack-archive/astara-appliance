@@ -88,7 +88,9 @@ def _build_static_config(config):
 
 def _build_direct_config(config, interface_map):
     tmpl = "protocol direct {\n    interface %s;\n}"
-    retval = tmpl % ','.join('"%s"' % i for i in interface_map.values())
+    retval = tmpl % ','.join(
+        '"%s"' % i for i in sorted(interface_map.values())
+    )
     return textwrap.dedent(retval)
 
 

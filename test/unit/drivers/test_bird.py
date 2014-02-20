@@ -150,7 +150,7 @@ class BirdTestCase(TestCase):
 
     def test_build_direct_config(self):
         result = bird._build_direct_config(mock.Mock(), IF_MAP)
-        expected = 'protocol direct {\n    interface "en2","en1","en0";\n}'
+        expected = 'protocol direct {\n    interface "en0","en1","en2";\n}'
         self.assertEqual(result, expected)
 
     def test_build_ospf_config(self):

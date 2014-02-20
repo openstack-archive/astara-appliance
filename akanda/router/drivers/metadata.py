@@ -18,7 +18,10 @@ class MetadataManager(base.Manager):
     def save_config(self, config):
         config_data = build_config(config)
 
-        replace_file('/tmp/metadata.conf', json.dumps(config_data))
+        replace_file(
+            '/tmp/metadata.conf',
+            json.dumps(config_data, sort_keys=True)
+        )
         execute(['mv', '/tmp/metadata.conf', CONF_PATH], self.root_helper)
 
     def restart(self):
