@@ -308,17 +308,21 @@ class FloatingIP(ModelBase):
 
     @property
     def pf_rule(self):
-        if self.network is None:
-            return ''
-        else:
-            return (
-                'pass on %s from %s to any binat-to %s' %
-                (
-                    self.network.interface.ifname,
-                    self.fixed_ip,
-                    self.floating_ip
+        if self.network is not None:
+            # There is a bug in Neutron that allows floating IPs with e.g.,
+            # a v6 fixed address and a v4 floating address.  Until we get
+            # a bug fix for this upstream, don't make rules for these, because
+            # they're invalid.
+            if self.fixed_ip.version == self.floating_ip.version:
+                return (
+                    'pass on %s from %s to any binat-to %s' %
+                    (
+                        self.network.interface.ifname,
+                        self.fixed_ip,
+                        self.floating_ip
+                    )
                 )
-            )
+        return ''
 
     @classmethod
     def from_dict(cls, d):

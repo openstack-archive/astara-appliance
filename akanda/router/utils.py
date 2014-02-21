@@ -65,8 +65,10 @@ def json_response(f):
         if isinstance(retval, flask.Response):
             return retval
         else:
-            return flask.Response(json.dumps(retval, cls=ModelSerializer),
-                                  status=200)
+            return flask.Response(
+                json.dumps(retval, cls=ModelSerializer, sort_keys=True),
+                status=200
+            )
     return wrapper
 
 

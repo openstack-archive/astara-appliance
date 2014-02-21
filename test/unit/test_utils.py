@@ -27,40 +27,46 @@ class ModelSerializerTestCase(TestCase):
         }
         expected = (
             '{"a": [1, 2, 3], "b": {"c": 4}, "d": "e", "f": "g", '
-            '"i": 3.0, "h": 42, "k": null, "j": false, '
-            '"m": 12345671238792347, "l": [4, 5, 6], "n": "192.168.1.1/24"}')
-        serialized = json.dumps(data, cls=utils.ModelSerializer)
+            '"h": 42, "i": 3.0, "j": false, "k": null, '
+            '"l": [4, 5, 6], "m": 12345671238792347, "n": "192.168.1.1/24"}')
+        serialized = json.dumps(data, cls=utils.ModelSerializer,
+                                sort_keys=True)
         self.assertEqual(serialized, expected)
 
     def test_default_with_set(self):
         data = {"a": set([1, 2, 3])}
         expected = '{"a": [1, 2, 3]}'
-        serialized = json.dumps(data, cls=utils.ModelSerializer)
+        serialized = json.dumps(data, cls=utils.ModelSerializer,
+                                sort_keys=True)
         self.assertEqual(serialized, expected)
 
     def test_default_ipaddress(self):
         data = dict(a=netaddr.IPAddress('192.168.1.1'))
         expected = '{"a": "192.168.1.1"}'
-        serialized = json.dumps(data, cls=utils.ModelSerializer)
+        serialized = json.dumps(data, cls=utils.ModelSerializer,
+                                sort_keys=True)
         self.assertEqual(serialized, expected)
 
     def test_default_ipnetwork(self):
         data = dict(a=netaddr.IPNetwork('192.168.1.1/24'))
         expected = '{"a": "192.168.1.1/24"}'
-        serialized = json.dumps(data, cls=utils.ModelSerializer)
+        serialized = json.dumps(data, cls=utils.ModelSerializer,
+                                sort_keys=True)
         self.assertEqual(serialized, expected)
 
     def test_model_base_to_dict(self):
         data = dict(r=models.StaticRoute('192.168.1.0/24', '172.16.77.1'))
-        expected = ('{"r": {"next_hop": "172.16.77.1", '
-                    '"destination": "192.168.1.0/24"}}')
-        serialized = json.dumps(data, cls=utils.ModelSerializer)
+        expected = ('{"r": {"destination": "192.168.1.0/24", '
+                    '"next_hop": "172.16.77.1"}}')
+        serialized = json.dumps(data, cls=utils.ModelSerializer,
+                                sort_keys=True)
         self.assertEqual(serialized, expected)
 
     def test_model_base_fallback_to_vars(self):
         data = dict(a=models.Anchor('foo', []))
-        expected = '{"a": {"rules": [], "name": "foo"}}'
-        serialized = json.dumps(data, cls=utils.ModelSerializer)
+        expected = '{"a": {"name": "foo", "rules": []}}'
+        serialized = json.dumps(data, cls=utils.ModelSerializer,
+                                sort_keys=True)
         self.assertEqual(serialized, expected)
 
 

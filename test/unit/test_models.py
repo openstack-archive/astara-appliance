@@ -348,6 +348,21 @@ class FloatingIPTestCase(TestCase):
             'pass on ge1 from 10.0.0.1 to any binat-to 9.9.9.9'
         )
 
+    def test_floating_ip_with_different_ip_versions(self):
+        fip = models.FloatingIP(
+            '9.9.9.9',
+            'fe80::1'
+        )
+
+        network = mock.Mock()
+        network.interface.ifname = 'ge1'
+
+        fip.network = network
+        self.assertEqual(
+            fip.pf_rule,
+            ''
+        )
+
 
 class StaticRouteTestCase(TestCase):
     def test_static_route(self):
