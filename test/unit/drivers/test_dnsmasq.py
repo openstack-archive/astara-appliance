@@ -2,14 +2,16 @@ from unittest2 import TestCase
 
 import mock
 import netaddr
-import re
-import textwrap
 
+from akanda.router import models
 from akanda.router.drivers import dnsmasq
 ext_subnet = mock.Mock()
 ext_subnet.gateway_ip = netaddr.IPAddress('dead:beef::1')
+
 ext_subnet.cidr = netaddr.IPNetwork('dead:beef::/64')
 ext_subnet.dns_nameservers = []
+ext_subnet.host_routes = [models.StaticRoute('172.16.0.0/16', '192.168.1.1')]
+ext_subnet.dns_nameservers = ['8.8.8.8', '8.8.4.4']
 
 ext_net = mock.Mock()
 ext_net.subnets = [ext_subnet]
@@ -17,6 +19,12 @@ ext_net.is_internal_network = False
 ext_net.is_external_network = True
 ext_net.is_tenant_network = False
 ext_net.interface.ifname = 'ge0'
+ext_net.address_allocations = [models.Allocation(
+    'fa:da:fa:da:fa:da:',
+    {'192.168.1.2': True, 'dead:beef::2': False},  # ip: DHCP enabled
+    '192-168-1-2.local',
+    'e3300819-d7b9-4d8d-9d7c-a6380ff78ca7'
+)]
 
 v6_subnet = mock.Mock()
 v6_subnet.gateway_ip = netaddr.IPAddress('face::1')
@@ -77,6 +85,18 @@ class DnsmasqTestCase(TestCase):
                 ['mv', '/tmp/dnsmasq.conf', '/etc/dnsmasq.d/em1.conf'],
                 'sudo'
             )
+
+    def test_build_dhcp_config(self):
+        config = self.mgr._build_dhcp_config('ge0', ext_net)
+        assert config == '\n'.join([
+            'interface=ge0',
+            'dhcp-range=set:ge0_0,dead:beef::,static,120s',
+            'dhcp-option=tag:ge0_0,option6:dns-server,8.8.8.8',
+            'dhcp-option=tag:ge0_0,option6:dns-server,8.8.4.4',
+            ('dhcp-option=tag:ge0_0,option6:classless-static-route,'
+             '172.16.0.0/16,192.168.1.1'),
+            'dhcp-host=fa:da:fa:da:fa:da:,192.168.1.2,192-168-1-2.local'
+        ])
 
     def test_restart(self):
         self.mgr.restart()
