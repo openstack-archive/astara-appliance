@@ -44,6 +44,22 @@ class DHCPManager(base.Manager):
                            'static',
                            DEFAULT_LEASE))
 
+            if subnet.cidr.version == 6:
+                option_label = 'option6'
+            else:
+                option_label = 'option'
+
+            config.extend(
+                'dhcp-option=tag:%s,%s:dns-server,%s' % (tag, option_label, s)
+                for s in subnet.dns_nameservers
+            )
+
+            config.extend(
+                'dhcp-option=tag:%s,%s:classless-static-route,%s,%s' %
+                (tag, option_label, r.destination, r.next_hop)
+                for r in subnet.host_routes
+            )
+
         config.extend(
             'dhcp-host=%s,%s,%s' % (
                 a.mac_address,
@@ -51,22 +67,6 @@ class DHCPManager(base.Manager):
                          a.dhcp_addresses),
                 a.hostname)
             for a in network.address_allocations
-        )
-
-        if subnet.cidr.version == 6:
-            option_label = 'option6'
-        else:
-            option_label = 'option'
-
-        config.extend(
-            'dhcp-option=tag:%s,%s:dns-server,%s' % (tag, option_label, s.ip)
-            for s in subnet.dns_nameservers
-        )
-
-        config.extend(
-            'dhcp-option=tag:%s,%s:classless-static-router,%s' %
-            (tag, option_label, r.destination, r.next_hop)
-            for r in subnet.host_routes
         )
 
         return '\n'.join(config)
