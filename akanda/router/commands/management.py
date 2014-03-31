@@ -20,6 +20,7 @@ def configure_ssh():
     config = open('/etc/ssh/sshd_config', 'r').read()
     config = re.sub('(^|\n)(#)?(ListenAddress|AddressFamily) .*', '', config)
     config += '\n'.join([
+        '',  # make sure we have a blank line at the end before adding more
         'AddressFamily inet6',
         'ListenAddress ' + listen_ip,
         'UseDNS no'
