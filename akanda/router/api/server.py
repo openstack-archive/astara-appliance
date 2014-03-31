@@ -22,7 +22,7 @@ def attach_config():
 
 
 def main():
-    #TODO(mark): make this use a config file ie
+    # TODO(mark): make this use a config file ie
     # app.config.from_object('akanda.router.config.Default')
     # manager.state_path = app.config['STATE_PATH']
 

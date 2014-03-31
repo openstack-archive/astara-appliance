@@ -35,7 +35,7 @@ class Manager(object):
         self.update_pf()
         self.update_routes()
 
-        #TODO(mark): update_vpn
+        # TODO(mark): update_vpn
 
     def update_interfaces(self):
         self.if_mgr.update_interfaces(self.config.interfaces)

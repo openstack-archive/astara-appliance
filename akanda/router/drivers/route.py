@@ -26,7 +26,7 @@ class RouteManager(base.Manager):
         if gateway_ip.version == 6:
             version += '6'
         try:
-            current = self.sudo('get', version, 'default')
+            current = self.sudo('get', '-n', version, 'default')
         except:
             current = None
 
