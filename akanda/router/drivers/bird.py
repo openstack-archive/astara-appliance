@@ -39,7 +39,7 @@ def build_config(config, interface_map):
         _build_device_config(),
         _build_static_config(config),
         _build_direct_config(config, interface_map),
-        #_build_ospf_config(config, interface_map),
+        # _build_ospf_config(config, interface_map),
         _build_bgp_config(config, interface_map),
         _build_radv_config(config, interface_map),
     ]
