@@ -742,14 +742,18 @@ def _format_metadata_rule(int_if):
 
 def _format_floating_ip(ext_if, floating_ips):
     bin_nat = [
-        ('pass on %s from %s to any binat-to %s' %
-         (ext_if, fip.fixed_ip, fip.floating_ip))
+        ('pass on %s from %s to any binat-to %s' % (
+            ext_if,
+            fip.fixed_ip,
+            fip.floating_ip
+        ))
         for fip in floating_ips
     ]
 
     bin_nat.extend(
         ('pass out on %s to %s' % (fip.network.interface.ifname, fip.fixed_ip))
         for fip in floating_ips
+        if fip.network is not None
     )
 
     return bin_nat
