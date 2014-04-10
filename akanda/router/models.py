@@ -636,7 +636,7 @@ class Configuration(ModelBase):
         # add in nat and management rules
         for network in self.networks:
             if network.network_type == Network.TYPE_EXTERNAL:
-                rv.extend(_format_ext_rule(network.interface.ifname))
+                rv.extend(_format_ext_rule(network.interface))
             elif network.network_type == Network.TYPE_INTERNAL:
                 if ext_if:
                     rv.extend(
@@ -673,13 +673,22 @@ class Configuration(ModelBase):
         return '\n'.join(rv) + '\n'
 
 
-def _format_ext_rule(ext_if):
-    return [
-        ('pass on %s inet6 proto tcp from %s:network to %s:network port 179' %
-            (ext_if, ext_if, ext_if)),
-        ('pass out quick on %s proto udp to any port %d' %
-            (ext_if, defaults.DNS))
-    ]
+def _format_ext_rule(interface):
+    retval = []
+    name = interface.ifname
+
+    if interface.first_v6:
+        retval.append((
+            'pass on %s inet6 proto tcp from %s:network '
+            'to %s:network port 179' % (name, name, name))
+        )
+
+    retval.append((
+        'pass out quick on %s proto udp to any port %d' %
+        (name, defaults.DNS))
+    )
+
+    return retval
 
 
 def _format_int_to_ext_rule(ext_if, ext_v4_addr, interface):
