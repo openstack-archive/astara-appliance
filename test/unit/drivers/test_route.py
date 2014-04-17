@@ -9,12 +9,33 @@ class RouteTest(unittest2.TestCase):
     def setUp(self):
         self.mgr = route.RouteManager()
 
-    def test_get_default_gateway_v6(self):
+    def test_get_default_gateway_v6_missing(self):
         output = 'route: writing to routing socket: No such process\n'
         with mock.patch.object(self.mgr, 'sudo') as sudo:
             sudo.return_value = output
             self.assertEqual(
                 None,
+                self.mgr._get_default_gateway('-inet6')
+            )
+            sudo.assert_called_with('-n', 'get', '-inet6', 'default')
+
+    def test_get_default_gateway_v6(self):
+        output = """
+   route to: ::
+destination: ::
+       mask: default
+    gateway: fdee:9f85:83be::1
+  interface: vio1
+ if address: fdee:9f85:83be:0:f816:3eff:fe7b:6263
+   priority: 8 (static)
+      flags: <UP,GATEWAY,DONE,STATIC>
+     use       mtu    expire
+       0         0         0
+"""
+        with mock.patch.object(self.mgr, 'sudo') as sudo:
+            sudo.return_value = output
+            self.assertEqual(
+                'fdee:9f85:83be::1',
                 self.mgr._get_default_gateway('-inet6')
             )
             sudo.assert_called_with('-n', 'get', '-inet6', 'default')
