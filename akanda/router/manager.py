@@ -2,7 +2,8 @@ import os
 import re
 
 from akanda.router import models
-from akanda.router.drivers import bird, dnsmasq, ifconfig, metadata, pf, route
+from akanda.router.drivers import (bird, dnsmasq, ifconfig, metadata, pf,
+                                   route, arp)
 
 
 class Manager(object):
@@ -34,6 +35,7 @@ class Manager(object):
         self.update_bgp_and_radv()
         self.update_pf()
         self.update_routes()
+        self.update_arp()
 
         # TODO(mark): update_vpn
 
@@ -67,6 +69,10 @@ class Manager(object):
     def update_routes(self):
         mgr = route.RouteManager()
         mgr.update_default(self.config)
+
+    def update_arp(self):
+        mgr = arp.ARPManager()
+        mgr.remove_stale_entries(self.config)
 
     def get_interfaces(self):
         return self.if_mgr.get_interfaces()
