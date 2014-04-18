@@ -755,7 +755,6 @@ class ConfigurationTestCase(TestCase):
             ]
         )
 
-
     def test_pf_config_with_floating(self):
         ext_net = dict(
             network_id='ext',
@@ -807,8 +806,8 @@ class ConfigurationTestCase(TestCase):
 
     def test_pf_config_external_ipv4(self):
         ext_net = dict(network_id='ext',
-                  interface=dict(ifname='ge0'),
-                  network_type='external')
+                       interface=dict(ifname='ge0'),
+                       network_type='external')
         self._pf_config_test_helper(
             {'networks': [ext_net]},
             ['pass out quick on ge0 proto udp to any port 53']
@@ -816,8 +815,8 @@ class ConfigurationTestCase(TestCase):
 
     def test_pf_config_external_ipv6(self):
         ext_net = dict(network_id='ext',
-                  interface=dict(ifname='ge0', addresses=['fe80::1/64']),
-                  network_type='external')
+                       interface=dict(ifname='ge0', addresses=['fe80::1/64']),
+                       network_type='external')
         self._pf_config_test_helper(
             {'networks': [ext_net]},
             [
