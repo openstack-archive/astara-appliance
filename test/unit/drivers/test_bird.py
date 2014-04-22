@@ -79,9 +79,17 @@ class BirdTestCase(TestCase):
     def test_restart(self):
         self.mgr.restart()
         self.mock_execute.assert_has_calls([
-            mock.call(['/etc/rc.d/bird6', 'stop'], 'sudo'),
-            mock.call(['/etc/rc.d/bird6', 'start'], 'sudo')
+            mock.call(['/etc/rc.d/bird6', 'reload'], 'sudo'),
         ])
+
+    def test_restart_failure(self):
+        with mock.patch('akanda.router.utils.execute') as execute:
+            execute.side_effect = [Exception('reload failed!'), None]
+            self.mgr.restart()
+            execute.assert_has_calls([
+                mock.call(['/etc/rc.d/bird6', 'reload'], 'sudo'),
+                mock.call(['/etc/rc.d/bird6', 'start'], 'sudo'),
+            ])
 
     def test_build_config(self):
         patches = {
