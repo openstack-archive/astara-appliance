@@ -21,16 +21,35 @@ class RouteManager(base.Manager):
                 if subnet.gateway_ip:
                     self._set_default_gateway(subnet.gateway_ip)
 
+    def _get_default_gateway(self, version):
+        current = None
+        try:
+            cmd_out = self.sudo('-n', 'get', version, 'default')
+        except:
+            # assume the route is missing and use defaults
+            pass
+        else:
+            if 'no such process' in cmd_out.lower():
+                # There is no gateway
+                return None
+            for l in cmd_out.splitlines():
+                l = l.strip()
+                if l.startswith('gateway:'):
+                    return l.partition(':')[-1].strip()
+        return current
+
     def _set_default_gateway(self, gateway_ip):
         version = '-inet'
         if gateway_ip.version == 6:
             version += '6'
-        try:
-            current = self.sudo('-n', 'get', version, 'default')
-        except:
-            current = None
+        current = self._get_default_gateway(version)
+        desired = str(gateway_ip)
 
-        if current and 'no such process' not in current.lower():
-            return self.sudo('change', version, 'default', str(gateway_ip))
-        else:
-            return self.sudo('add', version, 'default', str(gateway_ip))
+        if not current:
+            # Set the gateway
+            return self.sudo('add', version, 'default', desired)
+        if current != desired:
+            # Update the current gateway
+            return self.sudo('change', version, 'default', desired)
+        # Nothing to do
+        return ''

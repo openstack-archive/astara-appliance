@@ -633,8 +633,6 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net]},
             [
-                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
-                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
                  'http rdr-to 127.0.0.1 port 9601'),
@@ -660,8 +658,6 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net, v6_net]},
             [
-                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
-                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
                  'http rdr-to 127.0.0.1 port 9601'),
@@ -690,8 +686,6 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net]},
             [
-                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
-                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
                  'http rdr-to 127.0.0.1 port 9601'),
@@ -710,8 +704,6 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net]},
             [
-                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
-                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 'pass quick proto tcp from ge1:network to ge1 port { 22 }',
                 'pass quick proto tcp from ge1 to ge1:network port 9697',
@@ -728,8 +720,6 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net], 'address_book': ab},
             [
-                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
-                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 'table <foo> persist {192.168.1.1/24}'
             ]
@@ -746,8 +736,6 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net], 'anchors': [anchor]},
             [
-                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
-                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 'anchor foo {\npass proto tcp to port 22\n}'
             ]
@@ -762,8 +750,6 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net], 'labels': label},
             [
-                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
-                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 'match out on egress to {192.168.1.0/24} label "foo"'
             ]
@@ -805,8 +791,6 @@ class ConfigurationTestCase(TestCase):
         self._pf_config_test_helper(
             {'networks': [ext_net, int_net], 'floating_ips': [fip]},
             [
-                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
-                 'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
                 ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
                  'http rdr-to 127.0.0.1 port 9601'),
@@ -817,5 +801,27 @@ class ConfigurationTestCase(TestCase):
                 'pass in on ge1 proto udp to any',
                 'pass on ge0 from 10.0.0.1 to any binat-to 9.9.9.9',
                 'pass out on ge1 to 10.0.0.1'
+            ]
+        )
+
+    def test_pf_config_external_ipv4(self):
+        ext_net = dict(network_id='ext',
+                       interface=dict(ifname='ge0'),
+                       network_type='external')
+        self._pf_config_test_helper(
+            {'networks': [ext_net]},
+            ['pass out quick on ge0 proto udp to any port 53']
+        )
+
+    def test_pf_config_external_ipv6(self):
+        ext_net = dict(network_id='ext',
+                       interface=dict(ifname='ge0', addresses=['fe80::1/64']),
+                       network_type='external')
+        self._pf_config_test_helper(
+            {'networks': [ext_net]},
+            [
+                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
+                 'port 179'),
+                'pass out quick on ge0 proto udp to any port 53'
             ]
         )
