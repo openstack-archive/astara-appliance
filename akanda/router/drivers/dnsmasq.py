@@ -9,7 +9,7 @@ from akanda.router import utils
 LOG = logging.getLogger(__name__)
 CONF_DIR = '/etc/dnsmasq.d'
 RC_PATH = '/etc/rc.d/dnsmasq'
-DEFAULT_LEASE = 120
+DEFAULT_LEASE = 86400
 
 
 class DHCPManager(base.Manager):

@@ -6,8 +6,8 @@ TZ=UTC                   # Time zones are in /usr/share/zoneinfo
 BASEURL=ftp://ftp3.usa.openbsd.org/pub/OpenBSD
 MIRROR=$BASEURL/$MAJ.$MIN/$ARCH
 PKG_PATH=$BASEURL/$MAJ.$MIN/packages/$ARCH
-
-APPLIANCE_SCRIPT_DIR='/vagrant/akanda-appliance/scripts'
+APPLIANCE_BASE_DIR="/root/akanda-appliance"
+APPLIANCE_SCRIPT_DIR="$APPLIANCE_BASE_DIR/scripts"
 
 # Additional packages that should be installed on the akanda live cd
 PACKAGES="ntp python-2.7.3p1 py-pip wget dnsmasq bird-v6-1.3.9p0"
@@ -84,29 +84,18 @@ export LD_LIBRARY_PATH=/usr/local/lib
 ln -sf /usr/local/bin/python2.7 /usr/local/bin/python
 ln -sf /usr/local/bin/pip-2.7 /usr/local/bin/pip
 
-cd /root/src/greenlet-0.4.0
-python setup.py install
+pip install greenlet==0.4.0
+pip install eventlet==0.12.1
 
-cd /root/src/eventlet-0.12.1
-python setup.py install
-
-cd /vagrant/akanda-appliance
+cd $APPLIANCE_BASE_DIR
 python setup.py install
 EOF
-
-mkdir -p /root/src
-cd /root/src
-
-tar -zxf $APPLIANCE_SCRIPT_DIR/src/greenlet-0.4.0.tar.gz
-tar -zxf $APPLIANCE_SCRIPT_DIR/src/eventlet-0.12.1.tar.gz
 
 cd /root
 
 chmod +x /tmp/akanda.sh
 /tmp/akanda.sh || exit 1
 rm /tmp/akanda.sh
-
-rm -rf /root/src
 
 echo "[*] Add rc.d scripts...."
 cp $APPLIANCE_SCRIPT_DIR/etc/rc.d/sshd /etc/rc.d/sshd
