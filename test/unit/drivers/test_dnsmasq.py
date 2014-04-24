@@ -90,13 +90,13 @@ class DnsmasqTestCase(TestCase):
         config = self.mgr._build_dhcp_config('ge0', ext_net)
         assert config == '\n'.join([
             'interface=ge0',
-            'dhcp-range=set:ge0_0,dead:beef::,static,120s',
+            'dhcp-range=set:ge0_0,dead:beef::,static,86400s',
             'dhcp-option=tag:ge0_0,option6:dns-server,8.8.8.8',
             'dhcp-option=tag:ge0_0,option6:dns-server,8.8.4.4',
             ('dhcp-option=tag:ge0_0,option6:classless-static-route,'
              '172.16.0.0/16,192.168.1.1'),
             'dhcp-host=fa:da:fa:da:fa:da:,192.168.1.2,192-168-1-2.local'
-        ])
+        ]), config
 
     def test_restart(self):
         self.mgr.restart()
