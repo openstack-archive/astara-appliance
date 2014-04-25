@@ -26,13 +26,13 @@
 # Defaults
 ###############################################################################
 MAJ=5                    # Version major number
-MIN=3                    # Version minor number
+MIN=4                    # Version minor number
 ARCH=$(uname -p)         # Architecture
 TZ=UTC                   # Time zones are in /usr/share/zoneinfo
 # The base sets that should be installed on the akanda live cd
 SETS="base etc man"
 # Additional packages that should be installed on the akanda live cd
-PACKAGES="ntp python-2.7.3p1 py-pip wget dnsmasq bird-v6-1.3.9p0"
+PACKAGES="ntp python-2.7.5 py-pip wget dnsmasq bird-v6-1.3.10"
 
 
 WDIR=/usr/local/akanda-livecdx            # Working directory
