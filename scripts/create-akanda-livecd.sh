@@ -366,6 +366,9 @@ cat > $WDIR/etc/sysctl.conf <<EOF
 net.inet6.ip6.dad_count=0
 EOF
 
+echo "[*] Update newsyslog.conf"
+cp $HERE/etc/newsyslog.conf $WDIR/etc/newsyslog.conf
+
 echo "[*] Add rc.local file...."
 cp $HERE/etc/rc.local $WDIR/etc/rc.local
 
