@@ -688,6 +688,11 @@ def _format_ext_rule(interface):
         (name, defaults.DNS))
     )
 
+    retval.append((
+        'pass out quick on %s proto tcp to any port { %d %d }' %
+        (name, defaults.HTTP, defaults.HTTPS))
+    )
+
     return retval
 
 
