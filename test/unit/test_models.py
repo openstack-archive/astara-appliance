@@ -634,7 +634,7 @@ class ConfigurationTestCase(TestCase):
             {'networks': [ext_net, int_net]},
             [
                 'pass out quick on ge0 proto udp to any port 53',
-                'pass out quick on ge0 proto tcp to any port { 80 443 }',
+                'pass out quick on ge0 proto tcp to any',
                 ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
                  'http rdr-to 127.0.0.1 port 9601'),
                 'pass out on ge0 from ge1:network to any nat-to 9.9.9.1',
@@ -660,7 +660,7 @@ class ConfigurationTestCase(TestCase):
             {'networks': [ext_net, int_net, v6_net]},
             [
                 'pass out quick on ge0 proto udp to any port 53',
-                'pass out quick on ge0 proto tcp to any port { 80 443 }',
+                'pass out quick on ge0 proto tcp to any',
                 ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
                  'http rdr-to 127.0.0.1 port 9601'),
                 'pass out on ge0 from ge1:network to any nat-to 9.9.9.1',
@@ -689,7 +689,7 @@ class ConfigurationTestCase(TestCase):
             {'networks': [ext_net, int_net]},
             [
                 'pass out quick on ge0 proto udp to any port 53',
-                'pass out quick on ge0 proto tcp to any port { 80 443 }',
+                'pass out quick on ge0 proto tcp to any',
                 ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
                  'http rdr-to 127.0.0.1 port 9601'),
                 'block from ge1:network to any'
@@ -708,7 +708,7 @@ class ConfigurationTestCase(TestCase):
             {'networks': [ext_net, int_net]},
             [
                 'pass out quick on ge0 proto udp to any port 53',
-                'pass out quick on ge0 proto tcp to any port { 80 443 }',
+                'pass out quick on ge0 proto tcp to any',
                 'pass quick proto tcp from ge1:network to ge1 port { 22 }',
                 'pass quick proto tcp from ge1 to ge1:network port 9697',
                 'block in quick on !ge1 to ge1:network',
@@ -725,7 +725,7 @@ class ConfigurationTestCase(TestCase):
             {'networks': [ext_net], 'address_book': ab},
             [
                 'pass out quick on ge0 proto udp to any port 53',
-                'pass out quick on ge0 proto tcp to any port { 80 443 }',
+                'pass out quick on ge0 proto tcp to any',
                 'table <foo> persist {192.168.1.1/24}'
             ]
         )
@@ -742,7 +742,7 @@ class ConfigurationTestCase(TestCase):
             {'networks': [ext_net], 'anchors': [anchor]},
             [
                 'pass out quick on ge0 proto udp to any port 53',
-                'pass out quick on ge0 proto tcp to any port { 80 443 }',
+                'pass out quick on ge0 proto tcp to any',
                 'anchor foo {\npass proto tcp to port 22\n}'
             ]
         )
@@ -757,7 +757,7 @@ class ConfigurationTestCase(TestCase):
             {'networks': [ext_net], 'labels': label},
             [
                 'pass out quick on ge0 proto udp to any port 53',
-                'pass out quick on ge0 proto tcp to any port { 80 443 }',
+                'pass out quick on ge0 proto tcp to any',
                 'match out on egress to {192.168.1.0/24} label "foo"'
             ]
         )
@@ -799,7 +799,7 @@ class ConfigurationTestCase(TestCase):
             {'networks': [ext_net, int_net], 'floating_ips': [fip]},
             [
                 'pass out quick on ge0 proto udp to any port 53',
-                'pass out quick on ge0 proto tcp to any port { 80 443 }',
+                'pass out quick on ge0 proto tcp to any',
                 ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
                  'http rdr-to 127.0.0.1 port 9601'),
                 'pass out on ge0 from ge1:network to any nat-to 9.9.9.1',
@@ -820,7 +820,7 @@ class ConfigurationTestCase(TestCase):
             {'networks': [ext_net]},
             [
                 'pass out quick on ge0 proto udp to any port 53',
-                'pass out quick on ge0 proto tcp to any port { 80 443 }'
+                'pass out quick on ge0 proto tcp to any',
             ]
         )
 
@@ -834,6 +834,6 @@ class ConfigurationTestCase(TestCase):
                 ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
                  'port 179'),
                 'pass out quick on ge0 proto udp to any port 53',
-                'pass out quick on ge0 proto tcp to any port { 80 443 }',
+                'pass out quick on ge0 proto tcp to any',
             ]
         )
