@@ -1,5 +1,7 @@
 # Akanda Appliance
 
+*Part of the [Akanda Project](https://github.com/dreamhost/akanda).*
+
 Router appliance based upon [OpenBSD](http://www.openbsd.org) and [Packet
 Filter](http://www.openbsd.org/faq/pf/). Includes a REST API to monitor,
 configure, and manage the router.
