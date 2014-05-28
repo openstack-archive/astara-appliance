@@ -491,6 +491,15 @@ class ConfigurationTestCase(TestCase):
         c = models.Configuration({'tenant_id': 'abc123'})
         self.assertEqual(c.tenant_id, 'abc123')
 
+    def test_no_default_v4_gateway(self):
+        c = models.Configuration({})
+        self.assertIsNone(c.default_v4_gateway)
+
+    def test_valid_default_v4_gateway(self):
+        c = models.Configuration({'default_v4_gateway': '172.16.77.1'})
+        self.assertEqual(c.default_v4_gateway.version, 4)
+        self.assertEqual(str(c.default_v4_gateway), '172.16.77.1')
+
     def test_init_only_static_routes(self):
         routes = [('0.0.0.0/0', '192.168.1.1'),
                   ('172.16.77.0/16', '192.168.1.254')]
