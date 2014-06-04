@@ -18,6 +18,7 @@
 import mock
 import unittest2
 
+from akanda.router import models
 from akanda.router.drivers import route
 
 
@@ -145,3 +146,39 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             with mock.patch.object(self.mgr, 'sudo') as sudo:
                 self.mgr._set_default_gateway(ip)
                 sudo.assert_called_with('add', '-inet6', 'default', ip_s)
+
+    def test_update_default_no_inputs(self):
+        c = models.Configuration({})
+        with mock.patch.object(self.mgr, '_set_default_gateway') as set:
+            set.side_effect = AssertionError(
+                'should not try to set default gw'
+            )
+            self.mgr.update_default(c)
+
+    def test_update_default_v4_only(self):
+        c = models.Configuration({'default_v4_gateway': '172.16.77.1'})
+        with mock.patch.object(self.mgr, '_set_default_gateway') as set:
+            self.mgr.update_default(c)
+            set.assert_called_once_with(c.default_v4_gateway)
+
+    def test_update_default_v6_only(self):
+        subnet = dict(
+            cidr='fe80::1/64',
+            gateway_ip='fe80::1',
+            dhcp_enabled=True,
+            dns_nameservers=[],
+        )
+        network = dict(
+            network_id='netid',
+            name='thenet',
+            interface=dict(ifname='ge0', addresses=['fe80::2']),
+            allocations=[],
+            subnets=[subnet],
+            network_type='external',
+        )
+        c = models.Configuration({'networks': [network]})
+        with mock.patch.object(self.mgr, '_set_default_gateway') as set:
+            self.mgr.update_default(c)
+            net = c.networks[0]
+            snet = net.subnets[0]
+            set.assert_called_once_with(snet.gateway_ip)

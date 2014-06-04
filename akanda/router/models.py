@@ -542,6 +542,8 @@ class Network(ModelBase):
 
 class Configuration(ModelBase):
     def __init__(self, conf_dict={}):
+        gw = conf_dict.get('default_v4_gateway')
+        self.default_v4_gateway = netaddr.IPAddress(gw) if gw else None
         self.asn = conf_dict.get('asn', DEFAULT_AS)
         self.neighbor_asn = conf_dict.get('neighbor_asn', self.asn)
         self.networks = [
