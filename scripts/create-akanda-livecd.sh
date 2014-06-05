@@ -393,6 +393,12 @@ cp $HERE/etc/rc.local $WDIR/etc/rc.local
     echo "[*] Removing ssh host keys..."
     rm -f $WDIR/etc/ssh/*key*
 
+    echo "[*] Adding ssh key...]"
+    mkdir $WDIR/root/.ssh
+    chmod 700 $WDIR/root/.ssh
+    cp $HERE/etc/key $WDIR/root/.ssh/authorized_keys
+    chmod 600 $WDIR/root/.ssh/authorized_keys
+
     echo "[*] Saving creation timestamp..."
     date > $WDIR/etc/livecd-release
 
