@@ -30,20 +30,36 @@ class RouteManager(base.Manager):
         super(RouteManager, self).__init__(root_helper)
 
     def update_default(self, config):
+        # Track whether we have set the default gateways, by IP
+        # version.
+        gw_set = {
+            4: False,
+            6: False,
+        }
+
         # The default v4 gateway is pulled out as a special case
         # because we only want one but we might have multiple v4
-        # subnets on the external network.
+        # subnets on the external network. However, sometimes the RUG
+        # can't figure out what that value is, because it thinks we
+        # don't have any external IP addresses, yet. In that case, it
+        # doesn't give us a default.
         if config.default_v4_gateway:
             self._set_default_gateway(config.default_v4_gateway)
+            gw_set[4] = True
 
-        # Set the gateway for the IPv6 network.
+        # Look through our networks and make sure we have a default
+        # gateway set for each IP version, if we have an IP for that
+        # version on the external net. If we haven't already set the
+        # v4 gateway, this picks the gateway for the first subnet we
+        # find, which might be wrong.
         for net in config.networks:
             if not net.is_external_network:
                 continue
 
             for subnet in net.subnets:
-                if subnet.gateway_ip and subnet.gateway_ip.version == 6:
+                if subnet.gateway_ip and not gw_set[subnet.gateway_ip.version]:
                     self._set_default_gateway(subnet.gateway_ip)
+                    gw_set[subnet.gateway_ip.version] = True
 
     def _get_default_gateway(self, version):
         current = None

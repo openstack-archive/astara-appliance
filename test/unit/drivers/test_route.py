@@ -155,13 +155,63 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             )
             self.mgr.update_default(c)
 
-    def test_update_default_v4_only(self):
+    def test_update_default_v4_from_gateway(self):
         c = models.Configuration({'default_v4_gateway': '172.16.77.1'})
         with mock.patch.object(self.mgr, '_set_default_gateway') as set:
             self.mgr.update_default(c)
             set.assert_called_once_with(c.default_v4_gateway)
 
-    def test_update_default_v6_only(self):
+    def test_update_default_v4_from_subnet(self):
+        subnet = dict(
+            cidr='192.168.89.0/24',
+            gateway_ip='192.168.89.1',
+            dhcp_enabled=True,
+            dns_nameservers=[],
+        )
+        network = dict(
+            network_id='netid',
+            name='thenet',
+            interface=dict(ifname='ge0', addresses=['fe80::2']),
+            allocations=[],
+            subnets=[subnet],
+            network_type='external',
+        )
+        c = models.Configuration({'networks': [network]})
+        with mock.patch.object(self.mgr, '_set_default_gateway') as set:
+            self.mgr.update_default(c)
+            net = c.networks[0]
+            snet = net.subnets[0]
+            set.assert_called_once_with(snet.gateway_ip)
+
+    def test_update_multiple_v4_subnets(self):
+        subnet = dict(
+            cidr='192.168.89.0/24',
+            gateway_ip='192.168.89.1',
+            dhcp_enabled=True,
+            dns_nameservers=[],
+        )
+        subnet2 = dict(
+            cidr='192.168.71.0/24',
+            gateway_ip='192.168.71.1',
+            dhcp_enabled=True,
+            dns_nameservers=[],
+        )
+        network = dict(
+            network_id='netid',
+            name='thenet',
+            interface=dict(ifname='ge0', addresses=['fe80::2']),
+            allocations=[],
+            subnets=[subnet, subnet2],
+            network_type='external',
+        )
+        c = models.Configuration({'networks': [network]})
+        with mock.patch.object(self.mgr, '_set_default_gateway') as set:
+            self.mgr.update_default(c)
+            net = c.networks[0]
+            snet = net.subnets[0]
+            set.assert_called_once_with(snet.gateway_ip)
+
+    def test_update_default_v6(self):
         subnet = dict(
             cidr='fe80::1/64',
             gateway_ip='fe80::1',
@@ -174,6 +224,34 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             interface=dict(ifname='ge0', addresses=['fe80::2']),
             allocations=[],
             subnets=[subnet],
+            network_type='external',
+        )
+        c = models.Configuration({'networks': [network]})
+        with mock.patch.object(self.mgr, '_set_default_gateway') as set:
+            self.mgr.update_default(c)
+            net = c.networks[0]
+            snet = net.subnets[0]
+            set.assert_called_once_with(snet.gateway_ip)
+
+    def test_update_default_multiple_v6(self):
+        subnet = dict(
+            cidr='fe80::1/64',
+            gateway_ip='fe80::1',
+            dhcp_enabled=True,
+            dns_nameservers=[],
+        )
+        subnet2 = dict(
+            cidr='fe89::1/64',
+            gateway_ip='fe89::1',
+            dhcp_enabled=True,
+            dns_nameservers=[],
+        )
+        network = dict(
+            network_id='netid',
+            name='thenet',
+            interface=dict(ifname='ge0', addresses=['fe80::2']),
+            allocations=[],
+            subnets=[subnet, subnet2],
             network_type='external',
         )
         c = models.Configuration({'networks': [network]})
