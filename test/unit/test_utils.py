@@ -123,3 +123,10 @@ class ExecuteTest(TestCase):
                 utils.execute(['command', 'with', 'args'])
             except RuntimeError as e:
                 self.assertIn('output text', str(e))
+
+    def test_execute_exception_real(self):
+        try:
+            utils.execute(['/bin/ls', '/no-such-directory'])
+        except RuntimeError as e:
+            self.assertIn('cannot access', str(e))
+        
