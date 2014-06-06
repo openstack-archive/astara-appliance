@@ -16,9 +16,11 @@
 
 
 import json
+import subprocess
 from unittest2 import TestCase
 
 import flask
+import mock
 import netaddr
 
 from akanda.router import models
@@ -107,3 +109,17 @@ class FlaskJsonResponse(TestCase):
         self.assertIsInstance(retval, flask.Response)
         self.assertEqual(retval.data, '{"arg1": 1, "kwarg1": "foo"}')
         self.assertEqual(retval.status_code, 200)
+
+
+class ExecuteTest(TestCase):
+
+    def test_execute_exception(self):
+        with mock.patch('subprocess.check_output') as co:
+            co.side_effect = subprocess.CalledProcessError(
+                1, ['command', 'with', 'args'],
+                output='output text',
+            )
+            try:
+                utils.execute(['command', 'with', 'args'])
+            except RuntimeError as e:
+                self.assertIn('output text', str(e))
