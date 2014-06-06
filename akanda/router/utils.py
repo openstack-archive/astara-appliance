@@ -33,7 +33,15 @@ def execute(args, root_helper=None):
         cmd = shlex.split(root_helper) + args
     else:
         cmd = args
-    return subprocess.check_output(map(str, cmd), stderr=subprocess.STDOUT)
+    try:
+        return subprocess.check_output(map(str, cmd), stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        # The serialization layer doesn't know about the extra output
+        # attribute of the CalledProcessError, so we don't get
+        # stdout/stderr. Convert to a simpler exception type and
+        # include all of the info from the original exception in the
+        # message.
+        raise RuntimeError('%s: %s' % (e, e.output))
 
 
 def replace_file(file_name, data):
