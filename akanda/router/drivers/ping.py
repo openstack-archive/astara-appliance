@@ -29,18 +29,19 @@ LOG = logging.getLogger(__name__)
 
 class PingManager(base.Manager):
 
+    exe_map = {
+        4: '/sbin/ping',
+        6: '/sbin/ping6'
+    }
+
     def __init__(self, root_helper='sudo'):
         super(PingManager, self).__init__(root_helper)
 
     def do(self, ip):
         version = netaddr.IPAddress(ip).version
-        exe = {
-            4: '/sbin/ping',
-            6: '/sbin/ping6'
-        }
         args = ['-c', '1', ip]
         try:
-            utils.execute([exe.get(version)] + args)
+            utils.execute([self.exe_map.get(version)] + args)
             return True
-        except CalledProcessError:
+        except RuntimeError:
             return False
