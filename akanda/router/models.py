@@ -736,7 +736,7 @@ def _format_int_to_ext_rule(ext_if, ext_v4_addr, interface):
 
             # Allow IPv6 from this network out via egress
             'pass out on %s inet6 from %s:network' % (ext_if, name),
-            'pass inet6 proto tcp to %s:network' % (name)
+            'pass inet6 to %s:network' % (name)
         ])
 
     retval.extend([

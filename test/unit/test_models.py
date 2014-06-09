@@ -697,7 +697,7 @@ class ConfigurationTestCase(TestCase):
                 'pass in quick on ge2 proto udp from port 546 to port 547',
                 'pass out quick on ge2 proto udp from port 547 to port 546',
                 'pass out on ge0 inet6 from ge2:network',
-                'pass inet6 proto tcp to ge2:network',
+                'pass inet6 to ge2:network',
                 'pass in on ge2 proto tcp to any',
                 'pass in on ge2 proto udp to any',
             ]
