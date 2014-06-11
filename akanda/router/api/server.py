@@ -27,6 +27,7 @@ app = flask.Flask(__name__)
 app.register_blueprint(v1.base.blueprint)
 app.register_blueprint(v1.system.blueprint)
 app.register_blueprint(v1.firewall.blueprint)
+app.register_blueprint(v1.status.blueprint)
 app.register_error_handler(500, handle_traceback)
 
 
