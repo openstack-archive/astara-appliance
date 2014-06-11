@@ -16,7 +16,6 @@
 
 
 import logging
-from subprocess import CalledProcessError
 
 import netaddr
 
