@@ -69,7 +69,10 @@ class PFManager(base.Manager):
     def update_conf(self, conf_data):
         replace_file('/tmp/pf.conf', conf_data)
         execute(['mv', '/tmp/pf.conf', '/etc/pf.conf'], self.root_helper)
-        self.sudo('-f', '/etc/pf.conf')
+        try:
+            self.sudo('-f', '/etc/pf.conf')
+        except RuntimeError as e:
+            raise RuntimeError(unicode(e) + '\n' + conf_data)
 
     def _parse_label_line(self, line):
         parts = line.strip().split()

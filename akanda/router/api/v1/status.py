@@ -25,9 +25,11 @@ from akanda.router.drivers import ping
 
 blueprint = utils.blueprint_factory(__name__)
 
+
 @blueprint.before_request
 def get_manager():
     request.ping_mgr = ping.PingManager()
+
 
 @blueprint.route('/')
 @utils.json_response
