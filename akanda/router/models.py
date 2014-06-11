@@ -780,12 +780,14 @@ def _format_floating_ip(ext_if, floating_ips):
             fip.floating_ip
         ))
         for fip in floating_ips
+        if fip.fixed_ip.version == fip.floating_ip.version
     ]
 
     bin_nat.extend(
         ('pass out on %s to %s' % (fip.network.interface.ifname, fip.fixed_ip))
         for fip in floating_ips
-        if fip.network is not None
+        if fip.network is not None and
+        fip.fixed_ip.version == fip.floating_ip.version
     )
 
     return bin_nat
