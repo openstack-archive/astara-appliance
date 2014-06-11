@@ -838,6 +838,54 @@ class ConfigurationTestCase(TestCase):
             ]
         )
 
+    def test_pf_config_with_floating_different_ip_versions(self):
+        ext_net = dict(
+            network_id='ext',
+            interface=dict(ifname='ge0', addresses=['9.9.9.1/24']),
+            network_type='external',
+            subnets=[
+                {
+                    'cidr': '9.9.9.0/24',
+                    'gateway_ip': '9.9.9.1',
+                    'dhcp_enabled': True,
+                    'dns_nameservers': [],
+                }
+            ]
+        )
+        int_net = dict(
+            network_id='int',
+            interface=dict(ifname='ge1', addresses=['10.0.0.0/24']),
+            network_type='internal',
+            subnets=[
+                {
+                    'cidr': '10.0.0.0/24',
+                    'gateway_ip': '10.0.0.1',
+                    'dhcp_enabled': True,
+                    'dns_nameservers': [],
+                }
+            ]
+        )
+
+        fip = {
+            'floating_ip': '9.9.9.9',
+            'fixed_ip': 'fe80::1'
+        }
+
+        self._pf_config_test_helper(
+            {'networks': [ext_net, int_net], 'floating_ips': [fip]},
+            [
+                'pass out quick on ge0 proto udp to any port 53',
+                'pass out quick on ge0 proto tcp from ge0 to any',
+                ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
+                 'http rdr-to 127.0.0.1 port 9601'),
+                'pass out on ge0 from ge1:network to any nat-to 9.9.9.1',
+                'pass in quick on ge1 proto udp from port 68 to port 67',
+                'pass out quick on ge1 proto udp from port 67 to port 68',
+                'pass in on ge1 proto tcp to any',
+                'pass in on ge1 proto udp to any',
+            ]
+        )
+
     def test_pf_config_external_ipv4(self):
         ext_net = dict(network_id='ext',
                        interface=dict(ifname='ge0'),
