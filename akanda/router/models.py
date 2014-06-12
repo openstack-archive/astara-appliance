@@ -703,8 +703,8 @@ def _format_ext_rule(interface):
         )
 
     retval.append((
-        'pass out quick on %s proto udp to any port %d' %
-        (name, defaults.DNS))
+        'pass out quick on %s proto udp from %s to any port %d' %
+        (name, name, defaults.DNS))
     )
 
     retval.append(
@@ -743,6 +743,11 @@ def _format_int_to_ext_rule(ext_if, ext_v4_addr, interface):
         'pass in on %s proto tcp to any' % name,
         'pass in on %s proto udp to any' % name,
     ])
+
+    retval.append((
+        'pass out quick on %s proto udp from %s to any port %d' %
+        (ext_if, name, defaults.DNS))
+    )
 
     return retval
 
