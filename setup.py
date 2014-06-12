@@ -28,7 +28,7 @@ setup(
     license='BSD',
     install_requires=[
         'flask>=0.9',
-        'gunicorn>=0.14.6',
+        'gunicorn>=0.14.6,<19',
         'netaddr>=0.7.7',
         'eventlet>=0.9.17',
         'requests>=0.14.1,<=1.2.0',
