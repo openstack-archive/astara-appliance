@@ -428,7 +428,7 @@ class Subnet(ModelBase):
 
     @classmethod
     def from_dict(cls, d):
-        host_routes = [StaticRoute(r['destination'], r['next_hop'])
+        host_routes = [StaticRoute(r['destination'], r['nexthop'])
                        for r in d.get('host_routes', [])]
         return cls(
             d['cidr'],
