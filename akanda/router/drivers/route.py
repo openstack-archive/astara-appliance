@@ -137,10 +137,14 @@ class RouteManager(base.Manager):
         if destination.version == 6:
             version += '6'
         try:
-            return self.sudo(action, version, str(destination), str(next_hop))
+            LOG.debug(
+                self.sudo(action, version, str(destination), str(next_hop))
+            )
+            return True
         except RuntimeError as e:
             # Since these are user-supplied custom routes, it's very possible
             # that adding/removing them will fail.  A failure to apply one of
             # these custom rules, however, should *not* cause an overall router
             # failure.
             LOG.warn('Route could not be %sed: %s' % (action, unicode(e)))
+            return False
