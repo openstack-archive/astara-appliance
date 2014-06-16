@@ -47,11 +47,13 @@ v6_subnet = mock.Mock()
 v6_subnet.gateway_ip = netaddr.IPAddress('face::1')
 v6_subnet.cidr = netaddr.IPNetwork('face::/64')
 v6_subnet.dns_nameservers = []
+v6_subnet.host_routes = []
 
 v4_subnet = mock.Mock()
 v4_subnet.gateway_ip = netaddr.IPAddress('9.9.9.1')
 v4_subnet.cidr = netaddr.IPNetwork('9.9.9.0/24')
 v4_subnet.dns_nameservers = []
+v4_subnet.host_routes = []
 
 int_net = mock.Mock()
 int_net.subnets = [v4_subnet, v6_subnet]
@@ -59,6 +61,12 @@ int_net.is_internal_network = True
 int_net.is_external_network = False
 int_net.is_tenant_network = True
 int_net.interface.ifname = 'ge1'
+int_net.address_allocations = [models.Allocation(
+    'fb:db:fb:db:fb:db',
+    {'9.9.9.2': True, 'face::2': True},  # ip: DHCP enabled
+    '9-9-9-2.local',
+    'e3300819-d7b9-4d8d-9d7c-a6380ff78ca8',
+)]
 
 mgt_net = mock.Mock()
 mgt_net.subnets = []
@@ -113,6 +121,15 @@ class DnsmasqTestCase(TestCase):
             ('dhcp-option=tag:ge0_0,option6:classless-static-route,'
              '172.16.0.0/16,192.168.1.1'),
             'dhcp-host=fa:da:fa:da:fa:da:,192.168.1.2,192-168-1-2.local'
+        ]), config
+
+    def test_build_dhcp_config_int(self):
+        config = self.mgr._build_dhcp_config('ge1', int_net)
+        assert config == '\n'.join([
+            'interface=ge1',
+            'dhcp-range=set:ge1_0,9.9.9.0,static,86400s',
+            'dhcp-range=set:ge1_1,face::,static,86400s',
+            'dhcp-host=fb:db:fb:db:fb:db,[face::2],9.9.9.2,9-9-9-2.local',
         ]), config
 
     def test_restart(self):

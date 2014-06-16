@@ -80,8 +80,8 @@ class DHCPManager(base.Manager):
         config.extend(
             'dhcp-host=%s,%s,%s' % (
                 a.mac_address,
-                ','.join('[%]' % ip if ':' in ip else ip for ip in
-                         a.dhcp_addresses),
+                ','.join('[%s]' % ip if ':' in ip else ip
+                         for ip in a.dhcp_addresses),
                 a.hostname)
             for a in network.address_allocations
         )
