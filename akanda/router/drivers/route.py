@@ -68,13 +68,6 @@ class RouteManager(base.Manager):
             for subnet in net.subnets:
                 cidr = str(subnet.cidr)
 
-                # ...if there are no host_routes configured, unset all of the
-                # previous host_routes for this subnet, and move on to the next
-                # subnet
-                if not subnet.host_routes:
-                    self._empty_host_routes(cidr, db)
-                    continue
-
                 # determine the set of previously written routes for this cidr
                 if cidr not in db:
                     db[cidr] = set()
@@ -101,7 +94,10 @@ class RouteManager(base.Manager):
                 # This assignment *is* necessary - Python's `shelve`
                 # implementation isn't smart enough to capture the changes to
                 # the reference above, so this setitem call triggers a DB sync
-                db[cidr] = current
+                if current:
+                    db[cidr] = current
+                else:
+                    del db[cidr]
 
     def _get_default_gateway(self, version):
         current = None
@@ -135,12 +131,6 @@ class RouteManager(base.Manager):
             return self.sudo('change', version, 'default', desired)
         # Nothing to do
         return ''
-
-    def _empty_host_routes(self, cidr, db):
-        if cidr in db:
-            for x in db[cidr]:
-                self._alter_route('delete', *x)
-            del db[cidr]
 
     def _alter_route(self, action, destination, next_hop):
         version = '-inet'
