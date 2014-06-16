@@ -382,3 +382,33 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
                           '192.168.90.1'),
             ])
             self.assertEqual(len(db), 0)
+
+    def test_custom_host_routes_failure(self):
+        subnet = dict(
+            cidr='192.168.89.0/24',
+            gateway_ip='192.168.89.1',
+            dhcp_enabled=True,
+            dns_nameservers=[],
+            host_routes=[{
+                'destination': '192.240.128.0/20',
+                'nexthop': '192.168.89.2'
+            }]
+        )
+        network = dict(
+            network_id='netid',
+            interface=dict(ifname='ge0', addresses=['fe80::2']),
+            subnets=[subnet]
+        )
+        c = models.Configuration({'networks': [network]})
+
+        db = {}
+        with mock.patch.object(self.mgr, 'sudo') as sudo:
+
+            sudo.side_effect = RuntimeError("Kaboom!")
+
+            self.assertEqual(len(db), 0)
+            self.mgr.update_host_routes(c, db)
+            sudo.assert_called_once_with(
+                'add', '-inet', '192.240.128.0/20', '192.168.89.2'
+            )
+            self.assertEqual(len(db), 0)
