@@ -18,6 +18,8 @@
 import mock
 import unittest2
 
+import netaddr
+
 from akanda.router import models
 from akanda.router.drivers import route
 
@@ -260,3 +262,153 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             net = c.networks[0]
             snet = net.subnets[0]
             set.assert_called_once_with(snet.gateway_ip)
+
+    @mock.patch.object(route.RouteManager, '_set_default_gateway',
+                       lambda *a, **kw: None)
+    def test_custom_host_routes(self):
+        subnet = dict(
+            cidr='192.168.89.0/24',
+            gateway_ip='192.168.89.1',
+            dhcp_enabled=True,
+            dns_nameservers=[],
+            host_routes=[{
+                'destination': '192.240.128.0/20',
+                'nexthop': '192.168.89.2'
+            }]
+        )
+        network = dict(
+            network_id='netid',
+            interface=dict(ifname='ge0', addresses=['fe80::2']),
+            subnets=[subnet]
+        )
+        c = models.Configuration({'networks': [network]})
+
+        db = {}
+        with mock.patch.object(self.mgr, 'sudo') as sudo:
+
+            # ...so let's add one!
+            self.mgr.update_host_routes(c, db)
+            sudo.assert_called_once_with(
+                'add', '-inet', '192.240.128.0/20', '192.168.89.2'
+            )
+
+            # db[subnet.cidr] should contain the above route
+            expected = set()
+            expected.add((
+                netaddr.IPNetwork('192.240.138.0/20'),
+                netaddr.IPAddress('192.168.89.2')
+            ))
+            self.assertEqual(len(db), 1)
+            self.assertEqual(
+                db[subnet['cidr']] - expected,
+                set()
+            )
+
+            # Empty the host_routes list
+            sudo.reset_mock()
+            subnet['host_routes'] = []
+            c = models.Configuration({'networks': [network]})
+            self.mgr.update_host_routes(c, db)
+            sudo.assert_called_once_with(
+                'delete', '-inet', '192.240.128.0/20', '192.168.89.2'
+            )
+            self.assertEqual(len(db), 0)
+
+            # ...this time, let's add multiple routes and ensure they're added
+            sudo.reset_mock()
+            subnet['host_routes'] = [{
+                'destination': '192.240.128.0/20',
+                'nexthop': '192.168.89.2'
+            }, {
+                'destination': '192.220.128.0/20',
+                'nexthop': '192.168.89.3'
+            }]
+            c = models.Configuration({'networks': [network]})
+            self.mgr.update_host_routes(c, db)
+            self.assertEqual(sudo.call_args_list, [
+                mock.call('add', '-inet', '192.240.128.0/20', '192.168.89.2'),
+                mock.call('add', '-inet', '192.220.128.0/20', '192.168.89.3'),
+            ])
+
+            # ...let's remove one and add another...
+            sudo.reset_mock()
+            subnet['host_routes'] = [{
+                'destination': '192.240.128.0/20',
+                'nexthop': '192.168.89.2'
+            }, {
+                'destination': '192.185.128.0/20',
+                'nexthop': '192.168.89.4'
+            }]
+            c = models.Configuration({'networks': [network]})
+            self.mgr.update_host_routes(c, db)
+            self.assertEqual(sudo.call_args_list, [
+                mock.call('delete', '-inet', '192.220.128.0/20',
+                          '192.168.89.3'),
+                mock.call('add', '-inet', '192.185.128.0/20', '192.168.89.4')
+            ])
+
+            # ...let's add another subnet...
+            self.assertEqual(len(db), 1)
+            sudo.reset_mock()
+            network['subnets'].append(dict(
+                cidr='192.168.90.0/24',
+                gateway_ip='192.168.90.1',
+                dhcp_enabled=True,
+                dns_nameservers=[],
+                host_routes=[{
+                    'destination': '192.240.128.0/20',
+                    'nexthop': '192.168.90.1'
+                }]
+            ))
+            c = models.Configuration({'networks': [network]})
+            self.mgr.update_host_routes(c, db)
+            self.assertEqual(sudo.call_args_list, [
+                mock.call('add', '-inet', '192.240.128.0/20', '192.168.90.1')
+            ])
+            self.assertEqual(len(db), 2)
+
+            # ...and finally, delete all custom host_routes...
+            sudo.reset_mock()
+            network['subnets'][0]['host_routes'] = []
+            network['subnets'][1]['host_routes'] = []
+            c = models.Configuration({'networks': [network]})
+            self.mgr.update_host_routes(c, db)
+            self.assertEqual(sudo.call_args_list, [
+                mock.call('delete', '-inet', '192.185.128.0/20',
+                          '192.168.89.4'),
+                mock.call('delete', '-inet', '192.240.128.0/20',
+                          '192.168.89.2'),
+                mock.call('delete', '-inet', '192.240.128.0/20',
+                          '192.168.90.1'),
+            ])
+            self.assertEqual(len(db), 0)
+
+    def test_custom_host_routes_failure(self):
+        subnet = dict(
+            cidr='192.168.89.0/24',
+            gateway_ip='192.168.89.1',
+            dhcp_enabled=True,
+            dns_nameservers=[],
+            host_routes=[{
+                'destination': '192.240.128.0/20',
+                'nexthop': '192.168.89.2'
+            }]
+        )
+        network = dict(
+            network_id='netid',
+            interface=dict(ifname='ge0', addresses=['fe80::2']),
+            subnets=[subnet]
+        )
+        c = models.Configuration({'networks': [network]})
+
+        db = {}
+        with mock.patch.object(self.mgr, 'sudo') as sudo:
+
+            sudo.side_effect = RuntimeError("Kaboom!")
+
+            self.assertEqual(len(db), 0)
+            self.mgr.update_host_routes(c, db)
+            sudo.assert_called_once_with(
+                'add', '-inet', '192.240.128.0/20', '192.168.89.2'
+            )
+            self.assertEqual(len(db), 0)

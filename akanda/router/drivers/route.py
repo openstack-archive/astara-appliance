@@ -61,6 +61,44 @@ class RouteManager(base.Manager):
                     self._set_default_gateway(subnet.gateway_ip)
                     gw_set[subnet.gateway_ip.version] = True
 
+    def update_host_routes(self, config, db):
+        for net in config.networks:
+
+            # For each subnet...
+            for subnet in net.subnets:
+                cidr = str(subnet.cidr)
+
+                # determine the set of previously written routes for this cidr
+                if cidr not in db:
+                    db[cidr] = set()
+
+                current = db[cidr]
+
+                # build a set of new routes for this cidr
+                latest = set()
+                for r in subnet.host_routes:
+                    latest.add((r.destination, r.next_hop))
+
+                # If the set of previously written routes contains routes that
+                # aren't defined in the new config, run commands to delete them
+                for x in current - latest:
+                    if self._alter_route('delete', *x):
+                        current.remove(x)
+
+                # If the new config contains routes that aren't defined in the
+                # set of previously written routes, run commands to add them
+                for x in latest - current:
+                    if self._alter_route('add', *x):
+                        current.add(x)
+
+                # This assignment *is* necessary - Python's `shelve`
+                # implementation isn't smart enough to capture the changes to
+                # the reference above, so this setitem call triggers a DB sync
+                if current:
+                    db[cidr] = current
+                else:
+                    del db[cidr]
+
     def _get_default_gateway(self, version):
         current = None
         try:
@@ -93,3 +131,20 @@ class RouteManager(base.Manager):
             return self.sudo('change', version, 'default', desired)
         # Nothing to do
         return ''
+
+    def _alter_route(self, action, destination, next_hop):
+        version = '-inet'
+        if destination.version == 6:
+            version += '6'
+        try:
+            LOG.debug(
+                self.sudo(action, version, str(destination), str(next_hop))
+            )
+            return True
+        except RuntimeError as e:
+            # Since these are user-supplied custom routes, it's very possible
+            # that adding/removing them will fail.  A failure to apply one of
+            # these custom rules, however, should *not* cause an overall router
+            # failure.
+            LOG.warn('Route could not be %sed: %s' % (action, unicode(e)))
+            return False

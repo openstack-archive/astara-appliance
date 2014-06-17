@@ -43,7 +43,7 @@ class Manager(object):
 
         return self._config
 
-    def update_config(self, config):
+    def update_config(self, config, db):
         self._config = config
 
         self.update_interfaces()
@@ -51,7 +51,7 @@ class Manager(object):
         self.update_metadata()
         self.update_bgp_and_radv()
         self.update_pf()
-        self.update_routes()
+        self.update_routes(db)
         self.update_arp()
 
         # TODO(mark): update_vpn
@@ -83,9 +83,10 @@ class Manager(object):
         mgr = pf.PFManager()
         mgr.update_conf(rule_data)
 
-    def update_routes(self):
+    def update_routes(self, db):
         mgr = route.RouteManager()
         mgr.update_default(self.config)
+        mgr.update_host_routes(self.config, db.get_shelve('c'))
 
     def update_arp(self):
         mgr = arp.ARPManager()
