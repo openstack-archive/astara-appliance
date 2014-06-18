@@ -62,6 +62,7 @@ class RouteManager(base.Manager):
                     gw_set[subnet.gateway_ip.version] = True
 
     def update_host_routes(self, config, db):
+        db = db.get_shelve('c')
         for net in config.networks:
 
             # For each subnet...
