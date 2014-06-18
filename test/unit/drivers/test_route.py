@@ -17,11 +17,19 @@
 
 import mock
 import unittest2
+import collections
 
 import netaddr
 
 from akanda.router import models
 from akanda.router.drivers import route
+
+
+class FakeShelve(collections.OrderedDict):
+
+    def get_shelve(self, mode):
+        assert mode == 'c'
+        return self
 
 
 class RouteTest(unittest2.TestCase):
@@ -283,7 +291,7 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
         )
         c = models.Configuration({'networks': [network]})
 
-        db = {}
+        db = FakeShelve()
         with mock.patch.object(self.mgr, 'sudo') as sudo:
 
             # ...so let's add one!
@@ -401,7 +409,7 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
         )
         c = models.Configuration({'networks': [network]})
 
-        db = {}
+        db = FakeShelve()
         with mock.patch.object(self.mgr, 'sudo') as sudo:
 
             sudo.side_effect = RuntimeError("Kaboom!")

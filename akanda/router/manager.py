@@ -86,7 +86,7 @@ class Manager(object):
     def update_routes(self, db):
         mgr = route.RouteManager()
         mgr.update_default(self.config)
-        mgr.update_host_routes(self.config, db.get_shelve('c'))
+        mgr.update_host_routes(self.config, db)
 
     def update_arp(self):
         mgr = arp.ARPManager()
