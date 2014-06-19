@@ -61,12 +61,17 @@ class RouteManager(base.Manager):
                     self._set_default_gateway(subnet.gateway_ip)
                     gw_set[subnet.gateway_ip.version] = True
 
-    def update_host_routes(self, config, db):
-        db = db.get_shelve('c')
+    def update_host_routes(self, config, handle):
+        db = None
         for net in config.networks:
 
             # For each subnet...
             for subnet in net.subnets:
+
+                # Only open the DB if there's at least one subnet
+                if db is None:
+                    db = handle.get_shelve('c')
+
                 cidr = str(subnet.cidr)
 
                 # determine the set of previously written routes for this cidr
