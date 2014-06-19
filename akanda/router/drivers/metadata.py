@@ -32,6 +32,18 @@ class MetadataManager(base.Manager):
     def __init__(self, root_helper='sudo'):
         super(MetadataManager, self).__init__(root_helper)
 
+    def networks_have_changed(self, config):
+        net_ids = set(
+            [net.id for net in config.networks if net.is_tenant_network]
+        )
+        try:
+            config_dict = json.load(open(CONF_PATH))
+        except:
+            # If we can't read the file, assume networks were added/removed
+            return True
+        config_dict.pop('tenant_id')
+        return net_ids != set(config_dict.keys())
+
     def save_config(self, config):
         config_data = build_config(config)
 
@@ -41,11 +53,20 @@ class MetadataManager(base.Manager):
         )
         execute(['mv', '/tmp/metadata.conf', CONF_PATH], self.root_helper)
 
-    def start(self):
+    def ensure_started(self):
         try:
             execute(['/etc/rc.d/metadata', 'check'], self.root_helper)
         except:
             execute(['/etc/rc.d/metadata', 'start'], self.root_helper)
+
+    def restart(self):
+        try:
+            execute(['/etc/rc.d/metadata', 'stop'], self.root_helper)
+        except:
+            # failure is ok here
+            pass
+        execute(['/etc/rc.d/metadata', 'start'], self.root_helper)
+
 
 def build_config(config):
     config_data = {}

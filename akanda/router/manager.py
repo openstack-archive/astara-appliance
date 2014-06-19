@@ -69,8 +69,12 @@ class Manager(object):
 
     def update_metadata(self):
         mgr = metadata.MetadataManager()
+        should_restart = mgr.networks_have_changed(self.config)
         mgr.save_config(self.config)
-        mgr.start()
+        if should_restart:
+            mgr.restart()
+        else:
+            mgr.ensure_started()
 
     def update_bgp_and_radv(self):
         mgr = bird.BirdManager()
