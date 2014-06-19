@@ -70,7 +70,7 @@ class Manager(object):
     def update_metadata(self):
         mgr = metadata.MetadataManager()
         mgr.save_config(self.config)
-        mgr.restart()
+        mgr.start()
 
     def update_bgp_and_radv(self):
         mgr = bird.BirdManager()

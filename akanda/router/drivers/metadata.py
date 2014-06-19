@@ -41,14 +41,11 @@ class MetadataManager(base.Manager):
         )
         execute(['mv', '/tmp/metadata.conf', CONF_PATH], self.root_helper)
 
-    def restart(self):
+    def start(self):
         try:
-            execute(['/etc/rc.d/metadata', 'stop'], self.root_helper)
+            execute(['/etc/rc.d/metadata', 'check'], self.root_helper)
         except:
-            # failure is ok here
-            pass
-        execute(['/etc/rc.d/metadata', 'start'], self.root_helper)
-
+            execute(['/etc/rc.d/metadata', 'start'], self.root_helper)
 
 def build_config(config):
     config_data = {}
