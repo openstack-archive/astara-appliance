@@ -52,7 +52,6 @@ class NetworkMetadataProxyHandler(object):
 
         LOG.debug("Request: %s", request)
         try:
-            self._generate_instance_map()
             response = self._proxy_request(request.remote_addr,
                                            request.path,
                                            request.query_string)
