@@ -28,7 +28,7 @@ setup(
     license='BSD',
     install_requires=[
         'flask>=0.9',
-        'flask-shelve>=0.1.1',
+        'dogpile.cache>=0.5.4',
         'gunicorn>=0.14.6,<19',
         'netaddr>=0.7.7',
         'eventlet>=0.9.17',

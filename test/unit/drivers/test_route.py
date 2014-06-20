@@ -17,19 +17,12 @@
 
 import mock
 import unittest2
-import collections
 
 import netaddr
+from dogpile.cache import make_region
 
 from akanda.router import models
 from akanda.router.drivers import route
-
-
-class FakeShelve(collections.OrderedDict):
-
-    def get_shelve(self, mode):
-        assert mode == 'c'
-        return self
 
 
 class RouteTest(unittest2.TestCase):
@@ -291,11 +284,11 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
         )
         c = models.Configuration({'networks': [network]})
 
-        db = FakeShelve()
+        cache = make_region().configure('dogpile.cache.memory')
         with mock.patch.object(self.mgr, 'sudo') as sudo:
 
             # ...so let's add one!
-            self.mgr.update_host_routes(c, db)
+            self.mgr.update_host_routes(c, cache)
             sudo.assert_called_once_with(
                 'add', '-inet', '192.240.128.0/20', '192.168.89.2'
             )
@@ -306,9 +299,9 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
                 netaddr.IPNetwork('192.240.138.0/20'),
                 netaddr.IPAddress('192.168.89.2')
             ))
-            self.assertEqual(len(db), 1)
+            self.assertEqual(len(cache.get('host_routes')), 1)
             self.assertEqual(
-                db[subnet['cidr']] - expected,
+                cache.get('host_routes')[subnet['cidr']] - expected,
                 set()
             )
 
@@ -316,11 +309,11 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             sudo.reset_mock()
             subnet['host_routes'] = []
             c = models.Configuration({'networks': [network]})
-            self.mgr.update_host_routes(c, db)
+            self.mgr.update_host_routes(c, cache)
             sudo.assert_called_once_with(
                 'delete', '-inet', '192.240.128.0/20', '192.168.89.2'
             )
-            self.assertEqual(len(db), 0)
+            self.assertEqual(len(cache.get('host_routes')), 0)
 
             # ...this time, let's add multiple routes and ensure they're added
             sudo.reset_mock()
@@ -332,7 +325,7 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
                 'nexthop': '192.168.89.3'
             }]
             c = models.Configuration({'networks': [network]})
-            self.mgr.update_host_routes(c, db)
+            self.mgr.update_host_routes(c, cache)
             self.assertEqual(sudo.call_args_list, [
                 mock.call('add', '-inet', '192.240.128.0/20', '192.168.89.2'),
                 mock.call('add', '-inet', '192.220.128.0/20', '192.168.89.3'),
@@ -348,7 +341,7 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
                 'nexthop': '192.168.89.4'
             }]
             c = models.Configuration({'networks': [network]})
-            self.mgr.update_host_routes(c, db)
+            self.mgr.update_host_routes(c, cache)
             self.assertEqual(sudo.call_args_list, [
                 mock.call('delete', '-inet', '192.220.128.0/20',
                           '192.168.89.3'),
@@ -356,7 +349,7 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             ])
 
             # ...let's add another subnet...
-            self.assertEqual(len(db), 1)
+            self.assertEqual(len(cache.get('host_routes')), 1)
             sudo.reset_mock()
             network['subnets'].append(dict(
                 cidr='192.168.90.0/24',
@@ -369,18 +362,18 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
                 }]
             ))
             c = models.Configuration({'networks': [network]})
-            self.mgr.update_host_routes(c, db)
+            self.mgr.update_host_routes(c, cache)
             self.assertEqual(sudo.call_args_list, [
                 mock.call('add', '-inet', '192.240.128.0/20', '192.168.90.1')
             ])
-            self.assertEqual(len(db), 2)
+            self.assertEqual(len(cache.get('host_routes')), 2)
 
             # ...and finally, delete all custom host_routes...
             sudo.reset_mock()
             network['subnets'][0]['host_routes'] = []
             network['subnets'][1]['host_routes'] = []
             c = models.Configuration({'networks': [network]})
-            self.mgr.update_host_routes(c, db)
+            self.mgr.update_host_routes(c, cache)
             self.assertEqual(sudo.call_args_list, [
                 mock.call('delete', '-inet', '192.185.128.0/20',
                           '192.168.89.4'),
@@ -389,7 +382,7 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
                 mock.call('delete', '-inet', '192.240.128.0/20',
                           '192.168.90.1'),
             ])
-            self.assertEqual(len(db), 0)
+            self.assertEqual(len(cache.get('host_routes')), 0)
 
     def test_custom_host_routes_failure(self):
         subnet = dict(
@@ -409,14 +402,13 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
         )
         c = models.Configuration({'networks': [network]})
 
-        db = FakeShelve()
+        cache = make_region().configure('dogpile.cache.memory')
         with mock.patch.object(self.mgr, 'sudo') as sudo:
 
             sudo.side_effect = RuntimeError("Kaboom!")
 
-            self.assertEqual(len(db), 0)
-            self.mgr.update_host_routes(c, db)
+            self.mgr.update_host_routes(c, cache)
             sudo.assert_called_once_with(
                 'add', '-inet', '192.240.128.0/20', '192.168.89.2'
             )
-            self.assertEqual(len(db), 0)
+            self.assertEqual(len(cache.get('host_routes')), 0)

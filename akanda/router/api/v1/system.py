@@ -20,13 +20,20 @@ Blueprint for the "system" portion of the version 1 of the API.
 """
 from flask import Response
 from flask import abort, request
-from flask.ext import shelve
+from dogpile.cache import make_region
 
 from akanda.router import models
 from akanda.router import utils
 from akanda.router.manager import manager
 
 blueprint = utils.blueprint_factory(__name__)
+
+cache = make_region().configure(
+    'dogpile.cache.dbm',
+    arguments={
+        "filename": "/tmp/akanda-state"
+    }
+)
 
 
 @blueprint.route('/interface/<ifname>')
@@ -74,5 +81,5 @@ def put_configuration():
             'The config failed to validate.\n' + '\n'.join(errors),
             status=422)
 
-    manager.update_config(config_candidate, shelve)
+    manager.update_config(config_candidate, cache)
     return dict(configuration=manager.config)
