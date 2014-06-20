@@ -290,13 +290,6 @@ chmod +x $WDIR/tmp/packages.sh
 chroot $WDIR /tmp/packages.sh || exit 1
 rm $WDIR/tmp/packages.sh
 
-echo "[*] Disabling services...."
-cat > $WDIR/etc/rc.conf.local <<EOF
-spamlogd_flags=NO
-inetd=NO
-amd_master=NO
-EOF
-
 mkdir $WDIR/etc/dnsmasq.d
 cat > $WDIR/etc/dnsmasq.conf <<EOF
 bind-interfaces
