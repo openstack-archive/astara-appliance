@@ -68,7 +68,9 @@ class NetworkMetadataProxyHandler(object):
         if config_mtime > self.config_mtime:
             LOG.debug("Metadata proxy configuration has changed; reloading...")
             config_dict = json.load(open(self.config_file))
-            self.ip_instance_map = config_dict[self.network_id]['ip_instance_map']
+            self.ip_instance_map = config_dict[
+                self.network_id
+            ]['ip_instance_map']
             self.config_mtime = config_mtime
 
     def _proxy_request(self, remote_address, path_info, query_string):
