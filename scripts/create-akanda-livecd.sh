@@ -361,6 +361,9 @@ inetd=NO
 amd_master=NO
 EOF
 
+echo "[*] Disable fsck"
+touch $WDIR/fastboot
+
 echo "[*] Add some stuff to sysctl.conf"
 cat > $WDIR/etc/sysctl.conf <<EOF
 net.inet6.ip6.dad_count=0
