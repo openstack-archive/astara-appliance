@@ -40,10 +40,12 @@ class NetworkMetadataProxyHandler(object):
        isolated tenant context.
     """
 
-    def __init__(self, tenant_id, network_id, ip_instance_map):
+    def __init__(self, tenant_id, network_id, config_file):
         self.tenant_id = tenant_id
         self.network_id = network_id
-        self.ip_instance_map = ip_instance_map
+        self.config_file = config_file
+        self.config_mtime = 0
+        self._ip_instance_map = {}
 
     def __call__(self, environ, start_response):
         request = wrappers.Request(environ)
@@ -60,6 +62,18 @@ class NetworkMetadataProxyHandler(object):
             response = exceptions.InternalServerError(description=unicode(msg))
 
         return response(environ, start_response)
+
+    @property
+    def ip_instance_map(self):
+        config_mtime = os.stat(self.config_file).st_mtime
+        if config_mtime > self.config_mtime:
+            LOG.debug("Metadata proxy configuration has changed; reloading...")
+            config_dict = json.load(open(self.config_file))
+            self._ip_instance_map = config_dict[
+                self.network_id
+            ]['ip_instance_map']
+            self.config_mtime = config_mtime
+        return self._ip_instance_map
 
     def _proxy_request(self, remote_address, path_info, query_string):
         headers = {
@@ -151,7 +165,7 @@ def main():
     for network_id, config in config_dict.items():
         app = NetworkMetadataProxyHandler(tenant_id,
                                           network_id,
-                                          config['ip_instance_map'])
+                                          args.config_file)
         socket = eventlet.listen(('127.0.0.1', config['listen_port']),
                                  backlog=128)
         pool.spawn_n(eventlet.wsgi.server, socket, app, custom_pool=pool)

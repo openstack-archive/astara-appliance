@@ -43,7 +43,7 @@ class Manager(object):
 
         return self._config
 
-    def update_config(self, config, db):
+    def update_config(self, config, cache):
         self._config = config
 
         self.update_interfaces()
@@ -51,7 +51,7 @@ class Manager(object):
         self.update_metadata()
         self.update_bgp_and_radv()
         self.update_pf()
-        self.update_routes(db)
+        self.update_routes(cache)
         self.update_arp()
 
         # TODO(mark): update_vpn
@@ -69,8 +69,12 @@ class Manager(object):
 
     def update_metadata(self):
         mgr = metadata.MetadataManager()
+        should_restart = mgr.networks_have_changed(self.config)
         mgr.save_config(self.config)
-        mgr.restart()
+        if should_restart:
+            mgr.restart()
+        else:
+            mgr.ensure_started()
 
     def update_bgp_and_radv(self):
         mgr = bird.BirdManager()
@@ -83,10 +87,10 @@ class Manager(object):
         mgr = pf.PFManager()
         mgr.update_conf(rule_data)
 
-    def update_routes(self, db):
+    def update_routes(self, cache):
         mgr = route.RouteManager()
         mgr.update_default(self.config)
-        mgr.update_host_routes(self.config, db)
+        mgr.update_host_routes(self.config, cache)
 
     def update_arp(self):
         mgr = arp.ARPManager()

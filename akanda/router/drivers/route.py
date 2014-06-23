@@ -61,8 +61,8 @@ class RouteManager(base.Manager):
                     self._set_default_gateway(subnet.gateway_ip)
                     gw_set[subnet.gateway_ip.version] = True
 
-    def update_host_routes(self, config, db):
-        db = db.get_shelve('c')
+    def update_host_routes(self, config, cache):
+        db = cache.get_or_create('host_routes', lambda: {})
         for net in config.networks:
 
             # For each subnet...
@@ -92,13 +92,10 @@ class RouteManager(base.Manager):
                     if self._alter_route('add', *x):
                         current.add(x)
 
-                # This assignment *is* necessary - Python's `shelve`
-                # implementation isn't smart enough to capture the changes to
-                # the reference above, so this setitem call triggers a DB sync
-                if current:
-                    db[cidr] = current
-                else:
+                if not current:
                     del db[cidr]
+
+        cache.set('host_routes', db)
 
     def _get_default_gateway(self, version):
         current = None

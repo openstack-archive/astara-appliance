@@ -18,7 +18,6 @@
 """Set up the API server application instance
 """
 import flask
-from flask.ext import shelve
 
 from akanda.router.api import v1
 from akanda.router.debug import handle_traceback
@@ -30,9 +29,6 @@ app.register_blueprint(v1.system.blueprint)
 app.register_blueprint(v1.firewall.blueprint)
 app.register_blueprint(v1.status.blueprint)
 app.register_error_handler(500, handle_traceback)
-
-app.config['SHELVE_FILENAME'] = '/tmp/akanda-state'
-shelve.init_app(app)
 
 
 @app.before_request
