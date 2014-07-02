@@ -31,7 +31,7 @@ blueprint = utils.blueprint_factory(__name__)
 cache = make_region().configure(
     'dogpile.cache.dbm',
     arguments={
-        "filename": "/tmp/akanda-state"
+        "filename": "/etc/akanda-state"
     }
 )
 
