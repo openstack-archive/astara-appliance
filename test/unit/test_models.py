@@ -413,6 +413,16 @@ class SubnetTestCase(TestCase):
         self.assertEqual(s.dns_nameservers, [netaddr.IPAddress('8.8.8.8')])
         self.assertEqual(s.host_routes, [])
 
+    def test_gateway_ip_empty(self):
+        s = models.Subnet('192.168.1.0/24', '', True, ['8.8.8.8'],
+                          [])
+        self.assertIsNone(s.gateway_ip)
+
+    def test_gateway_ip_none(self):
+        s = models.Subnet('192.168.1.0/24', None, True, ['8.8.8.8'],
+                          [])
+        self.assertIsNone(s.gateway_ip)
+
 
 class NetworkTestCase(TestCase):
     def test_network(self):
