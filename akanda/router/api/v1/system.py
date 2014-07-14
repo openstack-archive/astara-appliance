@@ -28,8 +28,11 @@ from akanda.router.manager import manager
 
 blueprint = utils.blueprint_factory(__name__)
 
+# Managed by _get_cache()
 _cache = None
-def get_cache():
+
+
+def _get_cache():
     global _cache
     if _cache is None:
         _cache = make_region().configure(
@@ -86,5 +89,5 @@ def put_configuration():
             'The config failed to validate.\n' + '\n'.join(errors),
             status=422)
 
-    manager.update_config(config_candidate, get_cache())
+    manager.update_config(config_candidate, _get_cache())
     return dict(configuration=manager.config)
