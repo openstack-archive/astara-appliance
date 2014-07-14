@@ -416,7 +416,10 @@ class Subnet(ModelBase):
 
     @gateway_ip.setter
     def gateway_ip(self, value):
-        self._gateway_ip = netaddr.IPAddress(value)
+        if value:
+            self._gateway_ip = netaddr.IPAddress(value)
+        else:
+            self._gateway_ip = None
 
     @property
     def dns_nameservers(self):
