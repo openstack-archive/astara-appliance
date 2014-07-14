@@ -20,6 +20,7 @@ Base classes for System Router API tests.
 """
 from unittest import TestCase
 
+from dogpile.cache import make_region
 import flask
 import json
 import mock
@@ -37,6 +38,15 @@ class SystemAPITestCase(TestCase):
         self.app = flask.Flask('system_test')
         self.app.register_blueprint(v1.system.blueprint)
         self.test_app = self.app.test_client()
+        # Replace the default cache with an in-memory version.
+        self._old_cache = v1.system._cache
+        v1.system._cache = make_region().configure(
+            'dogpile.cache.memory',
+        )
+
+    def tearDown(self):
+        v1.system._cache = self._old_cache
+        super(SystemAPITestCase, self).tearDown()
 
     def test_get_interface(self):
         with mock.patch.object(v1.system.manager, 'get_interface') as get_if:
