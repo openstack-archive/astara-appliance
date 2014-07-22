@@ -349,13 +349,6 @@ cp $HERE/etc/rc.d/metadata $WDIR/etc/rc.d/metadata
 chmod 555 $WDIR/etc/rc.d/sshd
 chmod 555 $WDIR/etc/rc.d/metadata
 
-echo "[*] Add rc.conf.local...."
-cat > $WDIR/etc/rc.conf.local <<EOF
-spamlogd_flags=NO
-inetd=NO
-amd_master=NO
-EOF
-
 echo "[*] Disable fsck"
 touch $WDIR/fastboot
 
