@@ -262,7 +262,7 @@ cat > $WDIR/etc/rc.conf.local <<EOF
 spamlogd_flags=NO
 inetd=NO
 amd_master=NO
-sendmail=NO
+sendmail_flags=NO
 sndiod=NO
 EOF
 
