@@ -26,7 +26,7 @@ from akanda.router.drivers import bird
 ext_subnet = mock.Mock()
 ext_subnet.gateway_ip = netaddr.IPAddress('dead:beef::1')
 ext_subnet.cidr = netaddr.IPNetwork('dead:beef::/64')
-ext_subnet.dns_nameservers = []
+ext_subnet.dns_nameservers = ["1.2.3.4"]
 
 ext_net = mock.Mock()
 ext_net.subnets = [ext_subnet]
@@ -38,7 +38,7 @@ ext_net.interface.ifname = 'ge0'
 int_subnet = mock.Mock()
 int_subnet.gateway_ip = netaddr.IPAddress('face::1')
 int_subnet.cidr = netaddr.IPNetwork('face::/64')
-int_subnet.dns_nameservers = []
+int_subnet.dns_nameservers = ["1.2.3.4"]
 
 int_net = mock.Mock()
 int_net.subnets = [int_subnet]
@@ -229,6 +229,10 @@ class BirdTestCase(TestCase):
                     rdnss local yes;
                     prefix face::/64 {
                         autonomous off;
+                    };
+                    rdnss {
+                        lifetime mult 10;
+                        ns 1.2.3.4;
                     };
                 };
             }
