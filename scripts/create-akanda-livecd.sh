@@ -260,10 +260,10 @@ echo "nameserver $DNS" > $WDIR/etc/resolv.conf
 echo "[*] Disabling services...."
 cat > $WDIR/etc/rc.conf.local <<EOF
 spamlogd_flags=NO
-inetd=NO
-amd_master=NO
+inetd_flags=NO
+amd_flags=NO
 sendmail_flags=NO
-sndiod=NO
+sndiod_flags=NO
 EOF
 
 echo "[*] Setting default password..."
