@@ -226,7 +226,7 @@ def _build_radv_config(config, interface_map):
 
             if subnet.dns_nameservers:
                 retval.append('\t\trdnss {')
-                retval.append('\t\t\tlifetime mult 10')
+                retval.append('\t\t\tlifetime mult 10;')
 
                 for ns in subnet.dns_nameservers:
                     retval.append('\t\t\tns %s;' % ns)
