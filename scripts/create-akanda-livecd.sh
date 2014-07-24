@@ -207,8 +207,8 @@ function livecd {
     echo "set image $MAJ.$MIN/$ARCH/bsd" > $WDIR/etc/boot.conf
 
     echo "[*] Disabling some kernel devices"
-    echo 'disable mpbios' | config -ef $MAJ.$MIN/$ARCH/bsd
-    echo 'disable usb' | config -ef $MAJ.$MIN/$ARCH/bsd
+    echo 'disable mpbios' | config -ef $CDBOOTDIR/bsd
+    echo 'disable usb' | config -ef $CDBOOTDIR/bsd
 
     echo "[*] Creating fstab entries..."
     cat >/$WDIR/etc/fstab <<EOF
@@ -264,10 +264,10 @@ echo "nameserver $DNS" > $WDIR/etc/resolv.conf
 echo "[*] Disabling services...."
 cat > $WDIR/etc/rc.conf.local <<EOF
 spamlogd_flags=NO
-inetd=NO
-amd_master=NO
+inetd_flags=NO
+amd_flags=NO
 sendmail_flags=NO
-sndiod=NO
+sndiod_flags=NO
 EOF
 
 echo "[*] Setting default password..."
