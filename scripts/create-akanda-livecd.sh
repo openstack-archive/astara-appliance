@@ -207,8 +207,8 @@ function livecd {
     echo "set image $MAJ.$MIN/$ARCH/bsd" > $WDIR/etc/boot.conf
 
     echo "[*] Disabling some kernel devices"
-    echo 'disable mpbios' | config -ef $MAJ.$MIN/$ARCH/bsd
-    echo 'disable usb' | config -ef $MAJ.$MIN/$ARCH/bsd
+    echo 'disable mpbios' | config -ef $CDBOOTDIR/bsd
+    echo 'disable usb' | config -ef $CDBOOTDIR/bsd
 
     echo "[*] Creating fstab entries..."
     cat >/$WDIR/etc/fstab <<EOF
