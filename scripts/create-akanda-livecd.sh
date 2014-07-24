@@ -206,6 +206,10 @@ function livecd {
     echo "[*] Creating boot configuration..."
     echo "set image $MAJ.$MIN/$ARCH/bsd" > $WDIR/etc/boot.conf
 
+    echo "[*] Disabling some kernel devices"
+    echo 'disable mpbios' | config -ef $MAJ.$MIN/$ARCH/bsd
+    echo 'disable usb' | config -ef $MAJ.$MIN/$ARCH/bsd
+
     echo "[*] Creating fstab entries..."
     cat >/$WDIR/etc/fstab <<EOF
     swap /tmp mfs rw,auto,-s=120000 0 0
