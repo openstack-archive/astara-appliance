@@ -1,18 +1,23 @@
-MAJ=5                    # Version major number
-MIN=3                    # Version minor number
-ARCH=$(uname -p)         # Architecture
 TZ=UTC                   # Time zones are in /usr/share/zoneinfo
 
-BASEURL=ftp://ftp3.usa.openbsd.org/pub/OpenBSD
-MIRROR=$BASEURL/$MAJ.$MIN/$ARCH
-PKG_PATH=$BASEURL/$MAJ.$MIN/packages/$ARCH
-APPLIANCE_BASE_DIR="/root/akanda-appliance"
+export DEBIAN_FRONTEND=noninteractive
+APT_GET="apt-get -y"
+APPLIANCE_BASE_DIR="/vagrant/akanda-appliance"
 APPLIANCE_SCRIPT_DIR="$APPLIANCE_BASE_DIR/scripts"
-
-# Additional packages that should be installed on the akanda live cd
-PACKAGES="ntp python-2.7.3p1 py-pip wget dnsmasq bird-v6-1.3.9p0"
+PACKAGES="ntp python2.7 wget dnsmasq bird6"
+PACKAGES_BUILD="python-dev python-pip isc-dhcp-client build-essential"
 
 DNS=8.8.8.8
+RELEASE=`lsb_release -cs`
+echo "[*] Setup APT for $RELEASE"
+cat > /etc/apt/sources.list <<EOF
+deb http://mirrors.dreamcompute.com/debian  $RELEASE  main
+deb http://mirrors.dreamcompute.com/debian  $RELEASE-updates  main
+deb http://mirrors.dreamcompute.com/security.debian.org  $RELEASE/updates  main
+EOF
+
+echo "[*] APT Update"
+apt-get update || exit 1
 
 echo "[*] Creating motd file..."
 cat >/etc/motd <<EOF
@@ -23,45 +28,22 @@ cat >/etc/motd <<EOF
 /    |    \\    <  / __ \\|   |  \\/ /_/ | / __ \\_
 \\____|__  /__|_ \\(____  /___|  /\\____ |(____  /
         \\/     \\/     \\/     \\/      \\/     \\/
-Welcome to Akanda: Powered by OpenBSD.
+Welcome to Akanda: Powered by Unicorns.
 
 
 EOF
 
-echo "[*] Setting name..."
-cat > /etc/myname <<EOF
+echo "[*] Setting hostname..."
+cat > /etc/hostname <<EOF
 akanda
 EOF
 
-echo "[*] Modifying the library path..."
-cat > /root/.cshrc << EOF
-# Workaround for missing libraries:
-export LD_LIBRARY_PATH=/usr/local/lib
-EOF
-
-echo "[*] Using DNS ($DNS) in livecd environment..."
+echo "[*] Setting up DNS ($DNS)"
 echo "nameserver $DNS" > /etc/resolv.conf
 
-echo "[*] Disabling services...."
-cat > /etc/rc.conf.local <<EOF
-spamlogd_flags=NO
-inetd=NO
-amd_master=NO
-EOF
-
 echo "[*] Installing additional packages..."
-cat > /tmp/packages.sh <<EOF
-#!/bin/sh -e
-export PKG_PATH=$(echo $PKG_PATH | sed 's#\ ##g')
-for i in $PACKAGES
-do
-   pkg_add -i \$i
-done
-EOF
-
-chmod +x /tmp/packages.sh
-/tmp/packages.sh || exit 1
-rm /tmp/packages.sh
+$APT_GET install $PACKAGES || exit 1
+$APT_GET install $PACKAGES_BUILD || exit 1
 
 mkdir /etc/dnsmasq.d
 cat > /etc/dnsmasq.conf <<EOF
@@ -79,11 +61,6 @@ EOF
 echo "[*] Installing akanda software..."
 cat > /tmp/akanda.sh <<EOF
 #!/bin/sh -e
-export LD_LIBRARY_PATH=/usr/local/lib
-
-ln -sf /usr/local/bin/python2.7 /usr/local/bin/python
-ln -sf /usr/local/bin/pip-2.7 /usr/local/bin/pip
-
 pip install greenlet==0.4.0
 pip install eventlet==0.12.1
 
@@ -91,21 +68,21 @@ cd $APPLIANCE_BASE_DIR
 python setup.py install
 EOF
 
-cd /root
-
 chmod +x /tmp/akanda.sh
 /tmp/akanda.sh || exit 1
 rm /tmp/akanda.sh
 
-echo "[*] Add rc.d scripts...."
-cp $APPLIANCE_SCRIPT_DIR/etc/rc.d/sshd /etc/rc.d/sshd
-cp $APPLIANCE_SCRIPT_DIR/etc/rc.d/metadata /etc/rc.d/metadata
-chmod 555 /etc/rc.d/sshd
-chmod 555 /etc/rc.d/metadata
+echo "[*] Add init scripts...."
+cp $APPLIANCE_SCRIPT_DIR/etc/init.d/ssh /etc/init.d/ssh
+cp $APPLIANCE_SCRIPT_DIR/etc/init.d/metadata /etc/init.d/metadata
+chmod 555 /etc/init.d/ssh
+chmod 555 /etc/init.d/metadata
 
 echo "[*] Add some stuff to sysctl.conf"
-cat > $WDIR/etc/sysctl.conf <<EOF
+cat > /etc/sysctl.conf <<EOF
+net.ipv4.ip_forward=1
 net.inet6.ip6.dad_count=0
+net.ipv6.conf.default.dad_transmits=0
 EOF
 
 echo "[*] Add rc.local file...."
@@ -121,22 +98,30 @@ do
     echo "" > $log_file
 done
 
-echo "[*] Remove ports and src"
-rm -rf /usr/{src,ports,xenocara}/*
+echo "[*] Remove packages only required by install"
+$APT_GET remove $PACKAGES_BUILD || exit 1
+$APT_GET autoremove
+$APT_GET clean
+
 
 echo "[*] Saving creation timestamp..."
-date > $WDIR/etc/akanda-release
+date > /etc/akanda-release
 
 echo "[*] Saving default timezone..."
 rm -f /etc/localtime
 ln -s /usr/share/zoneinfo/$TZ /etc/localtime
 
-rm -rf /vagrant
+echo "[*] Use bash instead of dash"
+rm /bin/sh ; ln -s /bin/bash /bin/sh
 
-echo "[*] Clean up dhcp for vio0..."
-rm /etc/hostname.vio0
 
-echo "[*] Please support the OpenBSD project by buying official cd sets or donating some money!"
+echo "[*] Clean up udev rules..."
+rm -f /etc/udev/rules.d/70-persistent-net.rules
+
+echo "[*] Remove vagrant specifics"
+userdel -f vagrant
+rm -rf /vagrant /home/vagrant
+
 echo "[*] Enjoy Akanda!"
 date
 echo "[*] Done."
