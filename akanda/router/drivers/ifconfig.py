@@ -124,10 +124,8 @@ class InterfaceManager(base.Manager):
     def _update_addresses(self, real_ifname, interface, old_interface):
         family = {4: 'inet', 6: 'inet6'}
 
-        add = lambda a: (real_ifname, family[a[0].version], str(a[0]),
-                         'prefixlen', a[1], 'alias')
-        delete = lambda a: (real_ifname, family[a[0].version], str(a[0]),
-                            'prefixlen', a[1], '-alias')
+        add = lambda a: (real_ifname, family[a[0].version], 'add', '%s/%s' % (a[0], a[1]))
+        delete = lambda a: (real_ifname, family[a[0].version], 'del', '%s/%s' % (a[0], a[1]))
         mutator = lambda a: (a.ip, a.prefixlen)
 
         self._update_set(real_ifname, interface, old_interface,
@@ -211,6 +209,7 @@ def _parse_head(line):
     m = re.match('(?P<ifname>\w+\d{1,3})', line)
     if m:
         retval['ifname'] = m.group('ifname')
+        retval['lladdr'] = line.split('HWaddr')[1].strip()
     return retval
 
 
@@ -245,9 +244,7 @@ def _parse_other_params(line):
     else:
         key, value = line.split(' ', 1)
 
-        if key == 'ether':  # pragma nocover
-            key = 'lladdr'
-        elif key.endswith(':'):
+        if key.endswith(':'):
             key = key[:-1]
 
         return [(key, value)]
