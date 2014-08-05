@@ -82,8 +82,6 @@ echo "[*] Add some stuff to sysctl.conf"
 cat > /etc/sysctl.conf <<EOF
 net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
-net.inet6.ip6.dad_count=0
-net.ipv6.conf.default.dad_transmits=0
 EOF
 
 echo "[*] Add rc.local file...."
