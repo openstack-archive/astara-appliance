@@ -12,7 +12,6 @@ RELEASE=`lsb_release -cs`
 echo "[*] Setup APT for $RELEASE"
 cat > /etc/apt/sources.list <<EOF
 deb http://mirrors.dreamcompute.com/debian  $RELEASE  main
-deb http://mirrors.dreamcompute.com/debian  $RELEASE-updates  main
 deb http://mirrors.dreamcompute.com/security.debian.org  $RELEASE/updates  main
 EOF
 
@@ -88,9 +87,27 @@ EOF
 echo "[*] Add rc.local file...."
 cp $APPLIANCE_SCRIPT_DIR/etc/rc.local /etc/rc.local
 
+echo "[*] Disable fsck on boot"
+touch /fastboot
+
+
 echo "[*] Deleting sensitive information..."
 rm -f /root/{.history,.viminfo}
 rm -f /home/*/{.history,.viminfo}
+rm -f /etc/ssh/*key*
+
+echo "[*] Adding ssh key..."
+mkdir /root/.ssh
+chmod 700 /root/.ssh
+cp $APPLIANCE_SCRIPT_DIR/etc/key /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+
+echo "[*] Setting root password"
+if [ -e $APPLIANCE_SCRIPT_DIR/etc/rootpass ]; then
+        cat $APPLIANCE_SCRIPT_DIR/etc/rootpass | chpasswd -e
+else
+        echo 'root:$6$wFdDrw6g$dt3ttiugLpvbbSeRFaLDpBW6WbkJUvN0NXTGie9KlFxnBiknYKmwzDVT8b3e6G0cq0vTR4gi.JOIJEUxaP6o8.' |chpasswd -e
+fi
 
 echo "[*] Empty log files..."
 for log_file in $(find /var/log -type f)
