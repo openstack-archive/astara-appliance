@@ -2,10 +2,10 @@ TZ=UTC                   # Time zones are in /usr/share/zoneinfo
 
 export DEBIAN_FRONTEND=noninteractive
 APT_GET="apt-get -y"
-APPLIANCE_BASE_DIR="/vagrant/akanda-appliance"
+APPLIANCE_BASE_DIR="/tmp/akanda-appliance"
 APPLIANCE_SCRIPT_DIR="$APPLIANCE_BASE_DIR/scripts"
-PACKAGES="ntp python2.7 wget dnsmasq bird6"
-PACKAGES_BUILD="python-dev python-pip isc-dhcp-client build-essential"
+PACKAGES="ntp python2.7 python-pip wget dnsmasq bird6"
+PACKAGES_BUILD="python-dev build-essential"
 
 DNS=8.8.8.8
 RELEASE=`lsb_release -cs`
@@ -82,8 +82,6 @@ echo "[*] Add some stuff to sysctl.conf"
 cat > /etc/sysctl.conf <<EOF
 net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
-net.inet6.ip6.dad_count=0
-net.ipv6.conf.default.dad_transmits=0
 EOF
 
 echo "[*] Add rc.local file...."
@@ -96,13 +94,14 @@ touch /fastboot
 echo "[*] Deleting sensitive information..."
 rm -f /root/{.history,.viminfo}
 rm -f /home/*/{.history,.viminfo}
-rm -f /etc/ssh/*key*
 
-echo "[*] Adding ssh key..."
-mkdir /root/.ssh
-chmod 700 /root/.ssh
-cp $APPLIANCE_SCRIPT_DIR/etc/key /root/.ssh/authorized_keys
-chmod 600 /root/.ssh/authorized_keys
+if [ -e $APPLIANCE_SCRIPT_DIR/etc/key ]; then
+        echo "[*] Adding ssh key..."
+        mkdir /root/.ssh
+        chmod 700 /root/.ssh
+        cp $APPLIANCE_SCRIPT_DIR/etc/key /root/.ssh/authorized_keys
+        chmod 600 /root/.ssh/authorized_keys
+fi
 
 echo "[*] Setting root password"
 if [ -e $APPLIANCE_SCRIPT_DIR/etc/rootpass ]; then
@@ -133,13 +132,8 @@ ln -s /usr/share/zoneinfo/$TZ /etc/localtime
 echo "[*] Use bash instead of dash"
 rm /bin/sh ; ln -s /bin/bash /bin/sh
 
-
 echo "[*] Clean up udev rules..."
 rm -f /etc/udev/rules.d/70-persistent-net.rules
-
-echo "[*] Remove vagrant specifics"
-userdel -f vagrant
-rm -rf /vagrant /home/vagrant
 
 echo "[*] Enjoy Akanda!"
 date
