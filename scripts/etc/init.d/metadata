@@ -1,0 +1,36 @@
+#! /bin/sh
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+DAEMON="/usr/local/bin/akanda-metadata-proxy"
+OPTIONS="/etc/metadata.conf"
+PIDFILE=/var/run/metadata.pid
+
+test -x $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+case "$1" in
+  start)
+	log_daemon_msg "Starting akanda-metadata-proxy" "akanda-metadata-proxy"
+	start_daemon -p $PIDFILE $DAEMON $OPTIONS
+	log_end_msg $?
+    ;;
+  stop)
+	log_daemon_msg "Stopping akanda-metadata-proxy" "akanda-metadata-proxy"
+	killproc -p $PIDFILE $DAEMON
+	log_end_msg $?
+    ;;
+  force-reload|restart)
+    $0 stop
+    $0 start
+    ;;
+  status)
+    status_of_proc -p $PIDFILE $DAEMON akanda-metadata-proxy && exit 0 || exit $?
+    ;;
+  *)
+    echo "Usage: /etc/init.d/akanda-metadata-proxy {start|stop|restart|force-reload|status}"
+    exit 1
+    ;;
+esac
+
+exit 0
