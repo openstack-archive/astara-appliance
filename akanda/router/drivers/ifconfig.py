@@ -98,6 +98,8 @@ class InterfaceManager(base.Manager):
         old_interface = self.get_interface(interface.ifname)
 
         if ignore_link_local:
+            interface.addresses = [a for a in interface.addresses
+                                   if not a.is_link_local()]
             old_interface.addresses = [a for a in old_interface.addresses
                                        if not a.is_link_local()]
         if ignore_egress_group:
