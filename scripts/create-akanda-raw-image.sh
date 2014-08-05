@@ -94,7 +94,6 @@ touch /fastboot
 echo "[*] Deleting sensitive information..."
 rm -f /root/{.history,.viminfo}
 rm -f /home/*/{.history,.viminfo}
-rm -f /etc/ssh/*key*
 
 if [ -e $APPLIANCE_SCRIPT_DIR/etc/key ]; then
         echo "[*] Adding ssh key..."
