@@ -28,6 +28,7 @@ cat >/etc/motd <<EOF
 \\____|__  /__|_ \\(____  /___|  /\\____ |(____  /
         \\/     \\/     \\/     \\/      \\/     \\/
 Welcome to Akanda: Powered by Unicorns.
+Default root password: akanda
 
 
 EOF
