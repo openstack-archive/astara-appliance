@@ -24,7 +24,7 @@ from akanda.router.drivers import base
 
 
 GENERIC_IFNAME = 'ge'
-PHYSICAL_INTERFACES = ['em', 're', 'en', 'vio', 'vtnet']
+PHYSICAL_INTERFACES = ['lo', 'eth', 'em', 're', 'en', 'vio', 'vtnet']
 ULA_PREFIX = 'fdca:3ba5:a17a:acda::/64'
 
 
@@ -172,7 +172,7 @@ def get_rug_address():
 
 def _parse_interfaces(data, filters=None):
     retval = []
-    for iface_data in re.split('(^|\n)(?=\w+\d{1,3}: flag)', data, re.M):
+    for iface_data in re.split('(^|\n)(?=\w+\d{0,3}\s+Link)', data, re.M):
         if not iface_data.strip():
             continue
 
@@ -192,10 +192,12 @@ def _parse_interfaces(data, filters=None):
 def _parse_interface(data):
     retval = dict(addresses=[])
     for line in data.split('\n'):
-        if line.startswith('\t'):
+        if line.startswith(' '):
             line = line.strip()
             if line.startswith('inet'):
                 retval['addresses'].append(_parse_inet(line))
+            elif 'MTU' in line:
+                retval.update(_parse_mtu_and_flags(line))
             else:
                 retval.update(_parse_other_params(line))
         else:
@@ -206,24 +208,30 @@ def _parse_interface(data):
 
 def _parse_head(line):
     retval = {}
-    m = re.match(
-        '(?P<ifname>\w*): flags=[0-9a-f]*<(?P<flags>[\w,]*)> mtu (?P<mtu>\d*)',
-        line)
+    m = re.match('(?P<ifname>\w+\d{1,3})', line)
     if m:
         retval['ifname'] = m.group('ifname')
-        retval['flags'] = m.group('flags').split(',')
-        retval['mtu'] = int(m.group('mtu'))
+    return retval
+
+
+def _parse_mtu_and_flags(line):
+    retval = {}
+    parts = line.split()
+    for part in parts:
+        if part.startswith('MTU:'):
+            retval['mtu'] = int(part.split(':')[1])
+        else:
+            retval.setdefault('flags', []).append(part)
     return retval
 
 
 def _parse_inet(line):
     tokens = line.split()
     if tokens[0] == 'inet6':
-        ip = tokens[1].split('%')[0]
-        mask = tokens[3]
-    else:
-        ip = tokens[1]
-        mask = str(netaddr.IPAddress(int(tokens[3], 16)))
+        return netaddr.IPNetwork(tokens[2])
+
+    ip = re.search('addr:(?P<addr>[0-9\.]+)', line).group('addr')
+    mask = re.search('Mask:(?P<mask>[0-9\.]+)', line).group('mask')
     return netaddr.IPNetwork('%s/%s' % (ip, mask))
 
 
