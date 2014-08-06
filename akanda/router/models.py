@@ -38,8 +38,8 @@ class Interface(ModelBase):
     """
     """
     def __init__(self, ifname=None, addresses=[], groups=None, flags=None,
-                 lladdr=None, mtu=1500, media=None, description=None,
-                 **extra_params):
+                 lladdr=None, mtu=1500, metric=0, media=None,
+                 description=None, **extra_params):
         self.ifname = ifname
         self.description = description
         self.addresses = addresses
@@ -47,6 +47,7 @@ class Interface(ModelBase):
         self.flags = flags or []
         self.lladdr = lladdr
         self.mtu = mtu
+        self.metric = metric
         self.media = media
         self.extra_params = extra_params
         self._aliases = []

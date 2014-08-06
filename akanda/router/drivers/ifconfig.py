@@ -24,7 +24,7 @@ from akanda.router.drivers import base
 
 
 GENERIC_IFNAME = 'ge'
-PHYSICAL_INTERFACES = ['em', 're', 'en', 'vio', 'vtnet']
+PHYSICAL_INTERFACES = ['lo', 'eth', 'em', 're', 'en', 'vio', 'vtnet']
 ULA_PREFIX = 'fdca:3ba5:a17a:acda::/64'
 
 
@@ -92,20 +92,16 @@ class InterfaceManager(base.Manager):
         real_ifname = self.generic_to_host(interface.ifname)
         self.sudo(real_ifname, 'down')
 
-    def update_interface(self, interface, ignore_link_local=True,
-                         ignore_egress_group=True):
+    def update_interface(self, interface, ignore_link_local=True):
         real_ifname = self.generic_to_host(interface.ifname)
         old_interface = self.get_interface(interface.ifname)
 
         if ignore_link_local:
+            interface.addresses = [a for a in interface.addresses
+                                   if not a.is_link_local()]
             old_interface.addresses = [a for a in old_interface.addresses
                                        if not a.is_link_local()]
-        if ignore_egress_group:
-            old_interface.groups = [g for g in old_interface.groups
-                                    if g != 'egress']
-
         self._update_description(real_ifname, interface)
-        self._update_groups(real_ifname, interface, old_interface)
         # Must update primary before aliases otherwise will lose address
         # in case where primary and alias are swapped.
         self._update_addresses(real_ifname, interface, old_interface)
@@ -114,20 +110,15 @@ class InterfaceManager(base.Manager):
         if interface.description:
             self.sudo(real_ifname, 'description', interface.description)
 
-    def _update_groups(self, real_ifname, interface, old_interface):
-        add = lambda g: (real_ifname, 'group', g)
-        delete = lambda g: (real_ifname, '-group', g)
-
-        self._update_set(real_ifname, interface, old_interface, 'groups',
-                         add, delete)
-
     def _update_addresses(self, real_ifname, interface, old_interface):
         family = {4: 'inet', 6: 'inet6'}
 
-        add = lambda a: (real_ifname, family[a[0].version], str(a[0]),
-                         'prefixlen', a[1], 'alias')
-        delete = lambda a: (real_ifname, family[a[0].version], str(a[0]),
-                            'prefixlen', a[1], '-alias')
+        add = lambda a: (
+            real_ifname, family[a[0].version], 'add', '%s/%s' % (a[0], a[1])
+        )
+        delete = lambda a: (
+            real_ifname, family[a[0].version], 'del', '%s/%s' % (a[0], a[1])
+        )
         mutator = lambda a: (a.ip, a.prefixlen)
 
         self._update_set(real_ifname, interface, old_interface,
@@ -172,7 +163,7 @@ def get_rug_address():
 
 def _parse_interfaces(data, filters=None):
     retval = []
-    for iface_data in re.split('(^|\n)(?=\w+\d{1,3}: flag)', data, re.M):
+    for iface_data in re.split('(^|\n)(?=\w+\d{0,3}\s+Link)', data, re.M):
         if not iface_data.strip():
             continue
 
@@ -192,12 +183,12 @@ def _parse_interfaces(data, filters=None):
 def _parse_interface(data):
     retval = dict(addresses=[])
     for line in data.split('\n'):
-        if line.startswith('\t'):
+        if line.startswith(' '):
             line = line.strip()
             if line.startswith('inet'):
                 retval['addresses'].append(_parse_inet(line))
-            else:
-                retval.update(_parse_other_params(line))
+            elif 'MTU' in line:
+                retval.update(_parse_mtu_and_flags(line))
         else:
             retval.update(_parse_head(line))
 
@@ -206,40 +197,31 @@ def _parse_interface(data):
 
 def _parse_head(line):
     retval = {}
-    m = re.match(
-        '(?P<ifname>\w*): flags=[0-9a-f]*<(?P<flags>[\w,]*)> mtu (?P<mtu>\d*)',
-        line)
+    m = re.match('(?P<ifname>\w+\d{1,3})', line)
     if m:
         retval['ifname'] = m.group('ifname')
-        retval['flags'] = m.group('flags').split(',')
-        retval['mtu'] = int(m.group('mtu'))
+        retval['lladdr'] = line.split('HWaddr')[1].strip()
+    return retval
+
+
+def _parse_mtu_and_flags(line):
+    retval = {}
+    parts = line.split()
+    for part in parts:
+        if part.startswith('MTU:'):
+            retval['mtu'] = int(part.split(':')[1])
+        elif part.startswith('Metric:'):
+            retval['metric'] = int(part.split(':')[1])
+        else:
+            retval.setdefault('flags', []).append(part)
     return retval
 
 
 def _parse_inet(line):
     tokens = line.split()
     if tokens[0] == 'inet6':
-        ip = tokens[1].split('%')[0]
-        mask = tokens[3]
-    else:
-        ip = tokens[1]
-        mask = str(netaddr.IPAddress(int(tokens[3], 16)))
+        return netaddr.IPNetwork(tokens[2])
+
+    ip = re.search('addr:(?P<addr>[0-9\.]+)', line).group('addr')
+    mask = re.search('Mask:(?P<mask>[0-9\.]+)', line).group('mask')
     return netaddr.IPNetwork('%s/%s' % (ip, mask))
-
-
-def _parse_other_params(line):
-    # TODO (mark): remove the no cover for FreeBSD variant of ifconfig
-    if line.startswith('options'):  # pragma nocover
-        m = re.match('options=[0-9a-f]*<(?P<options>[\w,]*)>', line)
-        return m.groupdict()
-    elif line.startswith('groups'):
-        return [('groups', line.split()[1:])]
-    else:
-        key, value = line.split(' ', 1)
-
-        if key == 'ether':  # pragma nocover
-            key = 'lladdr'
-        elif key.endswith(':'):
-            key = key[:-1]
-
-        return [(key, value)]

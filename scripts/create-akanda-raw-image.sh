@@ -61,6 +61,7 @@ EOF
 echo "[*] Installing akanda software..."
 cat > /tmp/akanda.sh <<EOF
 #!/bin/sh -e
+pip install -U setuptools
 pip install greenlet==0.4.0
 pip install eventlet==0.12.1
 
