@@ -210,7 +210,8 @@ def _parse_mtu_and_flags(line):
     for part in parts:
         if part.startswith('MTU:'):
             retval['mtu'] = int(part.split(':')[1])
-            break
+        elif part.startswith('Metric:'):
+            retval['metric'] = int(part.split(':')[1])
         else:
             retval.setdefault('flags', []).append(part)
     return retval

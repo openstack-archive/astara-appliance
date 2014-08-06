@@ -324,6 +324,7 @@ class ParseTestCase(TestCase):
         self.assertEqual(retval.ifname, 'eth0')
         self.assertEqual(retval.lladdr, '00:0c:29:94:72:33')
         self.assertEqual(retval.mtu, 1500)
+        self.assertEqual(retval.metric, 1)
         self.assertEqual(retval.flags, [
             'UP',
             'BROADCAST',
