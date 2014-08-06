@@ -2,6 +2,7 @@ import argparse
 import json
 import tempfile
 import unittest
+from collections import OrderedDict
 
 import eventlet
 import mock
@@ -13,7 +14,6 @@ config = json.dumps({
     "net1": {"listen_port": 9602, 'ip_instance_map': {'10.10.10.2': 'VM1'}},
     "net2": {"listen_port": 9603, 'ip_instance_map': {'10.10.10.2': 'VM2'}},
 })
-
 
 class TestMetadataProxy(unittest.TestCase):
 
@@ -31,25 +31,25 @@ class TestMetadataProxy(unittest.TestCase):
                 config_file=f.name
             )
             metadata_proxy.main()
-            listen.assert_has_calls([
-                mock.call(('127.0.0.1', 9603), backlog=128),
-                mock.call(('127.0.0.1', 9602), backlog=128)
-            ])
-
-            spawn_args = spawn.call_args_list[0][0]
-            server, socket, app = spawn_args
+            listen.assert_has_calls(
+                [mock.call(('127.0.0.1', 9602), backlog=128),
+                 mock.call(('127.0.0.1', 9603), backlog=128)],
+                any_order=True
+            )
+            # call_args need to be order before we can test it
+            spawn_args = sorted(spawn.call_args_list, key=lambda y: y[0][2].network_id)
+            server, socket, app = spawn_args[0][0]
             assert server == eventlet.wsgi.server
             assert isinstance(app, metadata_proxy.NetworkMetadataProxyHandler)
             assert app.tenant_id == 'ABC123'
-            assert app.network_id == 'net2'
+            assert app.network_id in 'net1'
             assert app.config_file == f.name
 
-            spawn_args = spawn.call_args_list[1][0]
-            server, socket, app = spawn_args
+            server, socket, app = spawn_args[1][0]
             assert server == eventlet.wsgi.server
             assert isinstance(app, metadata_proxy.NetworkMetadataProxyHandler)
             assert app.tenant_id == 'ABC123'
-            assert app.network_id == 'net1'
+            assert app.network_id in 'net2'
             assert app.config_file == f.name
 
     @mock.patch('requests.get')
