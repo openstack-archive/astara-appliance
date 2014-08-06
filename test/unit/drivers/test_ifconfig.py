@@ -23,51 +23,44 @@ import netaddr
 from akanda.router.drivers import ifconfig
 
 
-SAMPLE_OUTPUT = """lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 33152
-\tpriority: 0
-\tgroups: lo
-\tinet6 ::1 prefixlen 128
-\tinet6 fe80::1%lo0 prefixlen 64 scopeid 0x5
-\tinet 127.0.0.1 netmask 0xff000000
-em0: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
-\tlladdr 08:00:27:7a:6f:46
-\tpriority: 0
-\tmedia: Ethernet autoselect (1000baseT full-duplex)
-\tstatus: active
-\tinet6 fe80::a00:27ff:fe7a:6f46%em0 prefixlen 64 scopeid 0x1
-em1: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
-\tlladdr 08:00:27:32:1f:d1
-\tpriority: 0
-\tgroups: egress
-\tmedia: Ethernet autoselect (1000baseT full-duplex)
-\tstatus: active
-\tinet6 fe80::a00:27ff:fe32:1fd1%em1 prefixlen 64 scopeid 0x2
-\tinet 10.0.3.15 netmask 0xffffff00 broadcast 10.0.3.255
-em2: flags=8802<BROADCAST,SIMPLEX,MULTICAST> mtu 1500
-\tlladdr 08:00:27:53:cd:c8
-\tpriority: 0
-\tmedia: Ethernet autoselect (1000baseT full-duplex)
-\tstatus: active
-enc0: flags=0<>
-\tpriority: 0
-\tgroups: enc
-\tstatus: active
-pflog0: flags=141<UP,RUNNING,PROMISC> mtu 33152
-\tpriority: 0
-\tgroups: pflog
+SAMPLE_OUTPUT = """eth0      Link encap:Ethernet  HWaddr 00:0c:29:94:72:33
+          inet addr:172.16.27.130  Bcast:172.16.27.255  Mask:255.255.255.0
+          inet6 addr: fe80::20c:29ff:fe94:7233/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:331093 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:187500 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:395551383 (377.2 MiB)  TX bytes:13381399 (12.7 MiB)
+
+eth1      Link encap:Ethernet  HWaddr 00:0c:29:94:72:3d
+          inet addr:192.168.240.10  Bcast:192.168.240.255  Mask:255.255.255.0
+          inet6 addr: fe80::20c:29ff:fe94:723d/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:6 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:0 (0.0 B)  TX bytes:468 (468.0 B)
+
+lo        Link encap:Local Loopback
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:8 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:8 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0
+          RX bytes:1104 (1.0 KiB)  TX bytes:1104 (1.0 KiB)
 """
 
 SAMPLE_SINGLE_OUTPUT = (
-    """em1: flags=8843<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> mtu 1500
-\tlladdr 08:00:27:32:1f:d1
-\tpriority: 0
-\tgroups: egress
-\tmedia: Ethernet autoselect (1000baseT full-duplex)
-\tstatus: active
-\tinet6 fe80::a00:27ff:fe32:1fd1%em1 prefixlen 64 scopeid 0x2
-\tinet 10.0.3.15 netmask 0xffffff00 broadcast 10.0.3.255
-""")
-
+"""eth0      Link encap:Ethernet  HWaddr 00:0c:29:94:72:33
+          inet addr:172.16.27.130  Bcast:172.16.27.255  Mask:255.255.255.0
+          inet6 addr: fe80::20c:29ff:fe94:7233/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:331093 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:187500 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:395551383 (377.2 MiB)  TX bytes:13381399 (12.7 MiB)"""
+)
 
 class IfconfigTestCase(TestCase):
     """
@@ -368,48 +361,44 @@ class ParseTestCase(TestCase):
             parse.side_effect = lambda x: x
 
             retval = ifconfig._parse_interfaces(SAMPLE_OUTPUT)
-            self.assertEqual(len(retval), 6)
+            self.assertEqual(len(retval), 3)
 
     def test_parse_interfaces_with_filter(self):
         with mock.patch.object(ifconfig, '_parse_interface') as parse:
             parse.side_effect = lambda x: x
-
-            retval = ifconfig._parse_interfaces(SAMPLE_OUTPUT, ['em'])
-            self.assertEqual(len(retval), 3)
+            retval = ifconfig._parse_interfaces(SAMPLE_OUTPUT, ['eth'])
+            self.assertEqual(len(retval), 2)
 
             for chunk in retval:
-                self.assertTrue(chunk.startswith('em'))
+                self.assertTrue(chunk.startswith('eth'))
 
     def test_parse_interface(self):
         retval = ifconfig._parse_interface(SAMPLE_SINGLE_OUTPUT)
-        self.assertEqual(retval.ifname, 'em1')
-        self.assertEqual(retval.flags,
-                         ['UP', 'BROADCAST', 'RUNNING',
-                          'SIMPLEX', 'MULTICAST'])
-        self.assertEqual(retval.mtu, 1500)
+        self.assertEqual(retval.ifname, 'eth0')
+        self.assertEqual(retval.lladdr, '00:0c:29:94:72:33')
 
     def test_parse_head(self):
         expected = dict(
-            ifname='em1',
-            flags=['UP', 'BROADCAST', 'RUNNING', 'SIMPLEX', 'MULTICAST'],
-            mtu=1500)
+            ifname='eth0',
+            lladdr='00:0c:29:94:72:33')
         retval = ifconfig._parse_head(SAMPLE_SINGLE_OUTPUT.split('\n')[0])
         self.assertEqual(retval, expected)
 
     def test_parse_inet(self):
-        inet_sample = SAMPLE_SINGLE_OUTPUT.split('\n')[-2].strip()
+        inet_sample = SAMPLE_SINGLE_OUTPUT.split('\n')[1].strip()
         retval = ifconfig._parse_inet(inet_sample)
 
-        self.assertEqual(retval, netaddr.IPNetwork('10.0.3.15/24'))
+        self.assertEqual(str(retval),
+                         str(netaddr.IPNetwork('172.16.27.130/24')))
 
     def test_parse_inet6(self):
-        inet_sample = SAMPLE_SINGLE_OUTPUT.split('\n')[-3].strip()
+        inet_sample = SAMPLE_SINGLE_OUTPUT.split('\n')[2].strip()
         retval = ifconfig._parse_inet(inet_sample)
 
-        self.assertEqual(retval,
-                         netaddr.IPNetwork('fe80::a00:27ff:fe32:1fd1/64'))
+        self.assertEqual(str(retval),
+                         str(netaddr.IPNetwork('fe80::20c:29ff:fe94:7233/64')))
 
     def test_parse_other_options(self):
-        lladdr_sample = SAMPLE_SINGLE_OUTPUT.split('\n')[1].strip()
+        lladdr_sample = SAMPLE_SINGLE_OUTPUT.split('\n')[4].strip()
         retval = ifconfig._parse_other_params(lladdr_sample)
-        self.assertEqual(retval, [('lladdr', '08:00:27:32:1f:d1')])
+        self.assertEqual(retval, [('RX', 'packets:331093 errors:0 dropped:0 overruns:0 frame:0')])
