@@ -301,6 +301,34 @@ class IfconfigTestCase(TestCase):
         mgr._update_set('em0', iface, old_iface, 'all_addresses', add, delete)
         self.assertEqual(self.mock_execute.call_count, 0)
 
+    def test_get_management_address(self):
+        # Mark eth0 as DOWN
+        output = SAMPLE_OUTPUT.replace('UP', 'DOWN')
+
+        fake_output = lambda *x: output
+        with mock.patch.object(ifconfig.InterfaceManager, 'do', fake_output):
+            mgr = ifconfig.InterfaceManager()
+            addr = mgr.get_management_address()
+            assert addr == 'fdca:3ba5:a17a:acda:20c:29ff:fe94:723d'
+            assert self.mock_execute.call_args_list == [
+                mock.call(['/sbin/ifconfig', 'eth0', 'up'], 'sudo'),
+            ]
+
+    def test_get_management_address_with_autoconfiguration(self):
+        # Mark eth0 as DOWN
+        output = SAMPLE_OUTPUT.replace('UP', 'DOWN')
+        cmd = '/sbin/ifconfig'
+
+        fake_output = lambda *x: output
+        with mock.patch.object(ifconfig.InterfaceManager, 'do', fake_output):
+            mgr = ifconfig.InterfaceManager()
+            addr = mgr.get_management_address(ensure_configuration=True)
+            assert addr == 'fdca:3ba5:a17a:acda:20c:29ff:fe94:723d'
+            assert self.mock_execute.call_args_list == [
+                mock.call([cmd, 'eth0', 'up'], 'sudo'),
+                mock.call([cmd, 'eth0', 'inet6', 'add', addr + '/64'], 'sudo')
+            ]
+
 
 class ParseTestCase(TestCase):
     def test_parse_interfaces(self):
