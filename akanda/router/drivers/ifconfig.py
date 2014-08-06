@@ -126,8 +126,12 @@ class InterfaceManager(base.Manager):
     def _update_addresses(self, real_ifname, interface, old_interface):
         family = {4: 'inet', 6: 'inet6'}
 
-        add = lambda a: (real_ifname, family[a[0].version], 'add', '%s/%s' % (a[0], a[1]))
-        delete = lambda a: (real_ifname, family[a[0].version], 'del', '%s/%s' % (a[0], a[1]))
+        add = lambda a: (
+            real_ifname, family[a[0].version], 'add', '%s/%s' % (a[0], a[1])
+        )
+        delete = lambda a: (
+            real_ifname, family[a[0].version], 'del', '%s/%s' % (a[0], a[1])
+        )
         mutator = lambda a: (a.ip, a.prefixlen)
 
         self._update_set(real_ifname, interface, old_interface,
@@ -221,6 +225,7 @@ def _parse_mtu_and_flags(line):
     for part in parts:
         if part.startswith('MTU:'):
             retval['mtu'] = int(part.split(':')[1])
+            break
         else:
             retval.setdefault('flags', []).append(part)
     return retval

@@ -376,6 +376,13 @@ class ParseTestCase(TestCase):
         retval = ifconfig._parse_interface(SAMPLE_SINGLE_OUTPUT)
         self.assertEqual(retval.ifname, 'eth0')
         self.assertEqual(retval.lladdr, '00:0c:29:94:72:33')
+        self.assertEqual(retval.mtu, 1500)
+        self.assertEqual(retval.flags, [
+            'UP',
+            'BROADCAST',
+            'RUNNING',
+            'MULTICAST'
+        ])
 
     def test_parse_head(self):
         expected = dict(
