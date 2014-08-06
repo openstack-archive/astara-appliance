@@ -269,6 +269,34 @@ class IfconfigTestCase(TestCase):
                 mock.ANY
             )
 
+    def test_address_add(self):
+        cmd = '/sbin/ifconfig'
+        v4 = netaddr.IPNetwork('172.16.27.13/24')
+        v6 = netaddr.IPNetwork('fdca:3ba5:a17a:acda:20c:29ff:fe94:723d/64')
+        iface = mock.Mock(all_addresses=[v4, v6])
+        old_iface = mock.Mock(all_addresses=[])
+
+        mgr = ifconfig.InterfaceManager()
+        mgr._update_addresses('em0', iface, old_iface)
+        assert self.mock_execute.call_args_list == [
+            mock.call([cmd, 'em0', 'inet', str(v4)], 'sudo'),
+            mock.call([cmd, 'em0', 'inet6', 'add', str(v6)], 'sudo'),
+        ]
+
+    def test_address_remove(self):
+        cmd = '/sbin/ifconfig'
+        v4 = netaddr.IPNetwork('172.16.27.13/24')
+        v6 = netaddr.IPNetwork('fdca:3ba5:a17a:acda:20c:29ff:fe94:723d/64')
+        iface = mock.Mock(all_addresses=[])
+        old_iface = mock.Mock(all_addresses=[v4, v6])
+
+        mgr = ifconfig.InterfaceManager()
+        mgr._update_addresses('em0', iface, old_iface)
+        assert self.mock_execute.call_args_list == [
+            mock.call([cmd, 'em0', 'inet', str(v4)], 'sudo'),
+            mock.call([cmd, 'em0', 'inet6', 'del', str(v6)], 'sudo'),
+        ]
+
     def test_update_set(self):
         iface = mock.Mock()
         iface.all_addresses = ['a', 'b']

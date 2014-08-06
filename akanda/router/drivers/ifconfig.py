@@ -15,6 +15,7 @@
 # under the License.
 
 
+import functools
 import re
 
 import netaddr
@@ -111,14 +112,17 @@ class InterfaceManager(base.Manager):
             self.sudo(real_ifname, 'description', interface.description)
 
     def _update_addresses(self, real_ifname, interface, old_interface):
-        family = {4: 'inet', 6: 'inet6'}
 
-        add = lambda a: (
-            real_ifname, family[a[0].version], 'add', '%s/%s' % (a[0], a[1])
-        )
-        delete = lambda a: (
-            real_ifname, family[a[0].version], 'del', '%s/%s' % (a[0], a[1])
-        )
+        def _gen_cmd(cmd, address):
+            family = {4: 'inet', 6: 'inet6'}[address[0].version]
+            args = [real_ifname, family]
+            if family == 'inet6':
+                args.append(cmd)
+            args.append('%s/%s' % (address[0], address[1]))
+            return args
+
+        add = functools.partial(_gen_cmd, 'add')
+        delete = functools.partial(_gen_cmd, 'del')
         mutator = lambda a: (a.ip, a.prefixlen)
 
         self._update_set(real_ifname, interface, old_interface,
