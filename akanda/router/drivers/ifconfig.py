@@ -92,8 +92,7 @@ class InterfaceManager(base.Manager):
         real_ifname = self.generic_to_host(interface.ifname)
         self.sudo(real_ifname, 'down')
 
-    def update_interface(self, interface, ignore_link_local=True,
-                         ignore_egress_group=True):
+    def update_interface(self, interface, ignore_link_local=True):
         real_ifname = self.generic_to_host(interface.ifname)
         old_interface = self.get_interface(interface.ifname)
 
@@ -102,12 +101,7 @@ class InterfaceManager(base.Manager):
                                    if not a.is_link_local()]
             old_interface.addresses = [a for a in old_interface.addresses
                                        if not a.is_link_local()]
-        if ignore_egress_group:
-            old_interface.groups = [g for g in old_interface.groups
-                                    if g != 'egress']
-
         self._update_description(real_ifname, interface)
-        self._update_groups(real_ifname, interface, old_interface)
         # Must update primary before aliases otherwise will lose address
         # in case where primary and alias are swapped.
         self._update_addresses(real_ifname, interface, old_interface)
@@ -115,13 +109,6 @@ class InterfaceManager(base.Manager):
     def _update_description(self, real_ifname, interface):
         if interface.description:
             self.sudo(real_ifname, 'description', interface.description)
-
-    def _update_groups(self, real_ifname, interface, old_interface):
-        add = lambda g: (real_ifname, 'group', g)
-        delete = lambda g: (real_ifname, '-group', g)
-
-        self._update_set(real_ifname, interface, old_interface, 'groups',
-                         add, delete)
 
     def _update_addresses(self, real_ifname, interface, old_interface):
         family = {4: 'inet', 6: 'inet6'}
@@ -202,8 +189,6 @@ def _parse_interface(data):
                 retval['addresses'].append(_parse_inet(line))
             elif 'MTU' in line:
                 retval.update(_parse_mtu_and_flags(line))
-            else:
-                retval.update(_parse_other_params(line))
         else:
             retval.update(_parse_head(line))
 
@@ -239,19 +224,3 @@ def _parse_inet(line):
     ip = re.search('addr:(?P<addr>[0-9\.]+)', line).group('addr')
     mask = re.search('Mask:(?P<mask>[0-9\.]+)', line).group('mask')
     return netaddr.IPNetwork('%s/%s' % (ip, mask))
-
-
-def _parse_other_params(line):
-    # TODO (mark): remove the no cover for FreeBSD variant of ifconfig
-    if line.startswith('options'):  # pragma nocover
-        m = re.match('options=[0-9a-f]*<(?P<options>[\w,]*)>', line)
-        return m.groupdict()
-    elif line.startswith('groups'):
-        return [('groups', line.split()[1:])]
-    else:
-        key, value = line.split(' ', 1)
-
-        if key.endswith(':'):
-            key = key[:-1]
-
-        return [(key, value)]
