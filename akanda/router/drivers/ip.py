@@ -15,6 +15,7 @@
 # under the License.
 
 
+import functools
 import re
 
 import netaddr
@@ -28,13 +29,13 @@ PHYSICAL_INTERFACES = ['lo', 'eth', 'em', 're', 'en', 'vio', 'vtnet']
 ULA_PREFIX = 'fdca:3ba5:a17a:acda::/64'
 
 
-class InterfaceManager(base.Manager):
+class IPManager(base.Manager):
     """
     """
-    EXECUTABLE = '/sbin/ifconfig'
+    EXECUTABLE = '/sbin/ip'
 
     def __init__(self, root_helper='sudo'):
-        super(InterfaceManager, self).__init__(root_helper)
+        super(IPManager, self).__init__(root_helper)
         self.next_generic_index = 0
         self.host_mapping = {}
         self.generic_mapping = {}
@@ -44,7 +45,7 @@ class InterfaceManager(base.Manager):
             self.get_interfaces()
 
     def get_interfaces(self):
-        interfaces = _parse_interfaces(self.do('-a'),
+        interfaces = _parse_interfaces(self.do('addr', 'show'),
                                        filters=PHYSICAL_INTERFACES)
 
         interfaces.sort(key=lambda x: x.ifname)
@@ -63,7 +64,7 @@ class InterfaceManager(base.Manager):
 
     def get_interface(self, ifname):
         real_ifname = self.generic_to_host(ifname)
-        retval = _parse_interface(self.do(real_ifname))
+        retval = _parse_interface(self.do('addr', 'show', real_ifname))
         retval.ifname = ifname
         return retval
 
@@ -85,12 +86,12 @@ class InterfaceManager(base.Manager):
 
     def up(self, interface):
         real_ifname = self.generic_to_host(interface.ifname)
-        self.sudo(real_ifname, 'up')
+        self.sudo('link', 'set', real_ifname, 'up')
         return self.get_interface(interface.ifname)
 
     def down(self, interface):
         real_ifname = self.generic_to_host(interface.ifname)
-        self.sudo(real_ifname, 'down')
+        self.sudo('link', 'set', real_ifname, 'down')
 
     def update_interface(self, interface, ignore_link_local=True):
         real_ifname = self.generic_to_host(interface.ifname)
@@ -101,24 +102,27 @@ class InterfaceManager(base.Manager):
                                    if not a.is_link_local()]
             old_interface.addresses = [a for a in old_interface.addresses
                                        if not a.is_link_local()]
-        self._update_description(real_ifname, interface)
         # Must update primary before aliases otherwise will lose address
         # in case where primary and alias are swapped.
         self._update_addresses(real_ifname, interface, old_interface)
 
-    def _update_description(self, real_ifname, interface):
-        if interface.description:
-            self.sudo(real_ifname, 'description', interface.description)
-
     def _update_addresses(self, real_ifname, interface, old_interface):
-        family = {4: 'inet', 6: 'inet6'}
 
-        add = lambda a: (
-            real_ifname, family[a[0].version], 'add', '%s/%s' % (a[0], a[1])
-        )
-        delete = lambda a: (
-            real_ifname, family[a[0].version], 'del', '%s/%s' % (a[0], a[1])
-        )
+        def _gen_cmd(cmd, address):
+            family = {4: 'inet', 6: 'inet6'}[address[0].version]
+            args = [
+                'addr',
+                cmd,
+                '%s/%s' % (address[0], address[1]),
+                'dev',
+                real_ifname
+            ]
+            if family == 'inet6':
+                args = ['-6'] + args
+            return args
+
+        add = functools.partial(_gen_cmd, 'add')
+        delete = functools.partial(_gen_cmd, 'del')
         mutator = lambda a: (a.ip, a.prefixlen)
 
         self._update_set(real_ifname, interface, old_interface,
@@ -163,15 +167,16 @@ def get_rug_address():
 
 def _parse_interfaces(data, filters=None):
     retval = []
-    for iface_data in re.split('(^|\n)(?=\w+\d{0,3}\s+Link)', data, re.M):
+    for iface_data in re.split('(^|\n)(?=[0-9]: \w+\d{0,3}:)', data, re.M):
         if not iface_data.strip():
             continue
+        number, interface = iface_data.split(': ', 1)
 
         # FIXME (mark): the logic works, but should be more readable
         for f in filters or ['']:
             if f == '':
                 break
-            elif iface_data.startswith(f) and iface_data[len(f)].isdigit():
+            elif interface.startswith(f) and interface[len(f)].isdigit():
                 break
         else:
             continue
@@ -187,8 +192,8 @@ def _parse_interface(data):
             line = line.strip()
             if line.startswith('inet'):
                 retval['addresses'].append(_parse_inet(line))
-            elif 'MTU' in line:
-                retval.update(_parse_mtu_and_flags(line))
+            elif 'link/ether' in line:
+                retval['lladdr'] = _parse_lladdr(line)
         else:
             retval.update(_parse_head(line))
 
@@ -197,31 +202,22 @@ def _parse_interface(data):
 
 def _parse_head(line):
     retval = {}
-    m = re.match('(?P<ifname>\w+\d{1,3})', line)
+    m = re.match(
+        '[0-9]+: (?P<if>\w+\d{1,3}): <(?P<flags>[^>]+)> mtu (?P<mtu>[0-9]+)',
+        line
+    )
     if m:
-        retval['ifname'] = m.group('ifname')
-        retval['lladdr'] = line.split('HWaddr')[1].strip()
-    return retval
-
-
-def _parse_mtu_and_flags(line):
-    retval = {}
-    parts = line.split()
-    for part in parts:
-        if part.startswith('MTU:'):
-            retval['mtu'] = int(part.split(':')[1])
-        elif part.startswith('Metric:'):
-            retval['metric'] = int(part.split(':')[1])
-        else:
-            retval.setdefault('flags', []).append(part)
+        retval['ifname'] = m.group('if')
+        retval['mtu'] = int(m.group('mtu'))
+        retval['flags'] = m.group('flags').split(',')
     return retval
 
 
 def _parse_inet(line):
     tokens = line.split()
-    if tokens[0] == 'inet6':
-        return netaddr.IPNetwork(tokens[2])
+    return netaddr.IPNetwork(tokens[1])
 
-    ip = re.search('addr:(?P<addr>[0-9\.]+)', line).group('addr')
-    mask = re.search('Mask:(?P<mask>[0-9\.]+)', line).group('mask')
-    return netaddr.IPNetwork('%s/%s' % (ip, mask))
+
+def _parse_lladdr(line):
+    tokens = line.split()
+    return tokens[1]

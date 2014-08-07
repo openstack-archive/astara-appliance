@@ -42,11 +42,11 @@ class BirdManager(base.Manager):
 
     def restart(self):
         try:
-            utils.execute(['/etc/rc.d/bird6', 'check'], self.root_helper)
+            utils.execute(['/etc/init.d/bird6', 'status'], self.root_helper)
         except:  # pragma no cover
-            utils.execute(['/etc/rc.d/bird6', 'start'], self.root_helper)
+            utils.execute(['/etc/init.d/bird6', 'start'], self.root_helper)
         else:  # pragma no cover
-            utils.execute(['/etc/rc.d/bird6', 'reload'], self.root_helper)
+            utils.execute(['/etc/init.d/bird6', 'reload'], self.root_helper)
 
 
 def build_config(config, interface_map):

@@ -25,7 +25,7 @@ from akanda.router import utils
 
 LOG = logging.getLogger(__name__)
 CONF_DIR = '/etc/dnsmasq.d'
-RC_PATH = '/etc/rc.d/dnsmasq'
+RC_PATH = '/etc/init.d/dnsmasq'
 DEFAULT_LEASE = 86400
 
 
@@ -90,7 +90,7 @@ class DHCPManager(base.Manager):
 
     def restart(self):
         try:
-            utils.execute(['/etc/rc.d/dnsmasq', 'stop'], self.root_helper)
+            utils.execute(['/etc/init.d/dnsmasq', 'stop'], self.root_helper)
         except:
             pass
 
@@ -99,7 +99,9 @@ class DHCPManager(base.Manager):
         while remaining:
             remaining -= 1
             try:
-                utils.execute(['/etc/rc.d/dnsmasq', 'start'], self.root_helper)
+                utils.execute(
+                    ['/etc/init.d/dnsmasq', 'start'], self.root_helper
+                )
                 return
             except Exception:
                 if remaining <= 0:

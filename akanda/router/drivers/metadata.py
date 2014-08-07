@@ -55,17 +55,17 @@ class MetadataManager(base.Manager):
 
     def ensure_started(self):
         try:
-            execute(['/etc/rc.d/metadata', 'check'], self.root_helper)
+            execute(['/etc/init.d/metadata', 'status'], self.root_helper)
         except:
-            execute(['/etc/rc.d/metadata', 'start'], self.root_helper)
+            execute(['/etc/init.d/metadata', 'start'], self.root_helper)
 
     def restart(self):
         try:
-            execute(['/etc/rc.d/metadata', 'stop'], self.root_helper)
+            execute(['/etc/init.d/metadata', 'stop'], self.root_helper)
         except:
             # failure is ok here
             pass
-        execute(['/etc/rc.d/metadata', 'start'], self.root_helper)
+        execute(['/etc/init.d/metadata', 'start'], self.root_helper)
 
 
 def build_config(config):

@@ -136,6 +136,6 @@ class DnsmasqTestCase(TestCase):
     def test_restart(self):
         self.mgr.restart()
         self.mock_execute.assert_has_calls([
-            mock.call(['/etc/rc.d/dnsmasq', 'stop'], 'sudo'),
-            mock.call(['/etc/rc.d/dnsmasq', 'start'], 'sudo')
+            mock.call(['/etc/init.d/dnsmasq', 'stop'], 'sudo'),
+            mock.call(['/etc/init.d/dnsmasq', 'start'], 'sudo')
         ])
