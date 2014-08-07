@@ -29,7 +29,7 @@ from werkzeug import exceptions
 from werkzeug import wrappers
 
 from akanda.router import defaults
-from akanda.router.drivers import ifconfig
+from akanda.router.drivers import ip
 
 LOG = logging.getLogger(__name__)
 
@@ -85,7 +85,7 @@ class NetworkMetadataProxyHandler(object):
 
         url = urlparse.urlunsplit((
             'http',
-            '[%s]:%d' % (ifconfig.get_rug_address(), defaults.RUG_META_PORT),
+            '[%s]:%d' % (ip.get_rug_address(), defaults.RUG_META_PORT),
             path_info,
             query_string,
             ''))

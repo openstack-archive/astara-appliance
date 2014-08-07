@@ -20,13 +20,13 @@ import sys
 import textwrap
 
 from akanda.router import defaults
-from akanda.router.drivers import ifconfig
+from akanda.router.drivers import ip
 
 
 def configure_ssh():
     """
     """
-    mgr = ifconfig.InterfaceManager()
+    mgr = ip.IPManager()
 
     listen_ip = mgr.get_management_address(ensure_configuration=True)
 
@@ -52,7 +52,7 @@ def configure_ssh():
 def configure_gunicorn():
     """
     """
-    mgr = ifconfig.InterfaceManager()
+    mgr = ip.IPManager()
 
     listen_ip = mgr.get_management_address(ensure_configuration=True)
 
@@ -88,7 +88,7 @@ def configure_default_pf():
     """
     """
 
-    mgr = ifconfig.InterfaceManager()
+    mgr = ip.IPManager()
     args = {'ifname': mgr.generic_to_host('ge0')}
 
     config = """
