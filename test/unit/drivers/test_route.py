@@ -22,67 +22,52 @@ import netaddr
 from dogpile.cache import make_region
 
 from akanda.router import models
-from akanda.router.drivers import route
+from akanda.router.drivers import ip
 
 
 class RouteTest(unittest2.TestCase):
 
     def setUp(self):
-        self.mgr = route.RouteManager()
+        super(RouteTest, self).setUp()
+        self.mgr = ip.IPManager()
+        self.host_patch = mock.patch.object(
+            self.mgr, 'generic_to_host', lambda x: x.replace('ge', 'eth')
+        )
+        self.host_patch.start()
+
+    def tearDown(self):
+        super(RouteTest, self).tearDown()
+        self.host_patch.stop()
 
     def test_get_default_gateway_v6_missing(self):
-        output = 'route: writing to routing socket: No such process\n'
+        output = ''
         with mock.patch.object(self.mgr, 'sudo') as sudo:
             sudo.return_value = output
             self.assertEqual(
                 None,
-                self.mgr._get_default_gateway('-inet6')
+                self.mgr._get_default_gateway(6)
             )
-            sudo.assert_called_with('-n', 'get', '-inet6', 'default')
+            sudo.assert_called_with('-6', 'route', 'show')
 
     def test_get_default_gateway_v6(self):
-        output = """
-   route to: ::
-destination: ::
-       mask: default
-    gateway: fdee:9f85:83be::1
-  interface: vio1
- if address: fdee:9f85:83be:0:f816:3eff:fe7b:6263
-   priority: 8 (static)
-      flags: <UP,GATEWAY,DONE,STATIC>
-     use       mtu    expire
-       0         0         0
-"""
+        output = "default via fe80::f816:3eff:fe33:deac dev eth2  metric 1024"
         with mock.patch.object(self.mgr, 'sudo') as sudo:
             sudo.return_value = output
             self.assertEqual(
-                'fdee:9f85:83be::1',
-                self.mgr._get_default_gateway('-inet6')
+                'fe80::f816:3eff:fe33:deac',
+                self.mgr._get_default_gateway(6)
             )
-            sudo.assert_called_with('-n', 'get', '-inet6', 'default')
+            sudo.assert_called_with('-6', 'route', 'show')
 
     def test_get_default_gateway_v4(self):
-        output = """
-   route to: default
-destination: default
-       mask: default
-    gateway: 192.168.122.1
-  interface: vio0
- if address: 192.168.122.240
-   priority: 8 (static)
-      flags: <UP,GATEWAY,DONE,STATIC>
-      label: DHCLIENT 20978
-     use       mtu    expire
-   73687         0         0
-sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
-"""
+        output = "default via 192.168.122.1 dev eth0  metric 100"
         with mock.patch.object(self.mgr, 'sudo') as sudo:
             sudo.return_value = output
             self.assertEqual(
                 '192.168.122.1',
-                self.mgr._get_default_gateway('-inet')
+                self.mgr._get_default_gateway(4)
             )
-            sudo.assert_called_with('-n', 'get', '-inet', 'default')
+            sudo.assert_called_with('-4', 'route', 'show')
 
     def test_set_default_v4_matches_current(self):
         ip_s = '192.168.122.1'
@@ -93,7 +78,7 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             get.return_value = ip_s
             with mock.patch.object(self.mgr, 'sudo') as sudo:
                 sudo.side_effect = AssertionError('should not be called')
-                self.mgr._set_default_gateway(ip)
+                self.mgr._set_default_gateway(ip, 'ge1')
 
     def test_set_default_v4_changes_current(self):
         ip_s = '192.168.122.1'
@@ -101,10 +86,19 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
         ip.version = 4
         ip.__str__.return_value = ip_s
         with mock.patch.object(self.mgr, '_get_default_gateway') as get:
-            get.return_value = '192.168.122.254'
-            with mock.patch.object(self.mgr, 'sudo') as sudo:
-                self.mgr._set_default_gateway(ip)
-                sudo.assert_called_with('change', '-inet', 'default', ip_s)
+                get.return_value = '192.168.122.254'
+                with mock.patch.object(self.mgr, 'sudo') as sudo:
+                    self.mgr._set_default_gateway(ip, 'ge1')
+                    assert sudo.call_args_list == [
+                        mock.call(
+                            '-4', 'route', 'del', 'default', 'via',
+                            get.return_value, 'dev', 'eth1'
+                        ),
+                        mock.call(
+                            '-4', 'route', 'add', 'default', 'via', ip_s,
+                            'dev', 'eth1'
+                        )
+                    ]
 
     def test_set_default_v4_no_current(self):
         ip_s = '192.168.122.1'
@@ -114,8 +108,11 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
         with mock.patch.object(self.mgr, '_get_default_gateway') as get:
             get.return_value = None
             with mock.patch.object(self.mgr, 'sudo') as sudo:
-                self.mgr._set_default_gateway(ip)
-                sudo.assert_called_with('add', '-inet', 'default', ip_s)
+                self.mgr._set_default_gateway(ip, 'ge1')
+                sudo.assert_called_with(
+                    '-4', 'route', 'add', 'default', 'via', '192.168.122.1',
+                    'dev', 'eth1'
+                )
 
     def test_set_default_v6_matches_current(self):
         ip_s = 'fe80::5054:ff:fee2:1d4f'
@@ -126,7 +123,7 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             get.return_value = ip_s
             with mock.patch.object(self.mgr, 'sudo') as sudo:
                 sudo.side_effect = AssertionError('should not be called')
-                self.mgr._set_default_gateway(ip)
+                self.mgr._set_default_gateway(ip, 'ge1')
 
     def test_set_default_v6_changes_current(self):
         ip_s = 'fe80::5054:ff:fee2:1d4f'
@@ -136,19 +133,32 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
         with mock.patch.object(self.mgr, '_get_default_gateway') as get:
             get.return_value = 'fe80::5054:ff:fee2:aaaa'
             with mock.patch.object(self.mgr, 'sudo') as sudo:
-                self.mgr._set_default_gateway(ip)
-                sudo.assert_called_with('change', '-inet6', 'default', ip_s)
+                self.mgr._set_default_gateway(ip, 'ge1')
+                assert sudo.call_args_list == [
+                    mock.call(
+                        '-6', 'route', 'del', 'default', 'via',
+                        get.return_value, 'dev', 'eth1'
+                    ),
+                    mock.call(
+                        '-6', 'route', 'add', 'default', 'via', ip_s,
+                        'dev', 'eth1'
+                    )
+                ]
 
     def test_set_default_v6_no_current(self):
         ip_s = 'fe80::5054:ff:fee2:1d4f'
         ip = mock.MagicMock()
         ip.version = 6
         ip.__str__.return_value = ip_s
+        self.mgr.generic_mapping = {'ge1', 'eth1'}
         with mock.patch.object(self.mgr, '_get_default_gateway') as get:
             get.return_value = None
             with mock.patch.object(self.mgr, 'sudo') as sudo:
-                self.mgr._set_default_gateway(ip)
-                sudo.assert_called_with('add', '-inet6', 'default', ip_s)
+                self.mgr._set_default_gateway(ip, 'ge1')
+                sudo.assert_called_with(
+                    '-6', 'route', 'add', 'default', 'via', ip_s,
+                    'dev', 'eth1'
+                )
 
     def test_update_default_no_inputs(self):
         c = models.Configuration({})
@@ -156,13 +166,13 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             set.side_effect = AssertionError(
                 'should not try to set default gw'
             )
-            self.mgr.update_default(c)
+            self.mgr.update_default_gateway(c)
 
     def test_update_default_v4_from_gateway(self):
         c = models.Configuration({'default_v4_gateway': '172.16.77.1'})
         with mock.patch.object(self.mgr, '_set_default_gateway') as set:
-            self.mgr.update_default(c)
-            set.assert_called_once_with(c.default_v4_gateway)
+            self.mgr.update_default_gateway(c)
+            set.assert_called_once_with(c.default_v4_gateway, None)
 
     def test_update_default_v4_from_subnet(self):
         subnet = dict(
@@ -181,10 +191,10 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
         )
         c = models.Configuration({'networks': [network]})
         with mock.patch.object(self.mgr, '_set_default_gateway') as set:
-            self.mgr.update_default(c)
+            self.mgr.update_default_gateway(c)
             net = c.networks[0]
             snet = net.subnets[0]
-            set.assert_called_once_with(snet.gateway_ip)
+            set.assert_called_once_with(snet.gateway_ip, 'ge0')
 
     def test_update_multiple_v4_subnets(self):
         subnet = dict(
@@ -209,10 +219,10 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
         )
         c = models.Configuration({'networks': [network]})
         with mock.patch.object(self.mgr, '_set_default_gateway') as set:
-            self.mgr.update_default(c)
+            self.mgr.update_default_gateway(c)
             net = c.networks[0]
             snet = net.subnets[0]
-            set.assert_called_once_with(snet.gateway_ip)
+            set.assert_called_once_with(snet.gateway_ip, 'ge0')
 
     def test_update_default_v6(self):
         subnet = dict(
@@ -231,10 +241,10 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
         )
         c = models.Configuration({'networks': [network]})
         with mock.patch.object(self.mgr, '_set_default_gateway') as set:
-            self.mgr.update_default(c)
+            self.mgr.update_default_gateway(c)
             net = c.networks[0]
             snet = net.subnets[0]
-            set.assert_called_once_with(snet.gateway_ip)
+            set.assert_called_once_with(snet.gateway_ip, 'ge0')
 
     def test_update_default_multiple_v6(self):
         subnet = dict(
@@ -259,12 +269,12 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
         )
         c = models.Configuration({'networks': [network]})
         with mock.patch.object(self.mgr, '_set_default_gateway') as set:
-            self.mgr.update_default(c)
+            self.mgr.update_default_gateway(c)
             net = c.networks[0]
             snet = net.subnets[0]
-            set.assert_called_once_with(snet.gateway_ip)
+            set.assert_called_once_with(snet.gateway_ip, 'ge0')
 
-    @mock.patch.object(route.RouteManager, '_set_default_gateway',
+    @mock.patch.object(ip.IPManager, '_set_default_gateway',
                        lambda *a, **kw: None)
     def test_custom_host_routes(self):
         subnet = dict(
@@ -290,7 +300,8 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             # ...so let's add one!
             self.mgr.update_host_routes(c, cache)
             sudo.assert_called_once_with(
-                'add', '-inet', '192.240.128.0/20', '192.168.89.2'
+                '-4', 'route', 'add', '192.240.128.0/20', 'via',
+                '192.168.89.2', 'dev', 'eth0'
             )
 
             # db[subnet.cidr] should contain the above route
@@ -311,7 +322,8 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             c = models.Configuration({'networks': [network]})
             self.mgr.update_host_routes(c, cache)
             sudo.assert_called_once_with(
-                'delete', '-inet', '192.240.128.0/20', '192.168.89.2'
+                '-4', 'route', 'del', '192.240.128.0/20', 'via',
+                '192.168.89.2', 'dev', 'eth0'
             )
             self.assertEqual(len(cache.get('host_routes')), 0)
 
@@ -327,8 +339,10 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             c = models.Configuration({'networks': [network]})
             self.mgr.update_host_routes(c, cache)
             self.assertEqual(sudo.call_args_list, [
-                mock.call('add', '-inet', '192.240.128.0/20', '192.168.89.2'),
-                mock.call('add', '-inet', '192.220.128.0/20', '192.168.89.3'),
+                mock.call('-4', 'route', 'add', '192.240.128.0/20',
+                          'via', '192.168.89.2', 'dev', 'eth0'),
+                mock.call('-4', 'route', 'add', '192.220.128.0/20',
+                          'via', '192.168.89.3', 'dev', 'eth0'),
             ])
 
             # ...let's remove one and add another...
@@ -343,9 +357,10 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             c = models.Configuration({'networks': [network]})
             self.mgr.update_host_routes(c, cache)
             self.assertEqual(sudo.call_args_list, [
-                mock.call('delete', '-inet', '192.220.128.0/20',
-                          '192.168.89.3'),
-                mock.call('add', '-inet', '192.185.128.0/20', '192.168.89.4')
+                mock.call('-4', 'route', 'del', '192.220.128.0/20',
+                          'via', '192.168.89.3', 'dev', 'eth0'),
+                mock.call('-4', 'route', 'add', '192.185.128.0/20',
+                          'via', '192.168.89.4', 'dev', 'eth0')
             ])
 
             # ...let's add another subnet...
@@ -364,7 +379,8 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             c = models.Configuration({'networks': [network]})
             self.mgr.update_host_routes(c, cache)
             self.assertEqual(sudo.call_args_list, [
-                mock.call('add', '-inet', '192.240.128.0/20', '192.168.90.1')
+                mock.call('-4', 'route', 'add', '192.240.128.0/20',
+                          'via', '192.168.90.1', 'dev', 'eth0')
             ])
             self.assertEqual(len(cache.get('host_routes')), 2)
 
@@ -375,12 +391,12 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
             c = models.Configuration({'networks': [network]})
             self.mgr.update_host_routes(c, cache)
             self.assertEqual(sudo.call_args_list, [
-                mock.call('delete', '-inet', '192.185.128.0/20',
-                          '192.168.89.4'),
-                mock.call('delete', '-inet', '192.240.128.0/20',
-                          '192.168.89.2'),
-                mock.call('delete', '-inet', '192.240.128.0/20',
-                          '192.168.90.1'),
+                mock.call('-4', 'route', 'del', '192.185.128.0/20',
+                          'via', '192.168.89.4', 'dev', 'eth0'),
+                mock.call('-4', 'route', 'del', '192.240.128.0/20',
+                          'via', '192.168.89.2', 'dev', 'eth0'),
+                mock.call('-4', 'route', 'del', '192.240.128.0/20',
+                          'via', '192.168.90.1', 'dev', 'eth0'),
             ])
             self.assertEqual(len(cache.get('host_routes')), 0)
 
@@ -409,6 +425,7 @@ sockaddrs: <DST,GATEWAY,NETMASK,IFP,IFA,LABEL>
 
             self.mgr.update_host_routes(c, cache)
             sudo.assert_called_once_with(
-                'add', '-inet', '192.240.128.0/20', '192.168.89.2'
+                '-4', 'route', 'add', '192.240.128.0/20', 'via',
+                '192.168.89.2', 'dev', 'eth0'
             )
             self.assertEqual(len(cache.get('host_routes')), 0)

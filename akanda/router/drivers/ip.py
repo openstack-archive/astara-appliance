@@ -16,12 +16,15 @@
 
 
 import functools
+import logging
 import re
 
 import netaddr
 
 from akanda.router import models
 from akanda.router.drivers import base
+
+LOG = logging.getLogger(__name__)
 
 
 GENERIC_IFNAME = 'ge'
@@ -157,6 +160,141 @@ class IPManager(base.Manager):
             primary.addresses.append(ip)
             self.update_interface(primary)
         return ip_str
+
+    def update_default_gateway(self, config):
+        # Track whether we have set the default gateways, by IP
+        # version.
+        gw_set = {
+            4: False,
+            6: False,
+        }
+
+        ifname = None
+        for net in config.networks:
+            if not net.is_external_network:
+                continue
+            ifname = net.interface.ifname
+
+        # The default v4 gateway is pulled out as a special case
+        # because we only want one but we might have multiple v4
+        # subnets on the external network. However, sometimes the RUG
+        # can't figure out what that value is, because it thinks we
+        # don't have any external IP addresses, yet. In that case, it
+        # doesn't give us a default.
+        if config.default_v4_gateway:
+            self._set_default_gateway(config.default_v4_gateway, ifname)
+            gw_set[4] = True
+
+        # Look through our networks and make sure we have a default
+        # gateway set for each IP version, if we have an IP for that
+        # version on the external net. If we haven't already set the
+        # v4 gateway, this picks the gateway for the first subnet we
+        # find, which might be wrong.
+        for net in config.networks:
+            if not net.is_external_network:
+                continue
+
+            for subnet in net.subnets:
+                if subnet.gateway_ip and not gw_set[subnet.gateway_ip.version]:
+                    self._set_default_gateway(
+                        subnet.gateway_ip,
+                        net.interface.ifname
+                    )
+                    gw_set[subnet.gateway_ip.version] = True
+
+    def update_host_routes(self, config, cache):
+        db = cache.get_or_create('host_routes', lambda: {})
+        for net in config.networks:
+
+            # For each subnet...
+            for subnet in net.subnets:
+                cidr = str(subnet.cidr)
+
+                # determine the set of previously written routes for this cidr
+                if cidr not in db:
+                    db[cidr] = set()
+
+                current = db[cidr]
+
+                # build a set of new routes for this cidr
+                latest = set()
+                for r in subnet.host_routes:
+                    latest.add((r.destination, r.next_hop))
+
+                # If the set of previously written routes contains routes that
+                # aren't defined in the new config, run commands to delete them
+                for x in current - latest:
+                    if self._alter_route(net.interface.ifname, 'del', *x):
+                        current.remove(x)
+
+                # If the new config contains routes that aren't defined in the
+                # set of previously written routes, run commands to add them
+                for x in latest - current:
+                    if self._alter_route(net.interface.ifname, 'add', *x):
+                        current.add(x)
+
+                if not current:
+                    del db[cidr]
+
+        cache.set('host_routes', db)
+
+    def _get_default_gateway(self, version):
+        current = None
+        try:
+            cmd_out = self.sudo('-%s' % version, 'route', 'show')
+        except:
+            # assume the route is missing and use defaults
+            pass
+        else:
+            for l in cmd_out.splitlines():
+                l = l.strip()
+                if l.startswith('default'):
+                    match = re.search('via (?P<gateway>[^ ]+)', l)
+                    if match:
+                        return match.group('gateway')
+        return current
+
+    def _set_default_gateway(self, gateway_ip, ifname):
+        version = 4
+        if gateway_ip.version == 6:
+            version = 6
+        current = self._get_default_gateway(version)
+        desired = str(gateway_ip)
+        ifname = self.generic_to_host(ifname)
+
+        if current and current != desired:
+            # Remove the current gateway and add the desired one
+            self.sudo(
+                '-%s' % version, 'route', 'del', 'default', 'via', current,
+                'dev', ifname
+            )
+            return self.sudo(
+                '-%s' % version, 'route', 'add', 'default', 'via', desired,
+                'dev', ifname
+            )
+        if not current:
+            # Add the desired gateway
+            return self.sudo(
+                '-%s' % version, 'route', 'add', 'default', 'via', desired,
+                'dev', ifname
+            )
+
+    def _alter_route(self, ifname, action, destination, next_hop):
+        version = destination.version
+        ifname = self.generic_to_host(ifname)
+        try:
+            LOG.debug(self.sudo(
+                '-%s' % version, 'route', action, str(destination), 'via',
+                str(next_hop), 'dev', ifname
+            ))
+            return True
+        except RuntimeError as e:
+            # Since these are user-supplied custom routes, it's very possible
+            # that adding/removing them will fail.  A failure to apply one of
+            # these custom rules, however, should *not* cause an overall router
+            # failure.
+            LOG.warn('Route could not be %sed: %s' % (action, unicode(e)))
+            return False
 
 
 def get_rug_address():
