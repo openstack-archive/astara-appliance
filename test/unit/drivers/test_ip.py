@@ -272,15 +272,15 @@ class IPTestCase(TestCase):
         old_iface = mock.Mock()
         old_iface.all_addresses = ['b', 'c']
 
-        add = lambda g: ('em0', 'add', g)
-        delete = lambda g: ('em0', 'del', g)
+        add = lambda g: ('addr', 'add', g, 'dev', 'em0')
+        delete = lambda g: ('addr', 'del', g, 'dev', 'em0')
 
         mgr = ip.IPManager()
         mgr._update_set('em0', iface, old_iface, 'all_addresses', add, delete)
 
         self.mock_execute.assert_has_calls([
-            mock.call(['/sbin/ip', 'em0', 'add', 'a'], 'sudo'),
-            mock.call(['/sbin/ip', 'em0', 'del', 'c'], 'sudo')
+            mock.call(['/sbin/ip', 'addr', 'add', 'a', 'dev', 'em0'], 'sudo'),
+            mock.call(['/sbin/ip', 'addr', 'del', 'c', 'dev', 'em0'], 'sudo')
         ])
 
     def test_update_set_no_diff(self):
