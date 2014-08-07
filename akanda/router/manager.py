@@ -19,8 +19,7 @@ import os
 import re
 
 from akanda.router import models
-from akanda.router.drivers import (bird, dnsmasq, ip, metadata, pf,
-                                   route, arp)
+from akanda.router.drivers import (bird, dnsmasq, ip, metadata, pf, arp)
 
 
 class Manager(object):
@@ -88,8 +87,8 @@ class Manager(object):
         mgr.update_conf(rule_data)
 
     def update_routes(self, cache):
-        mgr = route.RouteManager()
-        mgr.update_default(self.config)
+        mgr = ip.IPManager()
+        mgr.update_default_gateway(self.config)
         mgr.update_host_routes(self.config, cache)
 
     def update_arp(self):
