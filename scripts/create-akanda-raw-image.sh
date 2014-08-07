@@ -15,6 +15,28 @@ deb http://mirrors.dreamcompute.com/debian  $RELEASE  main
 deb http://mirrors.dreamcompute.com/security.debian.org  $RELEASE/updates  main
 EOF
 
+
+# Need to setup bird backports for wheezy only
+if [ $RELEASE = "wheezy" ]; then
+        echo "[*] Setup APT sources $RELEASE backports"
+        cat > /etc/apt/sources.list.d/backports.list <<EOF
+deb http://mirrors.dreamcompute.com/debian  $RELEASE-backports  main
+EOF
+
+        echo "[*] Setup APT prefrences for bird/bird6 to use $RELEASE-backports"
+        cat <<EOF > /etc/apt/preferences.d/bird
+Package: bird
+Pin: release a=$RELEASE-backports
+Pin-Priority: 1000
+
+Package: bird6
+Pin: release a=$RELEASE-backports
+Pin-Priority: 1000
+EOF
+
+fi
+
+
 echo "[*] APT Update"
 apt-get update || exit 1
 
