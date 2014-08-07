@@ -99,7 +99,9 @@ class DHCPManager(base.Manager):
         while remaining:
             remaining -= 1
             try:
-                utils.execute(['/etc/init.d/dnsmasq', 'start'], self.root_helper)
+                utils.execute(
+                    ['/etc/init.d/dnsmasq', 'start'], self.root_helper
+                )
                 return
             except Exception:
                 if remaining <= 0:

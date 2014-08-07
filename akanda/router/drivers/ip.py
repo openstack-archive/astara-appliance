@@ -203,11 +203,11 @@ def _parse_interface(data):
 def _parse_head(line):
     retval = {}
     m = re.match(
-        '[0-9]+: (?P<ifname>\w+\d{1,3}): <(?P<flags>[^>]+)> mtu (?P<mtu>[0-9]+)',
+        '[0-9]+: (?P<if>\w+\d{1,3}): <(?P<flags>[^>]+)> mtu (?P<mtu>[0-9]+)',
         line
     )
     if m:
-        retval['ifname'] = m.group('ifname')
+        retval['ifname'] = m.group('if')
         retval['mtu'] = int(m.group('mtu'))
         retval['flags'] = m.group('flags').split(',')
     return retval
