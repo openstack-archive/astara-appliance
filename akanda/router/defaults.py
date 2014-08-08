@@ -19,9 +19,13 @@ SSH = 22
 SMTP = 25
 DNS = 53
 HTTP = 80
+BGP = 179
 HTTPS = 443
 HTTP_ALT = 8080
 API_SERVICE = 5000
+
+DHCP = 67
+DHCPV6 = 546
 
 NFS_DEVELOPMENT = [111, 1110, 2049, 4045]
 
@@ -46,4 +50,5 @@ RUG_META_PORT = 9697
 
 
 def internal_metadata_port(ifname):
-    return BASE_METADATA_PORT + int(ifname[2:])
+    import re
+    return BASE_METADATA_PORT + int(re.sub('[a-zA-Z]', '', ifname))
