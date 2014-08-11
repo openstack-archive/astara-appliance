@@ -142,6 +142,7 @@ class IPManager(base.Manager):
 
         for item in (next_set - prev_set):
             self.sudo(*fmt_args_add(item))
+            self.up(interface)
 
         for item in (prev_set - next_set):
             self.sudo(*fmt_args_delete(item))
