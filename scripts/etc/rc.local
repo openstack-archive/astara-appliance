@@ -1,7 +1,0 @@
-#!/bin/sh
-
-echo "Configuring http for management interface..."
-/usr/local/bin/akanda-configure-gunicorn
-
-echo "Starting akanda.router.api.server"
-/usr/local/bin/gunicorn -c /etc/akanda_gunicorn_config akanda.router.api.server:app

@@ -98,8 +98,14 @@ rm /tmp/akanda.sh
 echo "[*] Add init scripts...."
 cp $APPLIANCE_SCRIPT_DIR/etc/init.d/ssh /etc/init.d/ssh
 cp $APPLIANCE_SCRIPT_DIR/etc/init.d/metadata /etc/init.d/metadata
+cp $APPLIANCE_SCRIPT_DIR/etc/init.d/akanda-router-api-server /etc/init.d/akanda-router-api-server
 chmod 555 /etc/init.d/ssh
 chmod 555 /etc/init.d/metadata
+chmod 555 /etc/init.d/akanda-router-api-server
+
+echo "[*] Update rc.d"
+update-rc.d akanda-router-api-server start
+
 
 echo "[*] Add some stuff to sysctl.conf"
 cat > /etc/sysctl.conf <<EOF
@@ -107,9 +113,6 @@ net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
 net.ipv6.conf.eth0.accept_dad=0
 EOF
-
-echo "[*] Add rc.local file...."
-cp $APPLIANCE_SCRIPT_DIR/etc/rc.local /etc/rc.local
 
 echo "[*] Disable fsck on boot"
 touch /fastboot

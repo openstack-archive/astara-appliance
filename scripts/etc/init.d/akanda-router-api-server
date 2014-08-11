@@ -1,0 +1,41 @@
+#! /bin/sh
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+DAEMON="/usr/local/bin/gunicorn"
+OPTIONS="-c /etc/akanda_gunicorn_config akanda.router.api.server:app"
+PIDFILE=/var/run/akanda-router-api-server.pid
+
+test -x $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+akanda_configure_gunicorn() {
+        /usr/local/bin/akanda-configure-gunicorn
+}
+
+case "$1" in
+  start)
+        akanda_configure_gunicorn
+	log_daemon_msg "Starting akanda-router-api-server" "akanda-router-api-server"
+	start_daemon -p $PIDFILE $DAEMON $OPTIONS
+	log_end_msg $?
+    ;;
+  stop)
+	log_daemon_msg "Stopping akanda-router-api-server" "akanda-router-api-server"
+	killproc -p $PIDFILE $DAEMON
+	log_end_msg $?
+    ;;
+  force-reload|restart)
+    $0 stop
+    $0 start
+    ;;
+  status)
+    status_of_proc -p $PIDFILE $DAEMON akanda-router-api-server && exit 0 || exit $?
+    ;;
+  *)
+    echo "Usage: /etc/init.d/akanda-router-api-server {start|stop|restart|force-reload|status}"
+    exit 1
+    ;;
+esac
+
+exit 0
