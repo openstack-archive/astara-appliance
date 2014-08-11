@@ -45,10 +45,19 @@ class IPTablesManager(base.Manager):
     """
 
     def save_config(self, config, interface_map):
+        '''
+        Save iptables-persistent firewall rules to disk.
+
+        :param config: The akanda configuration to save to disk
+        :type config: akanda.rug.models.Configuration
+        :param interface_map: A mapping of virtual ('ge0') to physical ('eth0')
+                              interface names
+        :type interface_map: dict
+        '''
         rules = []
 
-	self._build_filter_table(config, interface_map, rules)
-	self._build_nat_table(config, interface_map, rules)
+        self._build_filter_table(config, rules)
+        self._build_nat_table(config, rules)
 
         v4_data = '\n'.join(map(str, filter(lambda x: x.for_v4, rules)))
         v6_data = '\n'.join(map(str, filter(lambda x: x.for_v6, rules)))
@@ -74,24 +83,53 @@ class IPTablesManager(base.Manager):
         )
 
     def restart(self):
+        '''
+        Reload firewall rules via iptables-persistent
+        '''
         utils.execute(
             ['/etc/init.d/iptables-persistent', 'restart'],
             self.root_helper
         )
 
     def get_rules(self):
+        '''
+        Return the output of `iptables` and `ip6tables`.
+        This function is used by akanda-rug -> HTTP as a test for "router
+        aliveness".
+
+        :rtype: str
+        '''
         v4 = utils.execute(['iptables', '-L', '-n'])
         v6 = utils.execute(['ip6tables', '-L', '-n'])
         return v4 + v6
 
     def get_external_network(self, config):
+        '''
+        Returns the external network
+
+        :rtype: akanda.router.models.Interface
+        '''
         for n in config.networks:
             if n.network_type == Network.TYPE_EXTERNAL:
                 return n
 
-    def _build_filter_table(self, config, interface_map, rules):
-        ext_if = self.get_external_network(config).interface
+    def _build_filter_table(self, config, rules):
+        '''
+        Build a list of iptables and ip6tables rules to be written to disk.
 
+        :param config: the akanda configuration object:
+        :type config: akanda.router.models.Configuration
+        :param rules: the list of rules to append to
+        :type rules: a list of akanda.router.drivers.iptables.Rule objects
+        '''
+        self._build_default_filter_rules(rules)
+        self._build_management_filter_rules(config, rules)
+        self._build_internal_network_filter_rules(config, rules)
+
+    def _build_default_filter_rules(self, rules):
+        '''
+        Build rules for default filter policies and ICMP handling
+        '''
         # Drop INPUT/OUTPUT by default
         rules.extend([
             Rule('*filter'),
@@ -110,6 +148,11 @@ class IPTablesManager(base.Manager):
             ip_version=6
         ))
 
+    def _build_management_filter_rules(self, config, rules):
+        '''
+        Add rules specific to the management network, like allowances for SSH,
+        the HTTP API, and metadata proxying on the management interface.
+        '''
         for network in [
             n for n in config.networks
             if n.network_type == Network.TYPE_MANAGEMENT
@@ -131,6 +174,12 @@ class IPTablesManager(base.Manager):
                 network.interface.ifname,
                 network.interface.first_v6
             ), ip_version=6))
+
+    def _build_internal_network_filter_rules(self, config, rules):
+        '''
+        Add rules specific to private tenant networks.
+        '''
+        ext_if = self.get_external_network(config).interface
 
         for network in [
             n for n in config.networks
@@ -208,7 +257,10 @@ class IPTablesManager(base.Manager):
 
         rules.append(Rule('COMMIT'))
 
-    def _build_nat_table(self, config, interface_map, rules):
+    def _build_nat_table(self, config, rules):
+        '''
+        Add rules for generic v4 NAT for the internal tenant networks
+        '''
         ext_if = self.get_external_network(config).interface
 
         rules.extend([
@@ -248,6 +300,16 @@ class IPTablesManager(base.Manager):
                     ), ip_version=4
                 ))
 
+        self._build_floating_ips(config, rules)
+
+        rules.append(Rule('COMMIT', ip_version=4))
+
+    def _build_floating_ips(self, config, rules):
+        '''
+        Add rules for neutron FloatingIPs.
+        '''
+        ext_if = self.get_external_network(config).interface
+
         # Route floating IP addresses
         for fip in self.get_external_network(config).floating_ips:
             rules.append(Rule('-A POSTROUTING -o %s -s %s -j SNAT --to %s' % (
@@ -255,5 +317,3 @@ class IPTablesManager(base.Manager):
                 fip.fixed_ip,
                 fip.floating_ip
             ), ip_version=4))
-
-        rules.append(Rule('COMMIT', ip_version=4))
