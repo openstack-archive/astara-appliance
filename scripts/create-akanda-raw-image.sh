@@ -4,7 +4,7 @@ export DEBIAN_FRONTEND=noninteractive
 APT_GET="apt-get -y"
 APPLIANCE_BASE_DIR="/tmp/akanda-appliance"
 APPLIANCE_SCRIPT_DIR="$APPLIANCE_BASE_DIR/scripts"
-PACKAGES="ntp python2.7 python-pip wget dnsmasq bird6"
+PACKAGES="ntp python2.7 python-pip wget dnsmasq bird6 iptables iptables-persistent"
 PACKAGES_BUILD="python-dev build-essential isc-dhcp-client"
 
 DNS=8.8.8.8
