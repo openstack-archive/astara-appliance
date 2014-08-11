@@ -16,7 +16,6 @@
 
 
 import abc
-import os
 import re
 
 import netaddr
@@ -187,41 +186,6 @@ class FilterRule(ModelBase):
 
         super(FilterRule, self).__setattr__(name, value)
 
-    @property
-    def pf_rule(self):
-        retval = [self.action]
-        if self.direction:
-            retval.append(self.direction)
-        if self.interface:
-            retval.append('on %s' % self.interface)
-        if self.family:
-            retval.append(self.family)
-        if self.protocol:
-            retval.append('proto %s' % self.protocol)
-        if self.source or self.source_port:
-            retval.append('from')
-            if self.source:
-                retval.append(self._format_ip_or_table(self.source))
-            if self.source_port:
-                retval.append('port %s' % self.source_port)
-        if (self.destination_interface
-                or self.destination
-                or self.destination_port):
-            retval.append('to')
-            if self.destination_interface:
-                retval.append(self.destination_interface)
-            if self.destination:
-                retval.append(self._format_ip_or_table(self.destination))
-            if self.destination_port:
-                retval.append('port %s' % self.destination_port)
-        if self.redirect or self.redirect_port:
-            retval.append('rdr-to')
-            if self.redirect:
-                retval.append(str(self.redirect))
-            if self.redirect_port:
-                retval.append('port %s' % self.redirect_port)
-        return ' '.join(retval)
-
     @classmethod
     def from_dict(cls, d):
         return FilterRule(**d)
@@ -239,18 +203,6 @@ class Anchor(ModelBase):
         self.name = name
         self.rules = rules
 
-    @property
-    def pf_rule(self):
-        pf_rules = '\n\t'.join([r.pf_rule for r in self.rules])
-        return "anchor %s {\n%s\n}" % (self.name, pf_rules)
-
-    def external_pf_rule(self, base_dir):
-
-        path = os.path.abspath(os.path.join(base_dir, self.name))
-        return 'anchor %s\nload anchor %s from %s' % (self.name,
-                                                      self.name,
-                                                      path)
-
 
 class AddressBookEntry(ModelBase):
     def __init__(self, name, cidrs=[]):
@@ -264,17 +216,6 @@ class AddressBookEntry(ModelBase):
     @cidrs.setter
     def cidrs(self, values):
         self._cidrs = [netaddr.IPNetwork(a) for a in values]
-
-    @property
-    def pf_rule(self):
-        return 'table <%s> persist {%s}' % (
-            self.name, ', '.join(map(str, self.cidrs))
-        )
-
-    def external_pf_rule(self, base_dir):
-        path = os.path.abspath(os.path.join(base_dir, self.name))
-        return 'table %s\npersist file "%s"' % (self.name,
-                                                path)
 
     def external_table_data(self):
         return '\n'.join(map(str, self.cidrs))
@@ -323,24 +264,6 @@ class FloatingIP(ModelBase):
     def fixed_ip(self, value):
         self._fixed_ip = netaddr.IPAddress(value)
 
-    @property
-    def pf_rule(self):
-        if self.network is not None:
-            # There is a bug in Neutron that allows floating IPs with e.g.,
-            # a v6 fixed address and a v4 floating address.  Until we get
-            # a bug fix for this upstream, don't make rules for these, because
-            # they're invalid.
-            if self.fixed_ip.version == self.floating_ip.version:
-                return (
-                    'pass on %s from %s to any binat-to %s' %
-                    (
-                        self.network.interface.ifname,
-                        self.fixed_ip,
-                        self.floating_ip
-                    )
-                )
-        return ''
-
     @classmethod
     def from_dict(cls, d):
         return cls(
@@ -386,11 +309,6 @@ class Label(ModelBase):
     @cidrs.setter
     def cidrs(self, values):
         self._cidrs = [netaddr.IPNetwork(a) for a in values]
-
-    @property
-    def pf_rule(self):
-        return ('match out on egress to {%s} label "%s"' %
-                (', '.join(map(str, self.cidrs)), self.name))
 
 
 class Subnet(ModelBase):
@@ -642,57 +560,6 @@ class Configuration(ModelBase):
     @property
     def interfaces(self):
         return [n.interface for n in self.networks if n.interface]
-
-    @property
-    def pf_config(self):
-        rv = defaults.BASE_RULES[:]
-
-        # add default deny all external networks and remember 1st for nat
-        ext_if = None
-        for n in self.networks:
-            if n.network_type == Network.TYPE_EXTERNAL:
-                ext_if = n.interface.ifname
-                ext_v4_addr = n.interface.first_v4
-                break
-
-        # add in nat and management rules
-        for network in self.networks:
-            if network.network_type == Network.TYPE_EXTERNAL:
-                rv.extend(_format_ext_rule(network.interface))
-            elif network.network_type == Network.TYPE_INTERNAL:
-                if ext_if:
-                    rv.extend(
-                        _format_int_to_ext_rule(
-                            ext_if,
-                            ext_v4_addr,
-                            network.interface
-                        )
-                    )
-            elif network.network_type == Network.TYPE_MANAGEMENT:
-                rv.extend(_format_mgt_rule(network.interface.ifname))
-            else:
-                # isolated and management nets block all between interfaces
-                rv.extend(_format_isolated_rule(network.interface.ifname))
-
-        # add address book tables
-        rv.extend(ab.pf_rule for ab in self.address_book.values())
-
-        # add anchors and rules
-        rv.extend(a.pf_rule for a in self.anchors)
-
-        # add counters
-        rv.extend(l.pf_rule for l in self.labels)
-
-        # add floating ip
-        for network in self.networks:
-            rv.extend(
-                _format_floating_ip(
-                    network.interface.ifname,
-                    network.floating_ips
-                )
-            )
-
-        return '\n'.join(rv) + '\n'
 
 
 def _format_ext_rule(interface):
