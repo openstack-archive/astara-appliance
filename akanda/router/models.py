@@ -20,8 +20,6 @@ import re
 
 import netaddr
 
-from akanda.router import defaults
-
 GROUP_NAME_LENGTH = 15
 DEFAULT_AS = 64512
 
