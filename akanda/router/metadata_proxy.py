@@ -166,7 +166,7 @@ def main():
         app = NetworkMetadataProxyHandler(tenant_id,
                                           network_id,
                                           args.config_file)
-        socket = eventlet.listen(('127.0.0.1', config['listen_port']),
+        socket = eventlet.listen(('0.0.0.0', config['listen_port']),
                                  backlog=128)
         pool.spawn_n(eventlet.wsgi.server, socket, app, custom_pool=pool)
 

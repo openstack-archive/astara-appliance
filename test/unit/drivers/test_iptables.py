@@ -80,7 +80,7 @@ V4_OUTPUT = [
     '-A POSTROUTING -o eth1 -s 192.168.0.2 -j SNAT --to 172.16.77.50',
     '-A PREROUTING -i eth1 -d 172.16.77.50 -j DNAT --to-destination 192.168.0.2',  # noqa
     '-A POSTROUTING -o eth2 -j SNAT --to 172.16.77.2',
-    '-A PREROUTING -i eth2 -s 192.168.0.1 -d 169.254.169.254 -p tcp -m tcp --dport 80 -j DNAT --to-destination 127.0.0.1:9602',  # noqa
+    '-A PREROUTING -i eth2 -d 169.254.169.254 -p tcp -m tcp --dport 80 -j DNAT --to-destination 192.168.0.1:9602',  # noqa
     '-A POSTROUTING -o eth1 -j MASQUERADE',
     'COMMIT'
 ]

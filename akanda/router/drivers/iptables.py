@@ -271,12 +271,12 @@ class IPTablesManager(base.Manager):
 
             # Forward metadata requests on the management interface
             rules.append(Rule(
-                '-A PREROUTING -i %s -s %s -d %s -p tcp -m tcp '
-                '--dport %s -j DNAT --to-destination 127.0.0.1:%s' % (
+                '-A PREROUTING -i %s -d %s -p tcp -m tcp '
+                '--dport %s -j DNAT --to-destination %s:%s' % (
                     network.interface.ifname,
-                    network.interface.first_v4,
                     defaults.METADATA_DEST_ADDRESS,
                     defaults.HTTP,
+                    network.interface.first_v4,
                     defaults.internal_metadata_port(
                         network.interface.ifname
                     )
