@@ -161,6 +161,12 @@ class IPTablesManager(base.Manager):
 
         for network in self.networks_by_type(config, Network.TYPE_MANAGEMENT):
 
+            # Allow established mgt traffic
+            rules.append(Rule(
+                '-A INPUT -i %s -m state --state RELATED,ESTABLISHED -j ACCEPT'
+                % network.interface.ifname
+            ))
+
             # Open SSH, the HTTP API (5000) and the Nova metadata proxy (9697)
             for port in (
                 defaults.SSH, defaults.API_SERVICE, defaults.RUG_META_PORT

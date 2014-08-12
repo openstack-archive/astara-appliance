@@ -65,6 +65,7 @@ V4_OUTPUT = [
     ':OUTPUT ACCEPT [0:0]',
     '-A INPUT -i lo -j ACCEPT',
     '-A INPUT -p icmp --icmp-type echo-request -j ACCEPT',
+    '-A INPUT -i eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT',
     '-A FORWARD -d 192.168.0.1 -o eth2 -m state --state RELATED,ESTABLISHED -j ACCEPT',  # noqa
     '-A INPUT -i eth2 -p udp -m udp --dport 67 -j ACCEPT',
     '-A INPUT -i eth2 -p tcp -m tcp --dport 67 -j ACCEPT',
@@ -92,6 +93,7 @@ V6_OUTPUT = [
     ':OUTPUT ACCEPT [0:0]',
     '-A INPUT -i lo -j ACCEPT',
     '-A INPUT -p icmpv6 -j ACCEPT',
+    '-A INPUT -i eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT',
     '-A INPUT -i eth0 -p tcp -m tcp --dport 22 -j ACCEPT',
     '-A INPUT -i eth0 -p tcp -m tcp --dport 5000 -j ACCEPT',
     '-A INPUT -i eth0 -p tcp -m tcp --dport 9697 -j ACCEPT',
