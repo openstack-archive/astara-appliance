@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import re
+
 
 SSH = 22
 SMTP = 25
@@ -31,14 +33,6 @@ NFS_DEVELOPMENT = [111, 1110, 2049, 4045]
 
 MANAGEMENT_PORTS = [SSH, API_SERVICE]  # + NFS_DEVELOPMENT
 
-BASE_RULES = [
-    'set skip on lo',
-    'match in all scrub (no-df)',
-    'block log (all)',  # FIXME: remove log (all)
-    'pass proto icmp6 all',
-    'pass inet proto icmp icmp-type { echoreq, unreach }'
-]
-
 # destination address for AWS compliant metadata guests
 METADATA_DEST_ADDRESS = '169.254.169.254'
 
@@ -50,5 +44,4 @@ RUG_META_PORT = 9697
 
 
 def internal_metadata_port(ifname):
-    import re
     return BASE_METADATA_PORT + int(re.sub('[a-zA-Z]', '', ifname))
