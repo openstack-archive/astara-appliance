@@ -242,8 +242,6 @@ class IPTablesManager(base.Manager):
         '''
         Add rules for generic v4 NAT for the internal tenant networks
         '''
-        ext_if = self.get_external_network(config).interface
-
         rules = [
             Rule('*nat', ip_version=4),
             Rule(':PREROUTING ACCEPT [0:0]', ip_version=4),
