@@ -63,6 +63,7 @@ V4_OUTPUT = [
     ':INPUT DROP [0:0]',
     ':FORWARD ACCEPT [0:0]',
     ':OUTPUT ACCEPT [0:0]',
+    '-A INPUT -i lo -j ACCEPT',
     '-A INPUT -p icmp --icmp-type echo-request -j ACCEPT',
     '-A FORWARD -d 192.168.0.1 -o eth2 -m state --state RELATED,ESTABLISHED -j ACCEPT',  # noqa
     '-A INPUT -i eth2 -p udp -m udp --dport 67 -j ACCEPT',
@@ -76,9 +77,11 @@ V4_OUTPUT = [
     ':INPUT ACCEPT [0:0]',
     ':OUTPUT ACCEPT [0:0]',
     ':POSTROUTING ACCEPT [0:0]',
+    '-A POSTROUTING -o eth1 -j MASQUERADE',
     '-A PREROUTING -s 192.168.0.1 -d 169.254.169.254 -p tcp -m tcp --dport 80 -j DNAT --to-destination 127.0.0.1:9602',  # noqa
     '-A POSTROUTING -s 192.168.0.1 -o eth2 -j SNAT --to 172.16.77.2',
     '-A POSTROUTING -o eth1 -s 192.168.0.2 -j SNAT --to 172.16.77.50',
+    '-A PREROUTING -i eth1 -d 172.16.77.2 -j DNAT --to-destination 192.168.0.2',  # noqa
     'COMMIT'
 ]
 
@@ -87,6 +90,7 @@ V6_OUTPUT = [
     ':INPUT DROP [0:0]',
     ':FORWARD ACCEPT [0:0]',
     ':OUTPUT ACCEPT [0:0]',
+    '-A INPUT -i lo -j ACCEPT',
     '-A INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT',
     '-A INPUT -i eth0 -p tcp -m tcp --dport 22 -j ACCEPT',
     '-A INPUT -i eth0 -p tcp -m tcp --dport 5000 -j ACCEPT',

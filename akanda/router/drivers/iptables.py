@@ -141,6 +141,7 @@ class IPTablesManager(base.Manager):
             Rule(':INPUT DROP [0:0]'),
             Rule(':FORWARD ACCEPT [0:0]'),
             Rule(':OUTPUT ACCEPT [0:0]'),
+            Rule('-A INPUT -i lo -j ACCEPT'),
             Rule(
                 '-A INPUT -p icmp --icmp-type echo-request -j ACCEPT',
                 ip_version=4
@@ -251,6 +252,22 @@ class IPTablesManager(base.Manager):
             Rule(':POSTROUTING ACCEPT [0:0]', ip_version=4),
         ]
 
+        rules.extend(self._build_v4_nat(config))
+        rules.extend(self._build_floating_ips(config))
+
+        rules.append(Rule('COMMIT', ip_version=4))
+        return rules
+
+    def _build_v4_nat(self, config):
+        rules = []
+        ext_if = self.get_external_network(config).interface
+
+        # Add a masquerade catch-all for VMs without floating IPs
+        rules.append(Rule(
+            '-A POSTROUTING -o %s -j MASQUERADE' % ext_if.ifname,
+            ip_version=4
+        ))
+
         for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
             # Forward metadata requests on the management interface
             rules.append(Rule(
@@ -277,9 +294,6 @@ class IPTablesManager(base.Manager):
                 ), ip_version=4
             ))
 
-        rules.extend(self._build_floating_ips(config))
-
-        rules.append(Rule('COMMIT', ip_version=4))
         return rules
 
     def _build_floating_ips(self, config):
@@ -288,6 +302,9 @@ class IPTablesManager(base.Manager):
         '''
         rules = []
         ext_if = self.get_external_network(config).interface
+        ext_v4 = sorted(
+            a.ip for a in ext_if._addresses if a.version == 4
+        )[0]
 
         # Route floating IP addresses
         for fip in self.get_external_network(config).floating_ips:
@@ -296,5 +313,12 @@ class IPTablesManager(base.Manager):
                 fip.fixed_ip,
                 fip.floating_ip
             ), ip_version=4))
+            rules.append(Rule(
+                '-A PREROUTING -i %s -d %s -j DNAT --to-destination %s' % (
+                    ext_if.ifname,
+                    str(ext_v4),
+                    fip.fixed_ip
+                ), ip_version=4
+            ))
 
         return rules
