@@ -15,6 +15,7 @@
 # under the License.
 
 import re
+import itertools
 
 
 from akanda.router.drivers import base
@@ -54,33 +55,30 @@ class IPTablesManager(base.Manager):
                               interface names
         :type interface_map: dict
         '''
-        rules = []
-
-        self._build_filter_table(config, rules)
-        self._build_nat_table(config, rules)
-
-        v4_data = '\n'.join(map(str, filter(lambda x: x.for_v4, rules)))
-        v6_data = '\n'.join(map(str, filter(lambda x: x.for_v6, rules)))
-
-        real_name = interface_map.get('ge0')[:-1]
-
-        # Map virtual interface names
-        ifname_re = '\-(?P<flag>i|o)(?P<ws>[\s!])(?P<not>!?)(?P<if>ge)(?P<no>\d+)'  # noqa
-        ifname_sub = r'-\g<flag>\g<ws>\g<not>%s\g<no>' % real_name
-        v4_data = re.sub(ifname_re, ifname_sub, v4_data) + '\n'
-        v6_data = re.sub(ifname_re, ifname_sub, v6_data) + '\n'
-
-        utils.replace_file('/tmp/iptables.rules', v4_data)
-        utils.replace_file('/tmp/ip6tables.rules', v6_data)
-
-        utils.execute(
-            ['mv', '/tmp/iptables.rules', '/etc/iptables/rules.v4'],
-            self.root_helper
+        rules = itertools.chain(
+            self._build_filter_table(config),
+            self._build_nat_table(config)
         )
-        utils.execute(
-            ['mv', '/tmp/ip6tables.rules', '/etc/iptables/rules.v6'],
-            self.root_helper
-        )
+
+        for version, rules in zip((4, 6), itertools.tee(rules)):
+            data = '\n'.join(map(
+                str,
+                [r for r in rules if getattr(r, 'for_v%s' % version)]
+            ))
+
+            # Map virtual interface names
+            real_name = interface_map.get('ge0')[:-1]
+            ifname_re = '\-(?P<flag>i|o)(?P<ws>[\s!])(?P<not>!?)(?P<if>ge)(?P<no>\d+)'  # noqa
+            ifname_sub = r'-\g<flag>\g<ws>\g<not>%s\g<no>' % real_name
+            data = re.sub(ifname_re, ifname_sub, data) + '\n'
+
+            utils.replace_file('/tmp/ip%stables.rules' % version, data)
+
+            utils.execute([
+                'mv',
+                '/tmp/ip%stables.rules' % version,
+                '/etc/iptables/rules.v%s' % version
+            ], self.root_helper)
 
     def restart(self):
         '''
@@ -109,11 +107,17 @@ class IPTablesManager(base.Manager):
 
         :rtype: akanda.router.models.Interface
         '''
-        for n in config.networks:
-            if n.network_type == Network.TYPE_EXTERNAL:
-                return n
+        return self.networks_by_type(config, Network.TYPE_EXTERNAL)[0]
 
-    def _build_filter_table(self, config, rules):
+    def networks_by_type(self, config, type):
+        '''
+        Returns the external network
+
+        :rtype: akanda.router.models.Interface
+        '''
+        return filter(lambda n: n.network_type == type, config.networks)
+
+    def _build_filter_table(self, config):
         '''
         Build a list of iptables and ip6tables rules to be written to disk.
 
@@ -122,41 +126,39 @@ class IPTablesManager(base.Manager):
         :param rules: the list of rules to append to
         :type rules: a list of akanda.router.drivers.iptables.Rule objects
         '''
-        self._build_default_filter_rules(rules)
-        self._build_management_filter_rules(config, rules)
-        self._build_internal_network_filter_rules(config, rules)
+        return itertools.chain(
+            self._build_default_filter_rules(),
+            self._build_management_filter_rules(config),
+            self._build_internal_network_filter_rules(config)
+        )
 
-    def _build_default_filter_rules(self, rules):
+    def _build_default_filter_rules(self):
         '''
         Build rules for default filter policies and ICMP handling
         '''
-        # Drop INPUT/OUTPUT by default
-        rules.extend([
+        return (
             Rule('*filter'),
             Rule(':INPUT DROP [0:0]'),
             Rule(':FORWARD ACCEPT [0:0]'),
-            Rule(':OUTPUT ACCEPT [0:0]')
-        ])
+            Rule(':OUTPUT ACCEPT [0:0]'),
+            Rule(
+                '-A INPUT -p icmp --icmp-type echo-request -j ACCEPT',
+                ip_version=4
+            ),
+            Rule(
+                '-A INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT',
+                ip_version=6
+            )
+        )
 
-        # Allow ICMP and ICMP6
-        rules.append(Rule(
-            '-A INPUT -p icmp --icmp-type echo-request -j ACCEPT',
-            ip_version=4
-        ))
-        rules.append(Rule(
-            '-A INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT',
-            ip_version=6
-        ))
-
-    def _build_management_filter_rules(self, config, rules):
+    def _build_management_filter_rules(self, config):
         '''
         Add rules specific to the management network, like allowances for SSH,
         the HTTP API, and metadata proxying on the management interface.
         '''
-        for network in [
-            n for n in config.networks
-            if n.network_type == Network.TYPE_MANAGEMENT
-        ]:
+        rules = []
+
+        for network in self.networks_by_type(config, Network.TYPE_MANAGEMENT):
 
             # Open SSH, the HTTP API (5000) and the Nova metadata proxy (9697)
             for port in (
@@ -175,68 +177,45 @@ class IPTablesManager(base.Manager):
                 network.interface.first_v6
             ), ip_version=6))
 
-    def _build_internal_network_filter_rules(self, config, rules):
+        return rules
+
+    def _build_internal_network_filter_rules(self, config):
         '''
         Add rules specific to private tenant networks.
         '''
+        rules = []
         ext_if = self.get_external_network(config).interface
 
-        for network in [
-            n for n in config.networks
-            if n.network_type == Network.TYPE_INTERNAL
-        ]:
+        for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
 
-            if network.interface.first_v4:
+            for version, address, dhcp_port in (
+                (4, network.interface.first_v4, defaults.DHCP),
+                (6, network.interface.first_v6, defaults.DHCPV6)
+            ):
+                if address:
+                    # Basic state-matching rules. Allows packets related to a
+                    # pre-established session to pass.
+                    rules.append(Rule(
+                        '-A FORWARD -d %s -o %s -m state '
+                        '--state RELATED,ESTABLISHED -j ACCEPT' % (
+                            address,
+                            network.interface.ifname
+                        ), ip_version=version
+                    ))
 
-                # Basic v4 state-matching rules. Allows packets related to a
-                # pre-established session to pass.
-                rules.append(Rule(
-                    '-A FORWARD -d %s -o %s -m state '
-                    '--state RELATED,ESTABLISHED -j ACCEPT' % (
-                        network.interface.first_v4,
-                        network.interface.ifname
-                    ), ip_version=4
-                ))
-
-                # Allow v4 DHCP
-                rules.append(Rule(
-                    '-A INPUT -i %s -p udp -m udp --dport %s -j ACCEPT' % (
-                        network.interface.ifname,
-                        defaults.DHCP
-                    ), ip_version=4
-                ))
-                rules.append(Rule(
-                    '-A INPUT -i %s -p tcp -m tcp --dport %s -j ACCEPT' % (
-                        network.interface.ifname,
-                        defaults.DHCP
-                    ), ip_version=4
-                ))
-
-            if network.interface.first_v6:
-
-                # Basic v6 state-matching rules. Allows packets related to a
-                # pre-established session to pass.
-                rules.append(Rule(
-                    '-A FORWARD -d %s -o %s -m state '
-                    '--state RELATED,ESTABLISHED -j ACCEPT' % (
-                        network.interface.first_v6,
-                        network.interface.ifname
-                    ), ip_version=6
-                ))
-
-                # Allow v6 DHCP
-                rules.append(Rule(
-                    '-A INPUT -i %s -p udp -m udp --dport %s -j ACCEPT' % (
-                        network.interface.ifname,
-                        defaults.DHCPV6,
-                    ), ip_version=6
-                ))
-                rules.append(Rule(
-                    '-A INPUT -i %s -p tcp -m tcp --dport %s -j ACCEPT' % (
-                        network.interface.ifname,
-                        defaults.DHCPV6,
-                    ), ip_version=6
-                ))
+                    # Allow DHCP
+                    rules.append(Rule(
+                        '-A INPUT -i %s -p udp -m udp --dport %s -j ACCEPT' % (
+                            network.interface.ifname,
+                            dhcp_port
+                        ), ip_version=version
+                    ))
+                    rules.append(Rule(
+                        '-A INPUT -i %s -p tcp -m tcp --dport %s -j ACCEPT' % (
+                            network.interface.ifname,
+                            dhcp_port
+                        ), ip_version=version
+                    ))
 
             # Allow pre-established metadata sessions to pass
             rules.append(Rule(
@@ -256,58 +235,58 @@ class IPTablesManager(base.Manager):
             ))
 
         rules.append(Rule('COMMIT'))
+        return rules
 
-    def _build_nat_table(self, config, rules):
+    def _build_nat_table(self, config):
         '''
         Add rules for generic v4 NAT for the internal tenant networks
         '''
         ext_if = self.get_external_network(config).interface
 
-        rules.extend([
+        rules = [
             Rule('*nat', ip_version=4),
             Rule(':PREROUTING ACCEPT [0:0]', ip_version=4),
             Rule(':INPUT ACCEPT [0:0]', ip_version=4),
             Rule(':OUTPUT ACCEPT [0:0]', ip_version=4),
             Rule(':POSTROUTING ACCEPT [0:0]', ip_version=4),
-        ])
+        ]
 
-        for network in config.networks:
+        for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
+            # Forward metadata requests on the management interface
+            rules.append(Rule(
+                '-A PREROUTING -s %s -d %s -p tcp -m tcp '
+                '--dport %s -j DNAT --to-destination 127.0.0.1:%s' % (
+                    network.interface.first_v4,
+                    defaults.METADATA_DEST_ADDRESS,
+                    defaults.HTTP,
+                    defaults.internal_metadata_port(
+                        network.interface.ifname
+                    )
+                ), ip_version=4
+            ))
 
-            if network.network_type == Network.TYPE_INTERNAL:
+            # NAT for IPv4
+            ext_v4 = sorted(
+                a.ip for a in ext_if._addresses if a.version == 4
+            )[0]
+            rules.append(Rule(
+                '-A POSTROUTING -s %s -o %s -j SNAT --to %s' % (
+                    network.interface.first_v4,
+                    network.interface.ifname,
+                    str(ext_v4)
+                ), ip_version=4
+            ))
 
-                # Forward metadata requests on the management interface
-                rules.append(Rule(
-                    '-A PREROUTING -s %s -d %s -p tcp -m tcp '
-                    '--dport %s -j DNAT --to-destination 127.0.0.1:%s' % (
-                        network.interface.first_v4,
-                        defaults.METADATA_DEST_ADDRESS,
-                        defaults.HTTP,
-                        defaults.internal_metadata_port(
-                            network.interface.ifname
-                        )
-                    ), ip_version=4
-                ))
-
-                # NAT for IPv4
-                ext_v4 = sorted(
-                    a.ip for a in ext_if._addresses if a.version == 4
-                )[0]
-                rules.append(Rule(
-                    '-A POSTROUTING -s %s -o %s -j SNAT --to %s' % (
-                        network.interface.first_v4,
-                        network.interface.ifname,
-                        str(ext_v4)
-                    ), ip_version=4
-                ))
-
-        self._build_floating_ips(config, rules)
+        rules.extend(self._build_floating_ips(config))
 
         rules.append(Rule('COMMIT', ip_version=4))
+        return rules
 
-    def _build_floating_ips(self, config, rules):
+    def _build_floating_ips(self, config):
         '''
         Add rules for neutron FloatingIPs.
         '''
+        rules = []
         ext_if = self.get_external_network(config).interface
 
         # Route floating IP addresses
@@ -317,3 +296,5 @@ class IPTablesManager(base.Manager):
                 fip.fixed_ip,
                 fip.floating_ip
             ), ip_version=4))
+
+        return rules

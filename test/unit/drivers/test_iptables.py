@@ -125,7 +125,7 @@ class TestIPTablesConfiguration(TestCase):
         assert self.replace.call_count == 2
 
         assert mock.call(
-            '/tmp/iptables.rules',
+            '/tmp/ip4tables.rules',
             '\n'.join(V4_OUTPUT) + '\n'
         ) in self.replace.call_args_list
 
@@ -136,7 +136,7 @@ class TestIPTablesConfiguration(TestCase):
 
         assert self.execute.call_args_list == [
             mock.call(
-                ['mv', '/tmp/iptables.rules', '/etc/iptables/rules.v4'],
+                ['mv', '/tmp/ip4tables.rules', '/etc/iptables/rules.v4'],
                 'sudo'
             ),
             mock.call(
