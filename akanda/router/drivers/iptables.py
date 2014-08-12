@@ -300,9 +300,6 @@ class IPTablesManager(base.Manager):
         '''
         rules = []
         ext_if = self.get_external_network(config).interface
-        ext_v4 = sorted(
-            a.ip for a in ext_if._addresses if a.version == 4
-        )[0]
 
         # Route floating IP addresses
         for fip in self.get_external_network(config).floating_ips:
@@ -314,7 +311,7 @@ class IPTablesManager(base.Manager):
             rules.append(Rule(
                 '-A PREROUTING -i %s -d %s -j DNAT --to-destination %s' % (
                     ext_if.ifname,
-                    str(ext_v4),
+                    fip.floating_ip,
                     fip.fixed_ip
                 ), ip_version=4
             ))
