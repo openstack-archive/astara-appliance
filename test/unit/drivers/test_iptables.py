@@ -91,7 +91,7 @@ V6_OUTPUT = [
     ':FORWARD ACCEPT [0:0]',
     ':OUTPUT ACCEPT [0:0]',
     '-A INPUT -i lo -j ACCEPT',
-    '-A INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT',
+    '-A INPUT -p icmpv6 -j ACCEPT',
     '-A INPUT -i eth0 -p tcp -m tcp --dport 22 -j ACCEPT',
     '-A INPUT -i eth0 -p tcp -m tcp --dport 5000 -j ACCEPT',
     '-A INPUT -i eth0 -p tcp -m tcp --dport 9697 -j ACCEPT',

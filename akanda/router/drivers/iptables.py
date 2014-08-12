@@ -147,7 +147,7 @@ class IPTablesManager(base.Manager):
                 ip_version=4
             ),
             Rule(
-                '-A INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT',
+                '-A INPUT -p icmpv6 -j ACCEPT',
                 ip_version=6
             )
         )
