@@ -69,7 +69,6 @@ V4_OUTPUT = [
     '-A FORWARD -d 192.168.0.1 -o eth2 -m state --state RELATED,ESTABLISHED -j ACCEPT',  # noqa
     '-A INPUT -i eth2 -p udp -m udp --dport 67 -j ACCEPT',
     '-A INPUT -i eth2 -p tcp -m tcp --dport 67 -j ACCEPT',
-    '-A FORWARD -s 169.254.169.254 -o eth2 -m state --state RELATED,ESTABLISHED -j ACCEPT',  # noqa
     '-A INPUT -i eth2 -j ACCEPT',
     '-A INPUT -i eth1 -m state --state RELATED,ESTABLISHED -j ACCEPT',
     'COMMIT',

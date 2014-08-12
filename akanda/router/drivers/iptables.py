@@ -224,15 +224,6 @@ class IPTablesManager(base.Manager):
                         ), ip_version=version
                     ))
 
-            # Allow pre-established metadata sessions to pass
-            rules.append(Rule(
-                '-A FORWARD -s %s -o %s -m state '
-                '--state RELATED,ESTABLISHED -j ACCEPT' % (
-                    defaults.METADATA_DEST_ADDRESS,
-                    network.interface.ifname
-                ), ip_version=4
-            ))
-
             rules.append(Rule(
                 '-A INPUT -i %s -j ACCEPT' % network.interface.ifname
             ))
