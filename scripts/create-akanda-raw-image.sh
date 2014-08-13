@@ -97,9 +97,11 @@ rm /tmp/akanda.sh
 
 echo "[*] Add init scripts...."
 cp $APPLIANCE_SCRIPT_DIR/etc/init.d/ssh /etc/init.d/ssh
+cp $APPLIANCE_SCRIPT_DIR/etc/init.d/bird6 /etc/init.d/bird6
 cp $APPLIANCE_SCRIPT_DIR/etc/init.d/metadata /etc/init.d/metadata
 cp $APPLIANCE_SCRIPT_DIR/etc/init.d/akanda-router-api-server /etc/init.d/akanda-router-api-server
 chmod 555 /etc/init.d/ssh
+chmod 555 /etc/init.d/bird6
 chmod 555 /etc/init.d/metadata
 chmod 555 /etc/init.d/akanda-router-api-server
 
