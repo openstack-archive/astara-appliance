@@ -4,7 +4,7 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin
 DAEMON="/usr/local/bin/gunicorn"
 NAME="akanda-router-api-server"
 OPTIONS="-c /etc/akanda_gunicorn_config akanda.router.api.server:app"
-PIDFILE=/tmp/gunicorn.pid
+PIDFILE=/var/run/gunicorn.pid
 
 test -x $DAEMON || exit 0
 
