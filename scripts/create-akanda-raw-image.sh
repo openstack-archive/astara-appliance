@@ -57,7 +57,7 @@ EOF
 
 echo "[*] Setting hostname..."
 cat > /etc/hostname <<EOF
-akanda
+akanda-linux
 EOF
 
 echo "[*] Setting up DNS ($DNS)"
