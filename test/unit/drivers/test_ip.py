@@ -241,15 +241,27 @@ class IPTestCase(TestCase):
         cmd = '/sbin/ip'
         v4 = netaddr.IPNetwork('192.168.105.2/24')
         v6 = netaddr.IPNetwork('fdca:3ba5:a17a:acda:20c:29ff:fe94:723d/64')
-        iface = mock.Mock(all_addresses=[v4, v6])
-        old_iface = mock.Mock(all_addresses=[])
+        iface = mock.Mock(all_addresses=[v4, v6], ifname='em0')
+        old_iface = mock.Mock(all_addresses=[], ifname='em0')
 
         mgr = ip.IPManager()
-        mgr._update_addresses('em0', iface, old_iface)
-        assert self.mock_execute.call_args_list == [
-            mock.call([cmd, 'addr', 'add', str(v4), 'dev', 'em0'], 'sudo'),
-            mock.call([cmd, '-6', 'addr', 'add', str(v6), 'dev', 'em0'], 'sudo'),
-        ]
+        with mock.patch.object(
+            mgr, 'generic_to_host', lambda x: x.replace('ge', 'em')
+        ):
+            mgr._update_addresses('em0', iface, old_iface)
+            assert self.mock_execute.call_args_list == [
+                mock.call([
+                    cmd, 'addr', 'add', '192.168.105.2/24', 'dev', 'em0'
+                ], 'sudo'),
+                mock.call([cmd, 'link', 'set', 'em0', 'up'], 'sudo'),
+                mock.call([cmd, 'addr', 'show', 'em0']),
+                mock.call([
+                    cmd, '-6', 'addr', 'add',
+                    'fdca:3ba5:a17a:acda:20c:29ff:fe94:723d/64', 'dev', 'em0'
+                ], 'sudo'),
+                mock.call([cmd, 'link', 'set', 'em0', 'up'], 'sudo'),
+                mock.call([cmd, 'addr', 'show', 'em0'])
+            ]
 
     def test_address_remove(self):
         cmd = '/sbin/ip'
@@ -262,26 +274,40 @@ class IPTestCase(TestCase):
         mgr._update_addresses('em0', iface, old_iface)
         assert self.mock_execute.call_args_list == [
             mock.call([cmd, 'addr', 'del', str(v4), 'dev', 'em0'], 'sudo'),
-            mock.call([cmd, '-6', 'addr', 'del', str(v6), 'dev', 'em0'], 'sudo'),
+            mock.call([
+                cmd, '-6', 'addr', 'del', str(v6), 'dev', 'em0'
+            ], 'sudo'),
         ]
 
     def test_update_set(self):
         iface = mock.Mock()
         iface.all_addresses = ['a', 'b']
+        iface.ifname = 'em0'
 
         old_iface = mock.Mock()
         old_iface.all_addresses = ['b', 'c']
+        old_iface.ifname = 'em0'
 
         add = lambda g: ('addr', 'add', g, 'dev', 'em0')
         delete = lambda g: ('addr', 'del', g, 'dev', 'em0')
 
         mgr = ip.IPManager()
-        mgr._update_set('em0', iface, old_iface, 'all_addresses', add, delete)
+        with mock.patch.object(
+            mgr, 'generic_to_host', lambda x: x.replace('ge', 'em')
+        ):
+            mgr._update_set('em0', iface, old_iface, 'all_addresses', add,
+                            delete)
 
-        self.mock_execute.assert_has_calls([
-            mock.call(['/sbin/ip', 'addr', 'add', 'a', 'dev', 'em0'], 'sudo'),
-            mock.call(['/sbin/ip', 'addr', 'del', 'c', 'dev', 'em0'], 'sudo')
-        ])
+            assert self.mock_execute.call_args_list == [
+                mock.call([
+                    '/sbin/ip', 'addr', 'add', 'a', 'dev', 'em0'
+                ], 'sudo'),
+                mock.call(['/sbin/ip', 'link', 'set', 'em0', 'up'], 'sudo'),
+                mock.call(['/sbin/ip', 'addr', 'show', 'em0']),
+                mock.call([
+                    '/sbin/ip', 'addr', 'del', 'c', 'dev', 'em0'
+                ], 'sudo')
+            ]
 
     def test_update_set_no_diff(self):
         iface = mock.Mock()
@@ -326,7 +352,12 @@ class IPTestCase(TestCase):
             assert addr == 'fdca:3ba5:a17a:acda:f816:3eff:fe34:ba28'
             assert self.mock_execute.call_args_list == [
                 mock.call([cmd, 'link', 'set', 'eth0', 'up'], 'sudo'),
-                mock.call([cmd, '-6', 'addr', 'add', addr + '/64', 'dev', 'eth0'], 'sudo')
+                mock.call([
+                    cmd, '-6', 'addr', 'add',
+                    'fdca:3ba5:a17a:acda:f816:3eff:fe34:ba28/64', 'dev',
+                    'eth0'
+                ], 'sudo'),
+                mock.call([cmd, 'link', 'set', 'eth0', 'up'], 'sudo')
             ]
 
 

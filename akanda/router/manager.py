@@ -19,7 +19,7 @@ import os
 import re
 
 from akanda.router import models
-from akanda.router.drivers import (bird, dnsmasq, ip, metadata, pf, arp)
+from akanda.router.drivers import (bird, dnsmasq, ip, metadata, iptables, arp)
 
 
 class Manager(object):
@@ -49,7 +49,7 @@ class Manager(object):
         self.update_dhcp()
         self.update_metadata()
         self.update_bgp_and_radv()
-        self.update_pf()
+        self.update_firewall()
         self.update_routes(cache)
         self.update_arp()
 
@@ -80,11 +80,10 @@ class Manager(object):
         mgr.save_config(self.config, self.ip_mgr.generic_mapping)
         mgr.restart()
 
-    def update_pf(self):
-        rule_data = self.config.pf_config
-        rule_data = self._map_virtual_to_real_interfaces(rule_data)
-        mgr = pf.PFManager()
-        mgr.update_conf(rule_data)
+    def update_firewall(self):
+        mgr = iptables.IPTablesManager()
+        mgr.save_config(self.config, self.ip_mgr.generic_mapping)
+        mgr.restart()
 
     def update_routes(self, cache):
         mgr = ip.IPManager()

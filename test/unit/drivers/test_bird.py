@@ -89,7 +89,7 @@ class BirdTestCase(TestCase):
                 'the_config'
             )
             self.mock_execute.assert_called_once_with(
-                ['mv', '/tmp/bird6.conf', '/etc/bird6.conf'],
+                ['mv', '/tmp/bird6.conf', '/etc/bird/bird6.conf'],
                 'sudo'
             )
 

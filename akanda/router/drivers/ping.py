@@ -29,8 +29,8 @@ LOG = logging.getLogger(__name__)
 class PingManager(base.Manager):
 
     exe_map = {
-        4: '/sbin/ping',
-        6: '/sbin/ping6'
+        4: '/bin/ping',
+        6: '/bin/ping6'
     }
 
     def __init__(self, root_helper='sudo'):

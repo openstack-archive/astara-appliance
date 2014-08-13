@@ -32,8 +32,8 @@ class TestMetadataProxy(unittest.TestCase):
             )
             metadata_proxy.main()
             listen.assert_has_calls(
-                [mock.call(('127.0.0.1', 9602), backlog=128),
-                 mock.call(('127.0.0.1', 9603), backlog=128)],
+                [mock.call(('0.0.0.0', 9602), backlog=128),
+                 mock.call(('0.0.0.0', 9603), backlog=128)],
                 any_order=True
             )
             # call_args need to be order before we can test it
