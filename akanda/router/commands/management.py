@@ -72,7 +72,7 @@ def configure_gunicorn():
     worker_class ="sync"
     debug = False
     daemon = True
-    pidfile = "/tmp/gunicorn.pid"
+    pidfile = "/var/run/gunicorn.pid"
     logfile = "/tmp/gunicorn.log"
     """
     config = textwrap.dedent(config % args).lstrip()
