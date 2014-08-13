@@ -16,7 +16,10 @@
 
 
 import argparse
+import atexit
+import contextlib
 import json
+import functools
 import logging
 import os
 import sys
@@ -126,6 +129,13 @@ def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         os.dup2(stdin.fileno(), sys.stdin.fileno())
         os.dup2(stdout.fileno(), sys.stdout.fileno())
         os.dup2(stderr.fileno(), sys.stderr.fileno())
+
+        # write a pidfile
+        pidfile = '/var/run/metadata.pid'
+        atexit.register(functools.partial(os.remove, pidfile))
+        pid = str(os.getpid())
+        with contextlib.closing(open(pidfile, 'w+')) as f:
+            f.write("%s\n" % pid)
 
 
 def _fork():
