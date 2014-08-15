@@ -61,6 +61,7 @@ class Manager(object):
     def update_dhcp(self):
         mgr = dnsmasq.DHCPManager()
 
+        mgr.delete_all_config()
         for network in self.config.networks:
             real_ifname = self.ip_mgr.generic_to_host(network.interface.ifname)
             mgr.update_network_dhcp_config(real_ifname, network)

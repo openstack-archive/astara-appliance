@@ -258,7 +258,7 @@ class IPTablesManager(base.Manager):
         ext_if = self.get_external_network(config).interface
 
         for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
-            if network.inteface.first_v4:
+            if network.interface.first_v4:
                 # NAT for IPv4
                 ext_v4 = sorted(
                     a.ip for a in ext_if._addresses if a.version == 4
