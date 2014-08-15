@@ -258,30 +258,31 @@ class IPTablesManager(base.Manager):
         ext_if = self.get_external_network(config).interface
 
         for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
-            # NAT for IPv4
-            ext_v4 = sorted(
-                a.ip for a in ext_if._addresses if a.version == 4
-            )[0]
-            rules.append(Rule(
-                '-A POSTROUTING -o %s -j SNAT --to %s' % (
-                    network.interface.ifname,
-                    str(ext_v4)
-                ), ip_version=4
-            ))
+            if network.inteface.first_v4:
+                # NAT for IPv4
+                ext_v4 = sorted(
+                    a.ip for a in ext_if._addresses if a.version == 4
+                )[0]
+                rules.append(Rule(
+                    '-A POSTROUTING -o %s -j SNAT --to %s' % (
+                        network.interface.ifname,
+                        str(ext_v4)
+                    ), ip_version=4
+                ))
 
-            # Forward metadata requests on the management interface
-            rules.append(Rule(
-                '-A PREROUTING -i %s -d %s -p tcp -m tcp '
-                '--dport %s -j DNAT --to-destination %s:%s' % (
-                    network.interface.ifname,
-                    defaults.METADATA_DEST_ADDRESS,
-                    defaults.HTTP,
-                    network.interface.first_v4,
-                    defaults.internal_metadata_port(
-                        network.interface.ifname
-                    )
-                ), ip_version=4
-            ))
+                # Forward metadata requests on the management interface
+                rules.append(Rule(
+                    '-A PREROUTING -i %s -d %s -p tcp -m tcp '
+                    '--dport %s -j DNAT --to-destination %s:%s' % (
+                        network.interface.ifname,
+                        defaults.METADATA_DEST_ADDRESS,
+                        defaults.HTTP,
+                        network.interface.first_v4,
+                        defaults.internal_metadata_port(
+                            network.interface.ifname
+                        )
+                    ), ip_version=4
+                ))
 
         # Add a masquerade catch-all for VMs without floating IPs
         rules.append(Rule(
