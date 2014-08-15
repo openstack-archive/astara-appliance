@@ -33,6 +33,11 @@ class DHCPManager(base.Manager):
     def __init__(self, root_helper='sudo'):
         super(DHCPManager, self).__init__(root_helper)
 
+    def delete_all_config(self):
+        for f in os.listdir(CONF_DIR):
+            if f.endswith('.conf'):
+                os.remove(os.path.join(CONF_DIR, f))
+
     def update_network_dhcp_config(self, ifname, network):
         if network.is_tenant_network:
             config_data = self._build_dhcp_config(ifname, network)
