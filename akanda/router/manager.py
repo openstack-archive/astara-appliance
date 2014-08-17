@@ -19,7 +19,7 @@ import os
 import re
 
 from akanda.router import models
-from akanda.router.drivers import (bird, dnsmasq, ip, metadata, iptables, arp)
+from akanda.router.drivers import (bird, dnsmasq, ip, metadata, iptables, arp, hostname)
 
 
 class Manager(object):
@@ -45,6 +45,7 @@ class Manager(object):
     def update_config(self, config, cache):
         self._config = config
 
+	self.update_hostname()
         self.update_interfaces()
         self.update_dhcp()
         self.update_metadata()
@@ -54,6 +55,10 @@ class Manager(object):
         self.update_arp()
 
         # TODO(mark): update_vpn
+
+    def update_hostname(self):
+        mgr = hostname.HostnameManager()
+        mgr.update(self.config)
 
     def update_interfaces(self):
         self.ip_mgr.update_interfaces(self.config.interfaces)
