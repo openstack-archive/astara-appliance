@@ -15,7 +15,6 @@
 # under the License.
 
 import logging
-import re
 
 from akanda.router.drivers import (base, ip)
 from akanda.router import utils
@@ -44,4 +43,3 @@ class HostnameManager(base.Manager):
             '\t'.join([listen_ip, config.hostname])
         ])
         utils.replace_file('/etc/hosts', config_data)
-

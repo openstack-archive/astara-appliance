@@ -19,7 +19,8 @@ import os
 import re
 
 from akanda.router import models
-from akanda.router.drivers import (bird, dnsmasq, ip, metadata, iptables, arp, hostname)
+from akanda.router.drivers import (bird, dnsmasq, ip, metadata)
+from akanda.router.drives import (iptables, arp, hostname)
 
 
 class Manager(object):
@@ -45,7 +46,7 @@ class Manager(object):
     def update_config(self, config, cache):
         self._config = config
 
-	self.update_hostname()
+        self.update_hostname()
         self.update_interfaces()
         self.update_dhcp()
         self.update_metadata()
