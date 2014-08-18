@@ -32,7 +32,10 @@ class HostnameManager(base.Manager):
 
     def update_hostname(self, config):
         self.sudo(config.hostname)
-        utils.replace_file('/etc/hostname', config.hostname)
+        utils.replace_file('/tmp/hostname', config.hostname)
+        utils.execute(
+            ['mv', '/tmp/hostname', '/etc/hostname'], self.root_helper
+        )
 
     def update_hosts(self, config):
         mgr = ip.IPManager()
