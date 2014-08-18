@@ -42,4 +42,5 @@ class HostnameManager(base.Manager):
             '::1     localhost ip6-localhost ip6-loopback',
             '\t'.join([listen_ip, config.hostname])
         ])
-        utils.replace_file('/etc/hosts', config_data)
+        utils.replace_file('/tmp/hosts', config_data)
+        utils.execute(['mv', '/tmp/hosts', '/etc/hosts'], self.root_helper)
