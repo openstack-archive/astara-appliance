@@ -34,20 +34,30 @@ ULA_PREFIX = 'fdca:3ba5:a17a:acda::/64'
 
 class IPManager(base.Manager):
     """
+    A class that provides a pythonic interface to unix system network
+    configuration information.
     """
+
     EXECUTABLE = '/sbin/ip'
 
     def __init__(self, root_helper='sudo'):
+        """Initializes resources for the IPManager class"""
         super(IPManager, self).__init__(root_helper)
         self.next_generic_index = 0
         self.host_mapping = {}
         self.generic_mapping = {}
 
     def ensure_mapping(self):
+        """
+        """
         if not self.host_mapping:
             self.get_interfaces()
 
     def get_interfaces(self):
+        """
+        Returns a list of the available network interfaces.  This information
+        is obtained through the 'ip addr show' system command.
+        """
         interfaces = _parse_interfaces(self.do('addr', 'show'),
                                        filters=PHYSICAL_INTERFACES)
 
@@ -66,37 +76,67 @@ class IPManager(base.Manager):
         return interfaces
 
     def get_interface(self, ifname):
+        """
+        Returns a dict containing network configuration information for the
+        requested network interface.  This information is obtained through the
+        system command 'ip addr show <ifname>'.
+        """
         real_ifname = self.generic_to_host(ifname)
         retval = _parse_interface(self.do('addr', 'show', real_ifname))
         retval.ifname = ifname
         return retval
 
     def is_valid(self, ifname):
+        """
+        Validates if the supplied interface (ifname) is a valid system network
+        interface.  Returns <ifname> if <ifname> is a valid interface.  Returns
+        False if <ifname> is not a valid interface.
+        """
         self.ensure_mapping()
         return ifname in self.generic_mapping
 
     def generic_to_host(self, generic_name):
+        """
+        """
         self.ensure_mapping()
         return self.generic_mapping.get(generic_name)
 
     def host_to_generic(self, real_name):
+        """
+        """
         self.ensure_mapping()
         return self.host_mapping.get(real_name)
 
     def update_interfaces(self, interfaces):
+        """
+        Wrapper function that accepts a list of interfaces and iterates over
+        them, calling the update_interface(<interface) in order to update
+        their configuration.
+        """
         for i in interfaces:
             self.update_interface(i)
 
     def up(self, interface):
+        """
+        Sets the administrative mode for the network link on interface <interface> to "up".
+        """
         real_ifname = self.generic_to_host(interface.ifname)
         self.sudo('link', 'set', real_ifname, 'up')
         return self.get_interface(interface.ifname)
 
     def down(self, interface):
+        """
+        Sets the administrative mode for the network link on interface
+        <interface> to "down" and returns the interface's configuration after
+        the command has been executed.
+        """
         real_ifname = self.generic_to_host(interface.ifname)
         self.sudo('link', 'set', real_ifname, 'down')
 
     def update_interface(self, interface, ignore_link_local=True):
+        """
+        Updates network interface.
+        """
         real_ifname = self.generic_to_host(interface.ifname)
         old_interface = self.get_interface(interface.ifname)
 
@@ -110,8 +150,12 @@ class IPManager(base.Manager):
         self._update_addresses(real_ifname, interface, old_interface)
 
     def _update_addresses(self, real_ifname, interface, old_interface):
+        """
+        """
 
         def _gen_cmd(cmd, address):
+	    """
+	    """
             family = {4: 'inet', 6: 'inet6'}[address[0].version]
             args = [
                 'addr',
@@ -133,6 +177,8 @@ class IPManager(base.Manager):
 
     def _update_set(self, real_ifname, interface, old_interface, attribute,
                     fmt_args_add, fmt_args_delete, mutator=lambda x: x):
+        """
+        """
 
         next_set = set(mutator(i) for i in getattr(interface, attribute))
         prev_set = set(mutator(i) for i in getattr(old_interface, attribute))
@@ -148,6 +194,10 @@ class IPManager(base.Manager):
             self.sudo(*fmt_args_delete(item))
 
     def get_management_address(self, ensure_configuration=False):
+        """
+        Get the network interface address that will be used for management
+        traffic.
+        """
         primary = self.get_interface(GENERIC_IFNAME + '0')
         prefix, prefix_len = ULA_PREFIX.split('/', 1)
         eui = netaddr.EUI(primary.lladdr)
@@ -163,6 +213,10 @@ class IPManager(base.Manager):
         return ip_str
 
     def update_default_gateway(self, config):
+        """
+        Updates default gateway to <config>.  <config> is expected to be an
+        object.  This class makes a call to _set_default_gateway.
+        """
         # Track whether we have set the default gateways, by IP
         # version.
         gw_set = {
@@ -204,6 +258,10 @@ class IPManager(base.Manager):
                     gw_set[subnet.gateway_ip.version] = True
 
     def update_host_routes(self, config, cache):
+        """
+        Update the network routes.  This is useful to call after the network
+        interfaces have been modified.
+        """
         db = cache.get_or_create('host_routes', lambda: {})
         for net in config.networks:
 
@@ -240,6 +298,9 @@ class IPManager(base.Manager):
         cache.set('host_routes', db)
 
     def _get_default_gateway(self, version):
+        """
+        Gets the default gateway.
+        """
         current = None
         try:
             cmd_out = self.sudo('-%s' % version, 'route', 'show')
@@ -256,6 +317,9 @@ class IPManager(base.Manager):
         return current
 
     def _set_default_gateway(self, gateway_ip, ifname):
+        """
+        Sets the default gateway.
+        """
         version = 4
         if gateway_ip.version == 6:
             version = 6
@@ -281,6 +345,8 @@ class IPManager(base.Manager):
             )
 
     def _alter_route(self, ifname, action, destination, next_hop):
+        """
+        """
         version = destination.version
         ifname = self.generic_to_host(ifname)
         try:
@@ -305,6 +371,8 @@ def get_rug_address():
 
 
 def _parse_interfaces(data, filters=None):
+    """
+    """
     retval = []
     for iface_data in re.split('(^|\n)(?=[0-9]: \w+\d{0,3}:)', data, re.M):
         if not iface_data.strip():
@@ -325,6 +393,8 @@ def _parse_interfaces(data, filters=None):
 
 
 def _parse_interface(data):
+    """
+    """
     retval = dict(addresses=[])
     for line in data.split('\n'):
         if line.startswith(' '):
@@ -340,6 +410,8 @@ def _parse_interface(data):
 
 
 def _parse_head(line):
+    """
+    """
     retval = {}
     m = re.match(
         '[0-9]+: (?P<if>\w+\d{1,3}): <(?P<flags>[^>]+)> mtu (?P<mtu>[0-9]+)',
@@ -353,10 +425,14 @@ def _parse_head(line):
 
 
 def _parse_inet(line):
+    """
+    """
     tokens = line.split()
     return netaddr.IPNetwork(tokens[1])
 
 
 def _parse_lladdr(line):
+    """
+    """
     tokens = line.split()
     return tokens[1]
