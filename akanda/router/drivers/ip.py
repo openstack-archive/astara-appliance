@@ -118,7 +118,8 @@ class IPManager(base.Manager):
 
     def up(self, interface):
         """
-        Sets the administrative mode for the network link on interface <interface> to "up".
+        Sets the administrative mode for the network link on interface
+        <interface> to "up".
         """
         real_ifname = self.generic_to_host(interface.ifname)
         self.sudo('link', 'set', real_ifname, 'up')
@@ -154,8 +155,8 @@ class IPManager(base.Manager):
         """
 
         def _gen_cmd(cmd, address):
-	    """
-	    """
+            """
+            """
             family = {4: 'inet', 6: 'inet6'}[address[0].version]
             args = [
                 'addr',
