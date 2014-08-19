@@ -28,8 +28,8 @@ LOG = logging.getLogger(__name__)
 
 class PingManager(base.Manager):
     """
-    A class which provide a facade to the system ping utility. Supports both IPv4
-    and IPv6.
+    A class which provide a facade to the system ping utility. Supports both
+    IPv4 and IPv6.
     """
 
     exe_map = {

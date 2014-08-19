@@ -41,7 +41,8 @@ class ARPManager(base.Manager):
 
         :type config: akanda.router.models.Configuration
         :param config: An akanda.router.models.Configuration object containing
-                       configuration information for the system's network setup.
+                       configuration information for the system's network
+                       setup.
         """
         for network in config.networks:
             for a in network.address_allocations:
