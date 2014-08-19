@@ -29,10 +29,29 @@ METADATA_PROXY = '/usr/local/bin/metadata_proxy'
 
 
 class MetadataManager(base.Manager):
+    """
+    A class to provide facilities to interact with the Nova metadata service.
+    """
+
     def __init__(self, root_helper='sudo'):
+        """
+        Initializes MetataManager class.
+
+        :type root_helper: str
+        :param root_helper: System utility used to gain escalate privileges.
+        """
         super(MetadataManager, self).__init__(root_helper)
 
     def networks_have_changed(self, config):
+        """
+        This function determines if the networks have changed since <config>
+        was initialized.
+
+        :type config: akanda.router.models.Configuration
+        :param config: An akanda.router.models.Configuration object containing
+                       the current configuration of the system's networks.
+        :rtype: akanda.router.models.Configuration
+        """
         net_ids = set(
             [net.id for net in config.networks if net.is_tenant_network]
         )
@@ -45,6 +64,13 @@ class MetadataManager(base.Manager):
         return net_ids != set(config_dict.keys())
 
     def save_config(self, config):
+        """
+        Writes <config> to the metadata configuration file (<CONF_PATH>).
+
+        :type config: akanda.router.models.Configuration
+        :param config: An akanda.router.models.Configuration object containing
+                       the configuration of metadata service.
+        """
         config_data = build_config(config)
 
         replace_file(
@@ -54,12 +80,19 @@ class MetadataManager(base.Manager):
         execute(['mv', '/tmp/metadata.conf', CONF_PATH], self.root_helper)
 
     def ensure_started(self):
+        """
+        Checks if the metadata service is started and starts it if it is
+        determined to be stopped.
+        """
         try:
             execute(['/etc/init.d/metadata', 'status'], self.root_helper)
         except:
             execute(['/etc/init.d/metadata', 'start'], self.root_helper)
 
     def restart(self):
+        """
+        Restarts the metadata service using the init script.
+        """
         try:
             execute(['/etc/init.d/metadata', 'stop'], self.root_helper)
         except:
@@ -69,6 +102,13 @@ class MetadataManager(base.Manager):
 
 
 def build_config(config):
+    """
+    Determines the configuration of the metadata service.
+
+    :type config: akanda.router.models.Configuration
+    :param config:
+    :rtype: akanda.router.models.Configuration
+    """
     config_data = {}
 
     for net in config.networks:

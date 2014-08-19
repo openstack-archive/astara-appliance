@@ -30,15 +30,37 @@ DEFAULT_LEASE = 86400
 
 
 class DHCPManager(base.Manager):
+    """A class to manage dnsmasq."""
     def __init__(self, root_helper='sudo'):
+        """
+        Initializes DHCPManager class.
+
+        :type root_helper: str
+        :param root_helper: System utility used to gain escalate privileges.
+        """
         super(DHCPManager, self).__init__(root_helper)
 
     def delete_all_config(self):
+        """
+        Deletes all the dnsmasq configuration files (in <CONF_DIR>) that end in
+        .conf.
+        """
         for f in os.listdir(CONF_DIR):
             if f.endswith('.conf'):
                 os.remove(os.path.join(CONF_DIR, f))
 
     def update_network_dhcp_config(self, ifname, network):
+        """
+        Updates the dnsmasq.conf config, enabling dhcp configuration for nova
+        networks that are mapped to tenants and disabling networks that do not
+        map to tenants.
+
+        :type ifname: str
+        :param ifname:
+        :type network: 
+        :param network:
+
+        """
         if network.is_tenant_network:
             config_data = self._build_dhcp_config(ifname, network)
         else:
@@ -49,9 +71,30 @@ class DHCPManager(base.Manager):
         utils.execute(['mv', '/tmp/dnsmasq.conf', file_path], self.root_helper)
 
     def _build_disabled_config(self, ifname):
+        """
+        Appends "except-interface" for <ifname>. This is used to disable an
+        interface in the dnsmasq file and should be called from the wrapper
+        update_network_dhcp_config.
+
+        :type ifname: str
+        :param ifname: Name of the interface to add an exception to in dnsmasq
+                       configuration.
+        :rtype: str
+        """
         return 'except-interface=%s\n' % ifname
 
     def _build_dhcp_config(self, ifname, network):
+        """
+        Creates <config> containing dnsmasq configuration information for
+        <ifname>/<network>.  Should be called from wrapper
+        update_network_dhcp_config.
+
+        :type ifname: str
+        :param ifname:
+        :type network:
+        :param network:
+        :rtype: dict
+        """
         config = ['interface=%s' % ifname]
 
         for index, subnet in enumerate(network.subnets):
@@ -94,6 +137,9 @@ class DHCPManager(base.Manager):
         return '\n'.join(config)
 
     def restart(self):
+        """
+        Restarts dnsmasq service using the system provided init script.
+        """
         try:
             utils.execute(['/etc/init.d/dnsmasq', 'stop'], self.root_helper)
         except:
