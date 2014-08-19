@@ -489,6 +489,8 @@ class Configuration(ModelBase):
         ]
         self.tenant_id = conf_dict.get('tenant_id')
 
+        self.hostname = conf_dict.get('hostname')
+
         self._attach_floating_ips(self.floating_ips)
 
     def validate(self):
