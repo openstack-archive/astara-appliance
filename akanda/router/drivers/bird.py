@@ -76,7 +76,7 @@ def build_config(config, interface_map):
 
     :type interface_map: dict
     :param interface_map:
-    :rtype: 
+    :rtype:
     """
     config_data = [
         _build_global_config(config),
@@ -98,7 +98,7 @@ def _find_external_v4_ip(config):
 
     :type config: akanda.router.models.Configuration
     :param config:
-    :rtype: 
+    :rtype:
     """
     v4_id = config.external_v4_id
 
@@ -113,8 +113,8 @@ def _build_global_config(config):
     Generate the "global" section of the BIRD daemon configuration.
 
     :type config: akanda.router.models.Configuration
-    :param config: 
-    :rtype: 
+    :param config:
+    :rtype:
     """
     retval = [
         'log syslog {warning, error, info};',
@@ -128,8 +128,8 @@ def _build_kernel_config():
     Generate the "kernel" section of the BIRD daemon configuration.
 
     :type config: akanda.router.models.Configuration
-    :param config: 
-    :rtype: 
+    :param config:
+    :rtype:
     """
     config = """
     protocol kernel {
@@ -147,8 +147,8 @@ def _build_device_config():
     Generate the "device" section of the BIRD daemon configuration.
 
     :type config: akanda.router.models.Configuration
-    :param config: 
-    :rtype: 
+    :param config:
+    :rtype:
     """
     return 'protocol device {\n    scan time 10;\n}'
 
@@ -158,8 +158,8 @@ def _build_static_config(config):
     Generate the "static" section of the BIRD daemon configuration.
 
     :type config: akanda.router.models.Configuration
-    :param config: 
-    :rtype: 
+    :param config:
+    :rtype:
     """
     retval = []
     # TODO: setup static routes
@@ -171,9 +171,9 @@ def _build_direct_config(config, interface_map):
     Generate the "direct" section of the BIRD daemon configuration.
 
     :type config: akanda.router.models.Configuration
-    :param config: 
+    :param config:
     :type interface_map: dict
-    :param interface_map: 
+    :param interface_map:
     :rtype:
     """
     tmpl = "protocol direct {\n    interface %s;\n}"
@@ -188,10 +188,10 @@ def _build_ospf_config(config, interface_map):
     Generate the "ospf" section of the BIRD daemon configuration.
 
     :type config: akanda.router.models.Configuration
-    :param config: 
+    :param config:
     :type interface_map: dict
-    :param interface_map: 
-    :rtype: 
+    :param interface_map:
+    :rtype:
     """
     retval = [
         'protocol ospf {',
@@ -228,9 +228,9 @@ def _build_bgp_config(config, interface_map):
     Generate the "BGP" section of the BIRD daemon configuration.
 
     :type config: akanda.router.models.Configuration
-    :param config: 
+    :param config:
     :type interface_map: dict
-    :param interface_map: 
+    :param interface_map:
     :rtype:
     """
 
@@ -287,10 +287,10 @@ def _build_radv_config(config, interface_map):
     Generate the "radv" section of the BIRD daemon configuration.
 
     :type config: akanda.router.models.Configuration
-    :param config: 
+    :param config:
     :type interface_map: dict
-    :param interface_map: 
-    :rtype: 
+    :param interface_map:
+    :rtype:
     """
     retval = [
         'protocol radv {',

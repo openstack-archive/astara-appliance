@@ -57,7 +57,7 @@ class DHCPManager(base.Manager):
 
         :type ifname: str
         :param ifname:
-        :type network: 
+        :type network:
         :param network:
 
         """
