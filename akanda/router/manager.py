@@ -19,8 +19,8 @@ import os
 import re
 
 from akanda.router import models
-from akanda.router.drivers import (bird, dnsmasq, ip, metadata)
-from akanda.router.drivers import (iptables, arp, hostname)
+from akanda.router.drivers import (bird, dnsmasq, ip, metadata,
+                                   iptables, arp, hostname)
 
 
 class Manager(object):
