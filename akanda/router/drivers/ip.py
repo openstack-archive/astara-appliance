@@ -34,20 +34,32 @@ ULA_PREFIX = 'fdca:3ba5:a17a:acda::/64'
 
 class IPManager(base.Manager):
     """
+    A class that provides a pythonic interface to unix system network
+    configuration information.
     """
+
     EXECUTABLE = '/sbin/ip'
 
     def __init__(self, root_helper='sudo'):
+        """Initializes resources for the IPManager class"""
         super(IPManager, self).__init__(root_helper)
         self.next_generic_index = 0
         self.host_mapping = {}
         self.generic_mapping = {}
 
     def ensure_mapping(self):
+        """
+        Creates a mapping of generic interface names (e.g., ge0, ge1) to
+        physical interface names (eth1, eth2) if one does not already exist.
+        """
         if not self.host_mapping:
             self.get_interfaces()
 
     def get_interfaces(self):
+        """
+        Returns a list of the available network interfaces.  This information
+        is obtained through the `ip addr show` system command.
+        """
         interfaces = _parse_interfaces(self.do('addr', 'show'),
                                        filters=PHYSICAL_INTERFACES)
 
@@ -66,37 +78,93 @@ class IPManager(base.Manager):
         return interfaces
 
     def get_interface(self, ifname):
+        """
+        Returns network configuration information for the requested network
+        interface.  This information is obtained through the system command `ip
+        addr show <ifname>`.
+
+        :param ifname: the name of the interface to retrieve, e.g., `eth1`
+        :type ifname: str
+        :rtype: akanda.router.model.Interface
+        """
         real_ifname = self.generic_to_host(ifname)
         retval = _parse_interface(self.do('addr', 'show', real_ifname))
         retval.ifname = ifname
         return retval
 
     def is_valid(self, ifname):
+        """
+        Validates if the supplied interface is a valid system network
+        interface.  Returns `True` if <ifname> is a valid interface.  Returns
+        `False` if <ifname> is not a valid interface.
+
+        :param ifname: the name of the interface to retrieve, e.g., `eth1`
+        :type ifname: str
+        """
         self.ensure_mapping()
         return ifname in self.generic_mapping
 
     def generic_to_host(self, generic_name):
+        """
+        Translates a generic interface name into the physical network interface
+        name.
+        :param ifname: the generic name to translate, e.g., `ge0`
+        :type ifname: str
+        :rtype: str
+        """
         self.ensure_mapping()
         return self.generic_mapping.get(generic_name)
 
     def host_to_generic(self, real_name):
+        """
+        Translates a physical interface name into the generic network interface
+        name.
+        :param ifname: the physical name to translate, e.g., `eth0`
+        :type ifname: str
+        :rtype: str
+        """
         self.ensure_mapping()
         return self.host_mapping.get(real_name)
 
     def update_interfaces(self, interfaces):
+        """
+        Wrapper function that accepts a list of interfaces and iterates over
+        them, calling update_interface(<interface>) in order to update
+        their configuration.
+        """
         for i in interfaces:
             self.update_interface(i)
 
     def up(self, interface):
+        """
+        Sets the administrative mode for the network link on interface
+        <interface> to "up".
+        :param interface: the interface to mark up
+        :type interface: akanda.router.models.Interface
+        """
         real_ifname = self.generic_to_host(interface.ifname)
         self.sudo('link', 'set', real_ifname, 'up')
         return self.get_interface(interface.ifname)
 
     def down(self, interface):
+        """
+        Sets the administrative mode for the network link on interface
+        <interface> to "down".
+        :param interface: the interface to mark down
+        :type interface: akanda.router.models.Interface
+        """
         real_ifname = self.generic_to_host(interface.ifname)
         self.sudo('link', 'set', real_ifname, 'down')
 
     def update_interface(self, interface, ignore_link_local=True):
+        """
+        Updates a network interface, particularly its addresses
+        :param interface: the interface to update
+        :type interface: akanda.router.models.Interface
+        :param ignore_link_local: When True, link local addresses will not be
+                                  added/removed
+        :type ignore_link_local: bool
+        """
         real_ifname = self.generic_to_host(interface.ifname)
         old_interface = self.get_interface(interface.ifname)
 
@@ -110,8 +178,21 @@ class IPManager(base.Manager):
         self._update_addresses(real_ifname, interface, old_interface)
 
     def _update_addresses(self, real_ifname, interface, old_interface):
+        """
+        Compare the state of an interface, and add/remove address that have
+        changed.
+        :param real_ifname: the name of the interface to modify
+        :param real_ifname: str
+        :param interface: the new interface reference
+        :type interface: akanda.router.models.Interface
+        :param old_interface: the reference to the current network interface
+        :type old_interface: akanda.router.models.Interface
+        """
 
         def _gen_cmd(cmd, address):
+            """
+            Generates an `ip addr (add|del) <cidr> dev <ifname>` command.
+            """
             family = {4: 'inet', 6: 'inet6'}[address[0].version]
             args = [
                 'addr',
@@ -133,6 +214,11 @@ class IPManager(base.Manager):
 
     def _update_set(self, real_ifname, interface, old_interface, attribute,
                     fmt_args_add, fmt_args_delete, mutator=lambda x: x):
+        """
+        Compare the set of addresses (the current set and the desired set)
+        for an interface and generate a series of `ip addr add` and `ip addr
+        del` commands.
+        """
 
         next_set = set(mutator(i) for i in getattr(interface, attribute))
         prev_set = set(mutator(i) for i in getattr(old_interface, attribute))
@@ -148,6 +234,15 @@ class IPManager(base.Manager):
             self.sudo(*fmt_args_delete(item))
 
     def get_management_address(self, ensure_configuration=False):
+        """
+        Get the network interface address that will be used for management
+        traffic.
+
+        :param ensure_configuration: when `True`, this method will ensure that
+                                     the management address if configured on
+                                     `ge0`.
+        :rtype: str
+        """
         primary = self.get_interface(GENERIC_IFNAME + '0')
         prefix, prefix_len = ULA_PREFIX.split('/', 1)
         eui = netaddr.EUI(primary.lladdr)
@@ -163,6 +258,11 @@ class IPManager(base.Manager):
         return ip_str
 
     def update_default_gateway(self, config):
+        """
+        Sets the default gateway for v4 and v6 via the use of `ip route add`.
+
+        :type config: akanda.router.models.Configuration
+        """
         # Track whether we have set the default gateways, by IP
         # version.
         gw_set = {
@@ -204,6 +304,18 @@ class IPManager(base.Manager):
                     gw_set[subnet.gateway_ip.version] = True
 
     def update_host_routes(self, config, cache):
+        """
+        Update the network routes.  This is primarily used to support static
+        routes that users provide to neutron.
+
+        :type config: akanda.router.models.Configuration
+        :param cache: a dbm cache for storing the "last applied routes".
+                      Because Linux does not differentiate user-provided routes
+                      from, for example, the default gateway, this is necessary
+                      so that subsequent calls to this method can determine
+                      "what changed" for the user-provided routes.
+        :type cache: dogpile.cache.region.CacheRegion
+        """
         db = cache.get_or_create('host_routes', lambda: {})
         for net in config.networks:
 
@@ -240,7 +352,13 @@ class IPManager(base.Manager):
         cache.set('host_routes', db)
 
     def _get_default_gateway(self, version):
-        current = None
+        """
+        Gets the default gateway.
+
+        :param version: the IP version, 4 or 6
+        :type version: int
+        :rtype: str
+        """
         try:
             cmd_out = self.sudo('-%s' % version, 'route', 'show')
         except:
@@ -253,9 +371,17 @@ class IPManager(base.Manager):
                     match = re.search('via (?P<gateway>[^ ]+)', l)
                     if match:
                         return match.group('gateway')
-        return current
 
     def _set_default_gateway(self, gateway_ip, ifname):
+        """
+        Sets the default gateway.
+
+        :param gateway_ip: the IP address to set as the default gateway_ip
+        :type gateway_ip: netaddr.IPAddress
+        :param ifname: the interface name (in our case, of the external
+                       network)
+        :type ifname: str
+        """
         version = 4
         if gateway_ip.version == 6:
             version = 6
@@ -281,6 +407,19 @@ class IPManager(base.Manager):
             )
 
     def _alter_route(self, ifname, action, destination, next_hop):
+        """
+        Apply/remove a custom (generally, user-supplied) route using the `ip
+        route add/delete` command.
+
+        :param ifname: The name of the interface on which to alter the route
+        :type ifname: str
+        :param action: The action, 'add' or 'del'
+        :type action: str
+        :param destination: The destination CIDR
+        :type destination: netaddr.IPNetwork
+        :param next_hop: The next hop IP addressj
+        :type next_hop: netaddr.IPAddress
+        """
         version = destination.version
         ifname = self.generic_to_host(ifname)
         try:
@@ -305,6 +444,15 @@ def get_rug_address():
 
 
 def _parse_interfaces(data, filters=None):
+    """
+    Parse the output of `ip addr show`.
+
+    :param data: the output of `ip addr show`
+    :type data: str
+    :param filter: a list of valid interface names to match on
+    :type data: list of str
+    :rtype: list of akanda.router.models.Interface
+    """
     retval = []
     for iface_data in re.split('(^|\n)(?=[0-9]: \w+\d{0,3}:)', data, re.M):
         if not iface_data.strip():
@@ -325,6 +473,11 @@ def _parse_interfaces(data, filters=None):
 
 
 def _parse_interface(data):
+    """
+    Parse details for an interface, given its data from `ip addr show <ifname>`
+
+    :rtype: akanda.router.models.Interface
+    """
     retval = dict(addresses=[])
     for line in data.split('\n'):
         if line.startswith(' '):
@@ -340,6 +493,10 @@ def _parse_interface(data):
 
 
 def _parse_head(line):
+    """
+    Parse the line of `ip addr show` that contains the interface name, MTU, and
+    flags.
+    """
     retval = {}
     m = re.match(
         '[0-9]+: (?P<if>\w+\d{1,3}): <(?P<flags>[^>]+)> mtu (?P<mtu>[0-9]+)',
@@ -353,10 +510,16 @@ def _parse_head(line):
 
 
 def _parse_inet(line):
+    """
+    Parse a line of `ip addr show` that contains an address.
+    """
     tokens = line.split()
     return netaddr.IPNetwork(tokens[1])
 
 
 def _parse_lladdr(line):
+    """
+    Parse the line of `ip addr show` that contains the hardware address.
+    """
     tokens = line.split()
     return tokens[1]
