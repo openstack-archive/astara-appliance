@@ -40,10 +40,10 @@ class HostnameManager(base.Manager):
     def update_hosts(self, config):
         mgr = ip.IPManager()
         listen_ip = mgr.get_management_address()
-        config_data = '\n'.join([
+        config_data = [
             '127.0.0.1  localhost',
-            '::1     localhost ip6-localhost ip6-loopback',
-            '\t'.join([listen_ip, config.hostname])
-        ])
-        utils.replace_file('/tmp/hosts', config_data)
+            '::1  localhost ip6-localhost ip6-loopback',
+            '%s  %s' % (listen_ip, config.hostname)
+        ]
+        utils.replace_file('/tmp/hosts', '\n'.join(config_data))
         utils.execute(['mv', '/tmp/hosts', '/etc/hosts'], self.root_helper)
