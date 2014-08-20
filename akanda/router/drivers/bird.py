@@ -49,8 +49,9 @@ class BirdManager(base.Manager):
 
         :type config: akanda.router.models.Configuration
         :param config:
-        :type if_map:
-        :param if_map:
+        :type if_map: dict
+        :param if_map: A (dict) mapping of generic to physical hostname, e.g.:
+                       {'ge0': 'eth0', 'ge1': 'eth1'}
         """
         config_data = build_config(config, if_map)
 
@@ -75,8 +76,9 @@ def build_config(config, interface_map):
     provided by <interface_map>.
 
     :type interface_map: dict
-    :param interface_map:
-    :rtype:
+    :param interface_map: A (dict) mapping of generic to physical hostname, e.g.:
+                          {'ge0': 'eth0', 'ge1': 'eth1'}
+    :rtype: str
     """
     config_data = [
         _build_global_config(config),
@@ -98,7 +100,7 @@ def _find_external_v4_ip(config):
 
     :type config: akanda.router.models.Configuration
     :param config:
-    :rtype:
+    :rtype: str
     """
     v4_id = config.external_v4_id
 
@@ -114,7 +116,7 @@ def _build_global_config(config):
 
     :type config: akanda.router.models.Configuration
     :param config:
-    :rtype:
+    :rtype: str
     """
     retval = [
         'log syslog {warning, error, info};',
@@ -129,7 +131,7 @@ def _build_kernel_config():
 
     :type config: akanda.router.models.Configuration
     :param config:
-    :rtype:
+    :rtype: str
     """
     config = """
     protocol kernel {
@@ -148,7 +150,7 @@ def _build_device_config():
 
     :type config: akanda.router.models.Configuration
     :param config:
-    :rtype:
+    :rtype: str
     """
     return 'protocol device {\n    scan time 10;\n}'
 

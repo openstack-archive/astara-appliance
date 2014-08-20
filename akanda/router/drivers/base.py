@@ -40,7 +40,7 @@ class Manager(object):
     def sudo(self, *args):
         """
         Executes command <args> with the specified flags through the
-        root_helper facility (i.e. escalated privileges.
+        root_helper facility (i.e. escalated privileges).
 
         :type args: tuple
         :param args: A command, and flags, to execute.

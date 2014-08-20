@@ -50,7 +50,7 @@ class MetadataManager(base.Manager):
         :type config: akanda.router.models.Configuration
         :param config: An akanda.router.models.Configuration object containing
                        the current configuration of the system's networks.
-        :rtype: akanda.router.models.Configuration
+        :rtype: bool
         """
         net_ids = set(
             [net.id for net in config.networks if net.is_tenant_network]
