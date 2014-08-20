@@ -124,11 +124,10 @@ echo "[*] Deleting sensitive information..."
 rm -f /root/{.history,.viminfo}
 rm -f /home/*/{.history,.viminfo}
 
-echo "[*] Setting root password"
+
 if [ -e $APPLIANCE_SCRIPT_DIR/etc/rootpass ]; then
+        echo "[*] Setting root psassword"
         cat $APPLIANCE_SCRIPT_DIR/etc/rootpass | chpasswd -e
-else
-        echo 'root:$6$5HY0/7bi$axsLQiCMoSNFU2hDpv8LSM.vJNM..j4XppC.vGkELIB5/hZfss0a9c.T9ewED.qfIPlry5EZeqwzAT4ROW5nj0' |chpasswd -e
 fi
 
 echo "[*] Empty log files..."
