@@ -53,7 +53,7 @@ class ARPManager(base.Manager):
 
     def _mac_address_for_ip(self, ip):
         """
-        Matches a networks IP address to an arp entry.  This is used to
+        Matches a network's IP address to an arp entry.  This is used to
         associate arp entries with networks that are configured on the system
         and to determine which arp entries are stale through process of
         elemination.
