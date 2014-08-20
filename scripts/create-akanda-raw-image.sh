@@ -124,14 +124,6 @@ echo "[*] Deleting sensitive information..."
 rm -f /root/{.history,.viminfo}
 rm -f /home/*/{.history,.viminfo}
 
-if [ -e $APPLIANCE_SCRIPT_DIR/etc/key ]; then
-        echo "[*] Adding ssh key..."
-        mkdir /root/.ssh
-        chmod 700 /root/.ssh
-        cp $APPLIANCE_SCRIPT_DIR/etc/key /root/.ssh/authorized_keys
-        chmod 600 /root/.ssh/authorized_keys
-fi
-
 echo "[*] Setting root password"
 if [ -e $APPLIANCE_SCRIPT_DIR/etc/rootpass ]; then
         cat $APPLIANCE_SCRIPT_DIR/etc/rootpass | chpasswd -e
