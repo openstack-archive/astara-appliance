@@ -301,17 +301,25 @@ class IPTablesManager(base.Manager):
 
         # Route floating IP addresses
         for fip in self.get_external_network(config).floating_ips:
-            rules.append(Rule('-A POSTROUTING -o %s -s %s -j SNAT --to %s' % (
-                ext_if.ifname,
-                fip.fixed_ip,
-                fip.floating_ip
-            ), ip_version=4))
-            rules.append(Rule(
-                '-A PREROUTING -i %s -d %s -j DNAT --to-destination %s' % (
-                    ext_if.ifname,
-                    fip.floating_ip,
-                    fip.fixed_ip
-                ), ip_version=4
-            ))
+
+            # Neutron has a bug whereby you can create a floating ip that has
+            # mixed IP versions between the fixed and floating address.  If
+            # people create these accidentally, just ignore them (because
+            # iptables will barf if it encounters them)
+            if fip.fixed_ip.version == fip.floating_ip.version:
+                rules.append(
+                    Rule('-A POSTROUTING -o %s -s %s -j SNAT --to %s' % (
+                        ext_if.ifname,
+                        fip.fixed_ip,
+                        fip.floating_ip
+                    ), ip_version=4)
+                )
+                rules.append(Rule(
+                    '-A PREROUTING -i %s -d %s -j DNAT --to-destination %s' % (
+                        ext_if.ifname,
+                        fip.floating_ip,
+                        fip.fixed_ip
+                    ), ip_version=4
+                ))
 
         return rules
