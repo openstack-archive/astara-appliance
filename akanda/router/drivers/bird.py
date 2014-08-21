@@ -76,7 +76,7 @@ def build_config(config, interface_map):
     provided by <interface_map>.
 
     :type interface_map: dict
-    :param interface_map: A (dict) mapping of generic to physical hostname, e.g.:
+    :param interface_map: A (dict) mapping of generic to physical hostname:
                           {'ge0': 'eth0', 'ge1': 'eth1'}
     :rtype: str
     """
