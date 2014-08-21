@@ -1,6 +1,8 @@
+from copy import deepcopy
 from unittest import TestCase
 
 import mock
+import netaddr
 
 from akanda.router import models
 from akanda.router.drivers import iptables
@@ -156,3 +158,19 @@ class TestIPTablesConfiguration(TestCase):
         assert self.execute.call_args_list == [
             mock.call(['/etc/init.d/iptables-persistent', 'restart'], 'sudo')
         ]
+
+    def test_mixed_floating_ip_versions(self):
+        # Neutron has a bug whereby you can create a floating ip that has
+        # mixed IP versions between the fixed and floating address.  If
+        # people create these accidentally, just ignore them (because
+        # iptables will barf if it encounters them)
+        mgr = iptables.IPTablesManager()
+        config = deepcopy(CONFIG)
+        config.floating_ips[0].fixed_ip = netaddr.IPAddress(
+            'fdca:3ba5:a17a:acda:f816:3eff:fe66:33b6'
+        )
+        assert map(str, mgr._build_floating_ips(CONFIG)) == [
+            '-A POSTROUTING -o eth1 -s 192.168.0.2 -j SNAT --to 172.16.77.50',
+            '-A PREROUTING -i eth1 -d 172.16.77.50 -j DNAT --to-destination 192.168.0.2'  # noqa
+        ]
+        assert mgr._build_floating_ips(config) == []
