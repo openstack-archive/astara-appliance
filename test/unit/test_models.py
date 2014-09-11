@@ -196,105 +196,11 @@ class FilterRuleModelTestCase(TestCase):
         with self.assertRaises(ValueError):
             models.FilterRule(action='pass', protocol='made_up_proto')
 
-    def _pf_rule_test_helper(self, d, expected):
-        fr = models.FilterRule(**d)
-        self.assertEqual(fr.pf_rule, expected)
-
-    def test_pf_rule_basic(self):
-        self._pf_rule_test_helper(dict(action='pass'), 'pass')
-        self._pf_rule_test_helper(dict(action='block'), 'block')
-
-    def test_pf_rule_interface(self):
-        self._pf_rule_test_helper(dict(action='pass', interface='ge0'),
-                                  'pass on ge0')
-
-    def test_pf_rule_family(self):
-        self._pf_rule_test_helper(dict(action='block', family='inet6'),
-                                  'block inet6')
-
-    def test_pf_rule_protocol(self):
-        self._pf_rule_test_helper(dict(action='block', protocol='tcp'),
-                                  'block proto tcp')
-
-    def test_pf_rule_source_table(self):
-        self._pf_rule_test_helper(dict(action='block', source='foo'),
-                                  'block from <foo>')
-
-    def test_pf_rule_source_address(self):
-        args = dict(action='block', source='192.168.1.0/24')
-        self._pf_rule_test_helper(args, 'block from 192.168.1.0/24')
-
-    def test_pf_rule_source_port(self):
-        args = dict(action='block', source_port=22)
-        self._pf_rule_test_helper(args, 'block from port 22')
-
-    def test_pf_rule_source_address_and_port(self):
-        args = dict(action='pass', source='192.168.1.1/32', source_port=22)
-        self._pf_rule_test_helper(args, 'pass from 192.168.1.1/32 port 22')
-
-    def test_pf_rule_destination_interface(self):
-        args = dict(action='block', destination_interface="ge1")
-        self._pf_rule_test_helper(args, 'block to ge1')
-
-    def test_pf_rule_destination_table(self):
-        args = dict(action='block', destination="foo")
-        self._pf_rule_test_helper(args, 'block to <foo>')
-
-    def test_pf_rule_destination_address(self):
-        args = dict(action='block', destination="192.168.1.0/24")
-        self._pf_rule_test_helper(args, 'block to 192.168.1.0/24')
-
-    def test_pf_rule_destination_port(self):
-        args = dict(action='block', destination_port="23")
-        self._pf_rule_test_helper(args, 'block to port 23')
-
-    def test_pf_rule_destination_address_and_port(self):
-        args = dict(action='block', destination='192.168.1.2/32',
-                    destination_port="23")
-        self._pf_rule_test_helper(args, 'block to 192.168.1.2/32 port 23')
-
-    def test_pf_rule_redirect(self):
-        args = dict(action='pass',
-                    destination_port="23",
-                    redirect="192.168.1.1")
-        self._pf_rule_test_helper(args, 'pass to port 23 rdr-to 192.168.1.1')
-
-    def test_pf_rule_redirect_port(self):
-        args = dict(action='pass',
-                    destination_port="23",
-                    redirect_port="24")
-        self._pf_rule_test_helper(args, 'pass to port 23 rdr-to port 24')
-
-    def test_pf_rule_from_dict(self):
-        args = dict(action='pass',
-                    destination_port="23",
-                    redirect="192.168.1.2")
-
-        pr = models.FilterRule.from_dict(args)
-        self.assertEqual(pr.action, 'pass')
-        self.assertEqual(pr.destination_port, 23)
-        self.assertEqual(pr.redirect, netaddr.IPAddress('192.168.1.2'))
-
-
 class AnchorTestCase(TestCase):
     def test_anchor(self):
         a = models.Anchor('foo', [])
         self.assertEqual(a.name, 'foo')
         self.assertEqual(a.rules, [])
-
-    def test_anchor_external_pf_rule(self):
-        a = models.Anchor('foo', [])
-        self.assertEqual(a.external_pf_rule('/etc/pf'),
-                         'anchor foo\nload anchor foo from /etc/pf/foo')
-
-    def test_anchor_pf_rule_empty(self):
-        a = models.Anchor('foo', [])
-        self.assertEqual(a.pf_rule, 'anchor foo {\n\n}')
-
-    def test_anchor_pf_rule(self):
-        fr = models.FilterRule(action='block', interface="ge0")
-        a = models.Anchor('foo', [fr])
-        self.assertEqual(a.pf_rule, 'anchor foo {\nblock on ge0\n}')
 
 
 class AddressBookTestCase(TestCase):
@@ -302,15 +208,6 @@ class AddressBookTestCase(TestCase):
         ab = models.AddressBookEntry('foo', ['192.168.1.0/24'])
         self.assertEqual(ab.name, 'foo')
         self.assertEqual(ab.cidrs, [netaddr.IPNetwork('192.168.1.0/24')])
-
-    def test_pf_rule(self):
-        ab = models.AddressBookEntry('foo', ['192.168.1.0/24'])
-        self.assertEqual(ab.pf_rule, 'table <foo> persist {192.168.1.0/24}')
-
-    def test_external_pf_rule(self):
-        ab = models.AddressBookEntry('foo', ['192.168.1.0/24'])
-        self.assertEqual(ab.external_pf_rule('/etc'),
-                         'table foo\npersist file "/etc/foo"')
 
     def test_external_table_data(self):
         ab = models.AddressBookEntry('foo', ['192.168.1.0/24',
@@ -324,11 +221,6 @@ class LabelTestCase(TestCase):
         l = models.Label('foo', ['192.168.1.0/24'])
         self.assertEqual(l.name, 'foo')
         self.assertEqual(l.cidrs, [netaddr.IPNetwork('192.168.1.0/24')])
-
-    def test_pf_rule(self):
-        l = models.Label('foo', ['192.168.1.0/24'])
-        self.assertEqual(l.pf_rule,
-                         'match out on egress to {192.168.1.0/24} label "foo"')
 
 
 class AllocationTestCase(TestCase):
@@ -357,13 +249,8 @@ class FloatingIPTestCase(TestCase):
 
         self.assertEqual(fip.floating_ip, netaddr.IPAddress('9.9.9.9'))
         self.assertEqual(fip.fixed_ip, netaddr.IPAddress('10.0.0.1'))
-        self.assertEqual(fip.pf_rule, '')
 
         fip.network = network
-        self.assertEqual(
-            fip.pf_rule,
-            'pass on ge1 from 10.0.0.1 to any binat-to 9.9.9.9'
-        )
 
     def test_floating_ip_with_different_ip_versions(self):
         fip = models.FloatingIP(
@@ -375,10 +262,6 @@ class FloatingIPTestCase(TestCase):
         network.interface.ifname = 'ge1'
 
         fip.network = network
-        self.assertEqual(
-            fip.pf_rule,
-            ''
-        )
 
 
 class StaticRouteTestCase(TestCase):
@@ -641,288 +524,3 @@ class ConfigurationTestCase(TestCase):
                         anchors=[])
 
         self.assertEqual(c.to_dict(), expected)
-
-    def _pf_config_test_helper(self, conf_dict, test_expectations):
-        base = ['block']
-
-        expected = '\n'.join(base + test_expectations + [''])
-
-        attrs = dict(
-            BASE_RULES=base,
-            MANAGEMENT_PORTS=[22])
-
-        with mock.patch.multiple('akanda.router.defaults', **attrs) as defs:
-            c = models.Configuration(conf_dict)
-            self.assertEqual(c.pf_config, expected)
-
-    def test_pf_config_default(self):
-        self._pf_config_test_helper({'networks': []}, [])
-
-    def test_pf_config_nat(self):
-        ext_net = dict(network_id='ext',
-                       interface=dict(ifname='ge0', addresses=['9.9.9.1/24']),
-                       network_type='external')
-        int_net = dict(network_id='int',
-                       interface=dict(ifname='ge1', addresses=['10.0.0.0/8']),
-                       network_type='internal')
-
-        self._pf_config_test_helper(
-            {'networks': [ext_net, int_net]},
-            [
-                'pass out quick on ge0 proto udp from ge0 to any port 53',
-                'pass out quick on ge0 proto tcp from ge0 to any',
-                ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
-                 'http rdr-to 127.0.0.1 port 9601'),
-                'pass out on ge0 from ge1:network to any nat-to 9.9.9.1',
-                'pass in quick on ge1 proto udp from port 68 to port 67',
-                'pass out quick on ge1 proto udp from port 67 to port 68',
-                'pass in on ge1 proto tcp to any',
-                'pass in on ge1 proto udp to any',
-                'pass out quick on ge0 proto udp from ge1 to any port 53',
-            ]
-        )
-
-    def test_pf_config_nat_with_ip6(self):
-        ext_net = dict(network_id='ext',
-                       interface=dict(ifname='ge0', addresses=['9.9.9.1/24']),
-                       network_type='external')
-        int_net = dict(network_id='int',
-                       interface=dict(ifname='ge1', addresses=['10.0.0.0/8']),
-                       network_type='internal')
-        v6_net = dict(network_id='v6_int',
-                      interface=dict(ifname='ge2', addresses=['fe80::1/64']),
-                      network_type='internal')
-
-        self._pf_config_test_helper(
-            {'networks': [ext_net, int_net, v6_net]},
-            [
-                'pass out quick on ge0 proto udp from ge0 to any port 53',
-                'pass out quick on ge0 proto tcp from ge0 to any',
-                ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
-                 'http rdr-to 127.0.0.1 port 9601'),
-                'pass out on ge0 from ge1:network to any nat-to 9.9.9.1',
-                'pass in quick on ge1 proto udp from port 68 to port 67',
-                'pass out quick on ge1 proto udp from port 67 to port 68',
-                'pass in on ge1 proto tcp to any',
-                'pass in on ge1 proto udp to any',
-                'pass out quick on ge0 proto udp from ge1 to any port 53',
-                'pass in quick on ge2 proto udp from port 546 to port 547',
-                'pass out quick on ge2 proto udp from port 547 to port 546',
-                'pass out on ge0 inet6 from ge2:network',
-                'pass inet6 to ge2:network',
-                'pass in on ge2 proto tcp to any',
-                'pass in on ge2 proto udp to any',
-                'pass out quick on ge0 proto udp from ge2 to any port 53',
-            ]
-        )
-
-    def test_pf_config_isolated(self):
-        ext_net = dict(network_id='ext',
-                       interface=dict(ifname='ge0'),
-                       network_type='external')
-        int_net = dict(network_id='int',
-                       interface=dict(ifname='ge1'),
-                       network_type='isolated')
-
-        self._pf_config_test_helper(
-            {'networks': [ext_net, int_net]},
-            [
-                'pass out quick on ge0 proto udp from ge0 to any port 53',
-                'pass out quick on ge0 proto tcp from ge0 to any',
-                ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
-                 'http rdr-to 127.0.0.1 port 9601'),
-                'block from ge1:network to any'
-            ]
-        )
-
-    def test_pf_config_management(self):
-        ext_net = dict(network_id='ext',
-                       interface=dict(ifname='ge0'),
-                       network_type='external')
-        int_net = dict(network_id='int',
-                       interface=dict(ifname='ge1'),
-                       network_type='management')
-
-        self._pf_config_test_helper(
-            {'networks': [ext_net, int_net]},
-            [
-                'pass out quick on ge0 proto udp from ge0 to any port 53',
-                'pass out quick on ge0 proto tcp from ge0 to any',
-                'pass quick proto tcp from ge1:network to ge1 port { 22 }',
-                'pass quick proto tcp from ge1 to ge1:network port 9697',
-                'block in quick on !ge1 to ge1:network',
-            ]
-        )
-
-    def test_pf_config_with_addressbook(self):
-        ext_net = dict(network_id='ext',
-                       interface=dict(ifname='ge0'),
-                       network_type='external')
-        ab = dict(foo=['192.168.1.1/24'])
-
-        self._pf_config_test_helper(
-            {'networks': [ext_net], 'address_book': ab},
-            [
-                'pass out quick on ge0 proto udp from ge0 to any port 53',
-                'pass out quick on ge0 proto tcp from ge0 to any',
-                'table <foo> persist {192.168.1.1/24}'
-            ]
-        )
-
-    def test_pf_config_with_anchor(self):
-        ext_net = dict(network_id='ext',
-                       interface=dict(ifname='ge0'),
-                       network_type='external')
-        anchor = dict(name='foo',
-                      rules=[dict(action='pass',
-                                  protocol='tcp',
-                                  destination_port=22)])
-        self._pf_config_test_helper(
-            {'networks': [ext_net], 'anchors': [anchor]},
-            [
-                'pass out quick on ge0 proto udp from ge0 to any port 53',
-                'pass out quick on ge0 proto tcp from ge0 to any',
-                'anchor foo {\npass proto tcp to port 22\n}'
-            ]
-        )
-
-    def test_pf_config_with_label(self):
-        ext_net = dict(network_id='ext',
-                       interface=dict(ifname='ge0'),
-                       network_type='external')
-        label = dict(foo=['192.168.1.0/24'])
-
-        self._pf_config_test_helper(
-            {'networks': [ext_net], 'labels': label},
-            [
-                'pass out quick on ge0 proto udp from ge0 to any port 53',
-                'pass out quick on ge0 proto tcp from ge0 to any',
-                'match out on egress to {192.168.1.0/24} label "foo"'
-            ]
-        )
-
-    def test_pf_config_with_floating(self):
-        ext_net = dict(
-            network_id='ext',
-            interface=dict(ifname='ge0', addresses=['9.9.9.1/24']),
-            network_type='external',
-            subnets=[
-                {
-                    'cidr': '9.9.9.0/24',
-                    'gateway_ip': '9.9.9.1',
-                    'dhcp_enabled': True,
-                    'dns_nameservers': [],
-                }
-            ]
-        )
-        int_net = dict(
-            network_id='int',
-            interface=dict(ifname='ge1', addresses=['10.0.0.0/24']),
-            network_type='internal',
-            subnets=[
-                {
-                    'cidr': '10.0.0.0/24',
-                    'gateway_ip': '10.0.0.1',
-                    'dhcp_enabled': True,
-                    'dns_nameservers': [],
-                }
-            ]
-        )
-
-        fip = {
-            'floating_ip': '9.9.9.9',
-            'fixed_ip': '10.0.0.1'
-        }
-
-        self._pf_config_test_helper(
-            {'networks': [ext_net, int_net], 'floating_ips': [fip]},
-            [
-                'pass out quick on ge0 proto udp from ge0 to any port 53',
-                'pass out quick on ge0 proto tcp from ge0 to any',
-                ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
-                 'http rdr-to 127.0.0.1 port 9601'),
-                'pass out on ge0 from ge1:network to any nat-to 9.9.9.1',
-                'pass in quick on ge1 proto udp from port 68 to port 67',
-                'pass out quick on ge1 proto udp from port 67 to port 68',
-                'pass in on ge1 proto tcp to any',
-                'pass in on ge1 proto udp to any',
-                'pass out quick on ge0 proto udp from ge1 to any port 53',
-                'pass on ge0 from 10.0.0.1 to any binat-to 9.9.9.9',
-                'pass out on ge1 to 10.0.0.1'
-            ]
-        )
-
-    def test_pf_config_with_floating_different_ip_versions(self):
-        ext_net = dict(
-            network_id='ext',
-            interface=dict(ifname='ge0', addresses=['9.9.9.1/24']),
-            network_type='external',
-            subnets=[
-                {
-                    'cidr': '9.9.9.0/24',
-                    'gateway_ip': '9.9.9.1',
-                    'dhcp_enabled': True,
-                    'dns_nameservers': [],
-                }
-            ]
-        )
-        int_net = dict(
-            network_id='int',
-            interface=dict(ifname='ge1', addresses=['10.0.0.0/24']),
-            network_type='internal',
-            subnets=[
-                {
-                    'cidr': '10.0.0.0/24',
-                    'gateway_ip': '10.0.0.1',
-                    'dhcp_enabled': True,
-                    'dns_nameservers': [],
-                }
-            ]
-        )
-
-        fip = {
-            'floating_ip': '9.9.9.9',
-            'fixed_ip': 'fe80::1'
-        }
-
-        self._pf_config_test_helper(
-            {'networks': [ext_net, int_net], 'floating_ips': [fip]},
-            [
-                'pass out quick on ge0 proto udp from ge0 to any port 53',
-                'pass out quick on ge0 proto tcp from ge0 to any',
-                ('pass in quick on ge1 proto tcp to 169.254.169.254 port '
-                 'http rdr-to 127.0.0.1 port 9601'),
-                'pass out on ge0 from ge1:network to any nat-to 9.9.9.1',
-                'pass in quick on ge1 proto udp from port 68 to port 67',
-                'pass out quick on ge1 proto udp from port 67 to port 68',
-                'pass in on ge1 proto tcp to any',
-                'pass in on ge1 proto udp to any',
-                'pass out quick on ge0 proto udp from ge1 to any port 53'
-            ]
-        )
-
-    def test_pf_config_external_ipv4(self):
-        ext_net = dict(network_id='ext',
-                       interface=dict(ifname='ge0'),
-                       network_type='external')
-        self._pf_config_test_helper(
-            {'networks': [ext_net]},
-            [
-                'pass out quick on ge0 proto udp from ge0 to any port 53',
-                'pass out quick on ge0 proto tcp from ge0 to any',
-            ]
-        )
-
-    def test_pf_config_external_ipv6(self):
-        ext_net = dict(network_id='ext',
-                       interface=dict(ifname='ge0', addresses=['fe80::1/64']),
-                       network_type='external')
-        self._pf_config_test_helper(
-            {'networks': [ext_net]},
-            [
-                ('pass on ge0 inet6 proto tcp from ge0:network to ge0:network '
-                 'port 179'),
-                'pass out quick on ge0 proto udp from ge0 to any port 53',
-                'pass out quick on ge0 proto tcp from ge0 to any',
-            ]
-        )

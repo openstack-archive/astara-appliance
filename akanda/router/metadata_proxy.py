@@ -16,7 +16,10 @@
 
 
 import argparse
+import atexit
+import contextlib
 import json
+import functools
 import logging
 import os
 import sys
@@ -29,7 +32,7 @@ from werkzeug import exceptions
 from werkzeug import wrappers
 
 from akanda.router import defaults
-from akanda.router.drivers import ifconfig
+from akanda.router.drivers import ip
 
 LOG = logging.getLogger(__name__)
 
@@ -85,7 +88,7 @@ class NetworkMetadataProxyHandler(object):
 
         url = urlparse.urlunsplit((
             'http',
-            '[%s]:%d' % (ifconfig.get_rug_address(), defaults.RUG_META_PORT),
+            '[%s]:%d' % (ip.get_rug_address(), defaults.RUG_META_PORT),
             path_info,
             query_string,
             ''))
@@ -127,6 +130,13 @@ def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         os.dup2(stdout.fileno(), sys.stdout.fileno())
         os.dup2(stderr.fileno(), sys.stderr.fileno())
 
+        # write a pidfile
+        pidfile = '/var/run/metadata.pid'
+        atexit.register(functools.partial(os.remove, pidfile))
+        pid = str(os.getpid())
+        with contextlib.closing(open(pidfile, 'w+')) as f:
+            f.write("%s\n" % pid)
+
 
 def _fork():
     try:
@@ -166,7 +176,7 @@ def main():
         app = NetworkMetadataProxyHandler(tenant_id,
                                           network_id,
                                           args.config_file)
-        socket = eventlet.listen(('127.0.0.1', config['listen_port']),
+        socket = eventlet.listen(('0.0.0.0', config['listen_port']),
                                  backlog=128)
         pool.spawn_n(eventlet.wsgi.server, socket, app, custom_pool=pool)
 

@@ -20,13 +20,13 @@ import sys
 import textwrap
 
 from akanda.router import defaults
-from akanda.router.drivers import ifconfig
+from akanda.router.drivers import ip
 
 
 def configure_ssh():
     """
     """
-    mgr = ifconfig.InterfaceManager()
+    mgr = ip.IPManager()
 
     listen_ip = mgr.get_management_address(ensure_configuration=True)
 
@@ -52,7 +52,7 @@ def configure_ssh():
 def configure_gunicorn():
     """
     """
-    mgr = ifconfig.InterfaceManager()
+    mgr = ip.IPManager()
 
     listen_ip = mgr.get_management_address(ensure_configuration=True)
 
@@ -72,7 +72,7 @@ def configure_gunicorn():
     worker_class ="sync"
     debug = False
     daemon = True
-    pidfile = "/tmp/gunicorn.pid"
+    pidfile = "/var/run/gunicorn.pid"
     logfile = "/tmp/gunicorn.log"
     """
     config = textwrap.dedent(config % args).lstrip()
@@ -82,29 +82,3 @@ def configure_gunicorn():
         sys.stderr.write('http configured to listen on %s\n' % listen_ip)
     except:
         sys.stderr.write('Unable to write gunicorn configuration file.')
-
-
-def configure_default_pf():
-    """
-    """
-
-    mgr = ifconfig.InterfaceManager()
-    args = {'ifname': mgr.generic_to_host('ge0')}
-
-    config = """
-    ge0 = "%(ifname)s"
-    set skip on lo
-    match in all scrub (no-df)
-    block log (all)
-    pass proto icmp6 all
-    pass inet proto icmp icmp-type { echoreq, unreach }
-    pass proto tcp from $ge0:network to $ge0 port { 22, 5000}
-    """
-
-    config = textwrap.dedent(config % args).lstrip()
-
-    try:
-        open('/etc/pf.conf', 'w+').write(config)
-        sys.stderr.write('Default PF rules configured\n')
-    except:
-        sys.stderr.write('Unable to write pf configuration file.')

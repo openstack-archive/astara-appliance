@@ -19,6 +19,7 @@ from unittest2 import TestCase
 
 import mock
 import netaddr
+from collections import OrderedDict
 
 from akanda.router import models
 from akanda.router.drivers import dnsmasq
@@ -63,7 +64,7 @@ int_net.is_tenant_network = True
 int_net.interface.ifname = 'ge1'
 int_net.address_allocations = [models.Allocation(
     'fb:db:fb:db:fb:db',
-    {'9.9.9.2': True, 'face::2': True},  # ip: DHCP enabled
+    OrderedDict([('face::2', True),('9.9.9.2', True)]), # ip: DHCP enabled
     '9-9-9-2.local',
     'e3300819-d7b9-4d8d-9d7c-a6380ff78ca8',
 )]
@@ -135,6 +136,6 @@ class DnsmasqTestCase(TestCase):
     def test_restart(self):
         self.mgr.restart()
         self.mock_execute.assert_has_calls([
-            mock.call(['/etc/rc.d/dnsmasq', 'stop'], 'sudo'),
-            mock.call(['/etc/rc.d/dnsmasq', 'start'], 'sudo')
+            mock.call(['/etc/init.d/dnsmasq', 'stop'], 'sudo'),
+            mock.call(['/etc/init.d/dnsmasq', 'start'], 'sudo')
         ])

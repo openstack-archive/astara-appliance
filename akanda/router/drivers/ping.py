@@ -27,16 +27,34 @@ LOG = logging.getLogger(__name__)
 
 
 class PingManager(base.Manager):
+    """
+    A class which provide a facade to the system ping utility. Supports both
+    IPv4 and IPv6.
+    """
 
     exe_map = {
-        4: '/sbin/ping',
-        6: '/sbin/ping6'
+        4: '/bin/ping',
+        6: '/bin/ping6'
     }
 
     def __init__(self, root_helper='sudo'):
+        """
+        Initializes PingManager class.
+
+        :type root_helper: str
+        :param root_helper: System utility to escalate privileges.
+        """
         super(PingManager, self).__init__(root_helper)
 
     def do(self, ip):
+        """
+        Sends a single ICMP packet to <ip> using the systems ping utility.
+
+        :type ip: str
+        :param ip: The IP address to send ICMP packets to.
+        :rtype: bool. If <ip> responds to the ICMP packet, returns True else,
+                returns False
+        """
         version = netaddr.IPAddress(ip).version
         args = ['-c', '1', ip]
         try:

@@ -28,6 +28,5 @@ if __name__ == '__main__':
             print '-' * 80
             print conf.validate()
             print '-' * 80
-            print conf.pf_config
         except Exception as e:
             pdb.set_trace()
