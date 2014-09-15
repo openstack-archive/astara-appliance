@@ -225,7 +225,7 @@ class BirdTestCase(TestCase):
         expected = """
             protocol radv {
                 interface "en1" {
-                    max ra interval 10;
+                    max ra interval 600;
                     rdnss local yes;
                     prefix face::/64 {
                         autonomous off;

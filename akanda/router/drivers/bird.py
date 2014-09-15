@@ -314,7 +314,7 @@ def _build_radv_config(config, interface_map):
 
         retval.extend([
             '\tinterface "%s" {' % real_ifname,
-            '\t\tmax ra interval 10;',
+            '\t\tmax ra interval 600;',
             '\t\trdnss local yes;'
         ])
         for subnet in v6_subnets:
