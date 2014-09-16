@@ -259,17 +259,6 @@ class IPTablesManager(base.Manager):
 
         for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
             if network.interface.first_v4:
-                # NAT for IPv4
-                ext_v4 = sorted(
-                    a.ip for a in ext_if._addresses if a.version == 4
-                )[0]
-                rules.append(Rule(
-                    '-A POSTROUTING -o %s -j SNAT --to %s' % (
-                        network.interface.ifname,
-                        str(ext_v4)
-                    ), ip_version=4
-                ))
-
                 # Forward metadata requests on the management interface
                 rules.append(Rule(
                     '-A PREROUTING -i %s -d %s -p tcp -m tcp '
