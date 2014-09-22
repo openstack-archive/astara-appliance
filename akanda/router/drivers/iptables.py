@@ -200,16 +200,6 @@ class IPTablesManager(base.Manager):
                 (6, network.interface.first_v6, defaults.DHCPV6)
             ):
                 if address:
-                    # Basic state-matching rules. Allows packets related to a
-                    # pre-established session to pass.
-                    rules.append(Rule(
-                        '-A FORWARD -d %s -o %s -m state '
-                        '--state RELATED,ESTABLISHED -j ACCEPT' % (
-                            address,
-                            network.interface.ifname
-                        ), ip_version=version
-                    ))
-
                     # Allow DHCP
                     rules.append(Rule(
                         '-A INPUT -i %s -p udp -m udp --dport %s -j ACCEPT' % (
