@@ -36,6 +36,19 @@ EOF
 
 fi
 
+echo "[*] Configure GRUB"
+cat << EOF > /etc/default/grub
+# If you change this file, run 'update-grub' afterwards to update
+# /boot/grub/grub.cfg.
+
+GRUB_DEFAULT=0
+GRUB_TIMEOUT=0
+GRUB_DISTRIBUTOR=Debian
+GRUB_CMDLINE_LINUX_DEFAULT="quiet"
+# Disable GSO (Generic Segmentation Offload) in order to improve IPv6 forwarding performance
+GRUB_CMDLINE_LINUX="debian-installer=en_US virtio_net.gso=0"
+EOF
+/usr/sbin/update-grub
 
 echo "[*] APT Update"
 apt-get update || exit 1
