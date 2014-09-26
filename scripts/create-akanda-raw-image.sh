@@ -63,8 +63,8 @@ EOF
 echo "[*] APT Update"
 apt-get update || exit 1
 
-echo "[*] Upgrade to the 3.14 backport kernel"
-apt-get -y install linux-image-3.14-0.bpo.2-amd64
+echo "[*] Upgrade to the 3.14 backport kernel and update bash to fix CVE-2014-6271"
+apt-get -y install linux-image-3.14-0.bpo.2-amd64 bash
 
 echo "[*] Creating motd file..."
 cat >/etc/motd <<EOF
