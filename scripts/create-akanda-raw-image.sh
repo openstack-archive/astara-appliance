@@ -23,7 +23,7 @@ if [ $RELEASE = "wheezy" ]; then
 deb http://mirrors.dreamcompute.com/debian  $RELEASE-backports  main
 EOF
 
-        echo "[*] Setup APT prefrences for bird/bird6 to use $RELEASE-backports"
+        echo "[*] Setup APT prefrences for bird/bird6 and linux-image/initramfs-tools to use $RELEASE-backports"
         cat <<EOF > /etc/apt/preferences.d/bird
 Package: bird
 Pin: release a=$RELEASE-backports
@@ -31,6 +31,16 @@ Pin-Priority: 1000
 
 Package: bird6
 Pin: release a=$RELEASE-backports
+Pin-Priority: 1000
+EOF
+        # We need the new kernel in order to fix some IPv6 bugs
+        cat <<EOF > /etc/apt/preferences.d/kernel
+Package: linux-image
+Pin: release a=wheezy-backports
+Pin-Priority: 1000
+
+Package: initramfs-tools
+Pin: release a=wheezy-backports
 Pin-Priority: 1000
 EOF
 
@@ -52,6 +62,9 @@ EOF
 
 echo "[*] APT Update"
 apt-get update || exit 1
+
+echo "[*] Upgrade to the 3.14 backport kernel"
+apt-get -y install linux-image-3.14-0.bpo.2-amd64
 
 echo "[*] Creating motd file..."
 cat >/etc/motd <<EOF
