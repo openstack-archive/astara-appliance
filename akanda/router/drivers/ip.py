@@ -23,6 +23,7 @@ import netaddr
 
 from akanda.router import models
 from akanda.router.drivers import base
+from akanda.router import utils
 
 LOG = logging.getLogger(__name__)
 
@@ -232,6 +233,9 @@ class IPManager(base.Manager):
 
         for item in (prev_set - next_set):
             self.sudo(*fmt_args_delete(item))
+            ip, prefix = item
+            if ip.version == 4:
+                self._delete_conntrack_state(ip)
 
     def get_management_address(self, ensure_configuration=False):
         """
@@ -435,6 +439,28 @@ class IPManager(base.Manager):
             # failure.
             LOG.warn('Route could not be %sed: %s' % (action, unicode(e)))
             return False
+
+    def _delete_conntrack_state(self, ip):
+        """
+        Explicitly remove an IP from in-kernel connection tracking.
+
+        :param ip: The IP address to remove
+        :type ip: netaddr.IPAddress
+        """
+
+        # If no flow entries are deleted, `conntrack -D` will return 1
+        try:
+            utils.execute(['conntrack', '-D', '-d', str(ip)], self.root_helper)
+        except RuntimeError:
+            LOG.debug(
+                'Failed deleting ingress connection state of %s' % ip
+            )
+        try:
+            utils.execute(['conntrack', '-D', '-q', str(ip)], self.root_helper)
+        except RuntimeError:
+            LOG.debug(
+                'Failed deleting egress connection state of %s' % ip
+            )
 
 
 def get_rug_address():
