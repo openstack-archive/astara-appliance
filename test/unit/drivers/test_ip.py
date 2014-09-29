@@ -274,6 +274,8 @@ class IPTestCase(TestCase):
         mgr._update_addresses('em0', iface, old_iface)
         assert self.mock_execute.call_args_list == [
             mock.call([cmd, 'addr', 'del', str(v4), 'dev', 'em0'], 'sudo'),
+            mock.call(['conntrack', '-D', '-d', str(v4.ip)], 'sudo'),
+            mock.call(['conntrack', '-D', '-q', str(v4.ip)], 'sudo'),
             mock.call([
                 cmd, '-6', 'addr', 'del', str(v6), 'dev', 'em0'
             ], 'sudo'),
@@ -281,32 +283,38 @@ class IPTestCase(TestCase):
 
     def test_update_set(self):
         iface = mock.Mock()
-        iface.all_addresses = ['a', 'b']
+        a = netaddr.IPNetwork('192.168.101.2/24')
+        b = netaddr.IPNetwork('192.168.102.2/24')
+        c = netaddr.IPNetwork('192.168.103.2/24')
+        iface.all_addresses = [a, b]
         iface.ifname = 'em0'
 
         old_iface = mock.Mock()
-        old_iface.all_addresses = ['b', 'c']
+        old_iface.all_addresses = [b, c]
         old_iface.ifname = 'em0'
 
-        add = lambda g: ('addr', 'add', g, 'dev', 'em0')
-        delete = lambda g: ('addr', 'del', g, 'dev', 'em0')
+        add = lambda g: ('addr', 'add', '/'.join(map(str, g)), 'dev', 'em0')
+        delete = lambda g: ('addr', 'del', '/'.join(map(str, g)), 'dev', 'em0')
+        mutator = lambda x: (x.ip, x.prefixlen)
 
         mgr = ip.IPManager()
         with mock.patch.object(
             mgr, 'generic_to_host', lambda x: x.replace('ge', 'em')
         ):
             mgr._update_set('em0', iface, old_iface, 'all_addresses', add,
-                            delete)
+                            delete, mutator=mutator)
 
             assert self.mock_execute.call_args_list == [
                 mock.call([
-                    '/sbin/ip', 'addr', 'add', 'a', 'dev', 'em0'
+                    '/sbin/ip', 'addr', 'add', str(a), 'dev', 'em0'
                 ], 'sudo'),
                 mock.call(['/sbin/ip', 'link', 'set', 'em0', 'up'], 'sudo'),
                 mock.call(['/sbin/ip', 'addr', 'show', 'em0']),
                 mock.call([
-                    '/sbin/ip', 'addr', 'del', 'c', 'dev', 'em0'
-                ], 'sudo')
+                    '/sbin/ip', 'addr', 'del', str(c), 'dev', 'em0'
+                ], 'sudo'),
+                mock.call(['conntrack', '-D', '-d', str(c.ip)], 'sudo'),
+                mock.call(['conntrack', '-D', '-q', str(c.ip)], 'sudo'),
             ]
 
     def test_update_set_no_diff(self):
