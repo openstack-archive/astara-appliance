@@ -140,6 +140,7 @@ cat > /etc/sysctl.conf <<EOF
 net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
 net.ipv6.conf.eth0.accept_dad=0
+net.ipv4.conf.all.arp_announce=2
 EOF
 
 echo "[*] Disable fsck on boot"
