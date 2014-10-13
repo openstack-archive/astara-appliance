@@ -140,7 +140,9 @@ cat > /etc/sysctl.conf <<EOF
 net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
 net.ipv6.conf.default.accept_dad=0
+net.ipv6.conf.eth0.accept_dad=0
 net.ipv6.conf.eth1.accept_dad=1
+net.ipv6.conf.eth2.accept_dad=0
 net.ipv4.conf.all.arp_announce=2
 EOF
 
