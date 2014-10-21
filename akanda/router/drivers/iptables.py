@@ -57,7 +57,8 @@ class IPTablesManager(base.Manager):
         '''
         rules = itertools.chain(
             self._build_filter_table(config),
-            self._build_nat_table(config)
+            self._build_nat_table(config),
+            self._build_raw_table(config)
         )
 
         for version, rules in zip((4, 6), itertools.tee(rules)):
@@ -231,11 +232,16 @@ class IPTablesManager(base.Manager):
         '''
         rules = [
             Rule('*nat', ip_version=4),
+        ]
+
+        rules.extend(self._build_public_snat_chain(config))
+
+        rules.extend([
             Rule(':PREROUTING ACCEPT [0:0]', ip_version=4),
             Rule(':INPUT ACCEPT [0:0]', ip_version=4),
             Rule(':OUTPUT ACCEPT [0:0]', ip_version=4),
             Rule(':POSTROUTING ACCEPT [0:0]', ip_version=4),
-        ]
+        ])
 
         rules.extend(self._build_floating_ips(config))
         rules.extend(self._build_v4_nat(config))
@@ -278,7 +284,7 @@ class IPTablesManager(base.Manager):
         rules = []
         ext_if = self.get_external_network(config).interface
 
-        # Route floating IP addresses
+        # NAT floating IP addresses
         for fip in self.get_external_network(config).floating_ips:
 
             # Neutron has a bug whereby you can create a floating ip that has
@@ -287,10 +293,8 @@ class IPTablesManager(base.Manager):
             # iptables will barf if it encounters them)
             if fip.fixed_ip.version == fip.floating_ip.version:
                 rules.append(
-                    Rule('-A POSTROUTING -o %s -s %s -j SNAT --to %s' % (
-                        ext_if.ifname,
-                        fip.fixed_ip,
-                        fip.floating_ip
+                    Rule('-A POSTROUTING -s %s -j PUBLIC_SNAT' % (
+                        fip.fixed_ip
                     ), ip_version=4)
                 )
                 rules.append(Rule(
@@ -300,5 +304,64 @@ class IPTablesManager(base.Manager):
                         fip.fixed_ip
                     ), ip_version=4
                 ))
+                for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
+                    rules.append(Rule(
+                        '-A PREROUTING -i %s -d %s -j DNAT --to-destination %s' % (
+                            network.interface.ifname,
+                            fip.floating_ip,
+                            fip.fixed_ip
+                        ), ip_version=4
+                    ))
 
+        return rules
+
+    def _build_public_snat_chain(self, config):
+        '''
+        Build a chain for SNAT for neutron FloatingIPs.  This chain ignores NAT
+        for traffic marked as private.
+        '''
+        rules = [
+            Rule(':PUBLIC_SNAT - [0:0]', ip_version=4),
+            Rule('-A PUBLIC_SNAT -m mark --mark 0xACDA -j RETURN', ip_version=4)
+        ]
+        ext_if = self.get_external_network(config).interface
+
+        # NAT floating IP addresses
+        for fip in self.get_external_network(config).floating_ips:
+
+            if fip.fixed_ip.version == fip.floating_ip.version:
+                rules.append(
+                    Rule('-A PUBLIC_SNAT -s %s -j SNAT --to %s' % (
+                        fip.fixed_ip,
+                        fip.floating_ip
+                    ), ip_version=4)
+                )
+
+        return rules
+
+    def _build_raw_table(self, config):
+        '''
+        Add raw rules (so we can mark private traffic and avoid NATing it)
+        '''
+        rules = [
+            Rule('*raw', ip_version=4),
+            Rule(':INPUT - [0:0]', ip_version=4),
+            Rule(':OUTPUT - [0:0]', ip_version=4),
+            Rule(':FORWARD - [0:0]', ip_version=4),
+            Rule(':PREROUTING - [0:0]', ip_version=4)
+        ]
+
+        for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
+            if network.interface.first_v4:
+                address = sorted(
+                    str(a) for a in network.interface.addresses
+                    if a.version == 4
+                )[0]
+                rules.append(Rule(
+                    '-A PREROUTING -d %s -j MARK --set-mark 0xACDA' % address,
+                    ip_version=4
+                ))
+
+        rules.append(Rule(':POSTROUTING - [0:0]', ip_version=4))
+        rules.append(Rule('COMMIT', ip_version=4))
         return rules
