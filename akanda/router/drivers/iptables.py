@@ -304,9 +304,12 @@ class IPTablesManager(base.Manager):
                         fip.fixed_ip
                     ), ip_version=4
                 ))
-                for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
+                for network in self.networks_by_type(
+                    config, Network.TYPE_INTERNAL
+                ):
                     rules.append(Rule(
-                        '-A PREROUTING -i %s -d %s -j DNAT --to-destination %s' % (
+                        '-A PREROUTING -i %s -d %s -j DNAT '
+                        '--to-destination %s' % (
                             network.interface.ifname,
                             fip.floating_ip,
                             fip.fixed_ip
@@ -322,9 +325,11 @@ class IPTablesManager(base.Manager):
         '''
         rules = [
             Rule(':PUBLIC_SNAT - [0:0]', ip_version=4),
-            Rule('-A PUBLIC_SNAT -m mark --mark 0xACDA -j RETURN', ip_version=4)
+            Rule(
+                '-A PUBLIC_SNAT -m mark --mark 0xACDA -j RETURN',
+                ip_version=4
+            )
         ]
-        ext_if = self.get_external_network(config).interface
 
         # NAT floating IP addresses
         for fip in self.get_external_network(config).floating_ips:
