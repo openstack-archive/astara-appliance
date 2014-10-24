@@ -110,6 +110,14 @@ class IPTablesManager(base.Manager):
         '''
         return self.networks_by_type(config, Network.TYPE_EXTERNAL)[0]
 
+    def get_management_network(self, config):
+        '''
+        Returns the management network
+
+        :rtype: akanda.router.models.Interface
+        '''
+        return self.networks_by_type(config, Network.TYPE_MANAGEMENT)[0]
+
     def networks_by_type(self, config, type):
         '''
         Returns the external network
@@ -251,7 +259,6 @@ class IPTablesManager(base.Manager):
 
     def _build_v4_nat(self, config):
         rules = []
-        ext_if = self.get_external_network(config).interface
 
         for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
             if network.interface.first_v4:
@@ -270,8 +277,9 @@ class IPTablesManager(base.Manager):
                 ))
 
         # Add a masquerade catch-all for VMs without floating IPs
+        mgt_if = self.get_management_network(config).interface
         rules.append(Rule(
-            '-A POSTROUTING -o %s -j MASQUERADE' % ext_if.ifname,
+            '-A POSTROUTING ! -o %s -j MASQUERADE' % mgt_if.ifname,
             ip_version=4
         ))
 
