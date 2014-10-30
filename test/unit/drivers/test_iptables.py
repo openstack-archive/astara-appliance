@@ -185,4 +185,6 @@ class TestIPTablesConfiguration(TestCase):
             '-A PREROUTING -i eth2 -d 172.16.77.50 -j DNAT --to-destination 192.168.0.2',  # noqa
             '-A POSTROUTING -o eth1 -j MASQUERADE' # noqa
         ]
-        assert mgr._build_floating_ips(config) == []
+        assert map(str, mgr._build_floating_ips(config)) == [
+            '-A POSTROUTING -o eth1 -j MASQUERADE' # noqa
+        ]
