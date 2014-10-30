@@ -371,6 +371,11 @@ class IPTablesManager(base.Manager):
             Rule(':FORWARD - [0:0]', ip_version=4),
             Rule(':PREROUTING - [0:0]', ip_version=4)
         ]
+        ext_if = self.get_external_network(config).interface
+        rules.append(Rule(
+            '-A PREROUTING -i %s -j MARK --set-mark 0xACDA' % ext_if.ifname,
+            ip_version=4
+        ))
 
         for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
             if network.interface.first_v4:

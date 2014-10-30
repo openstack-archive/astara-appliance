@@ -93,6 +93,7 @@ V4_OUTPUT = [
     ':OUTPUT - [0:0]',
     ':FORWARD - [0:0]',
     ':PREROUTING - [0:0]',
+    '-A PREROUTING -i eth1 -j MARK --set-mark 0xACDA',
     '-A PREROUTING -d 192.168.0.1/24 -j MARK --set-mark 0xACDA',
     ':POSTROUTING - [0:0]',
     'COMMIT'
