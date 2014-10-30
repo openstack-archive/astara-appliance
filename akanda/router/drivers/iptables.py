@@ -316,7 +316,11 @@ class IPTablesManager(base.Manager):
                             fip.fixed_ip
                         ), ip_version=4
                     ))
-
+        rules.append(
+            Rule('-A POSTROUTING -o %s -j MASQUERADE' % (
+              ext_if.ifname
+            ), ip_version=4
+        ))
         return rules
 
     def _build_public_snat_chain(self, config):
