@@ -318,7 +318,7 @@ class IPTablesManager(base.Manager):
                     ))
         rules.append(
             Rule('-A POSTROUTING -o %s -j MASQUERADE' % (
-              ext_if.ifname
+                ext_if.ifname
             ), ip_version=4
         ))
         return rules
