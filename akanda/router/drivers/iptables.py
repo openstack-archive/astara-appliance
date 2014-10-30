@@ -276,13 +276,6 @@ class IPTablesManager(base.Manager):
                     ), ip_version=4
                 ))
 
-        # Add a masquerade catch-all for VMs without floating IPs
-        mgt_if = self.get_management_network(config).interface
-        rules.append(Rule(
-            '-A POSTROUTING ! -o %s -j MASQUERADE' % mgt_if.ifname,
-            ip_version=4
-        ))
-
         return rules
 
     def _build_floating_ips(self, config):
@@ -349,6 +342,13 @@ class IPTablesManager(base.Manager):
                         fip.floating_ip
                     ), ip_version=4)
                 )
+
+        # Add a masquerade catch-all for VMs without floating IPs
+        mgt_if = self.get_management_network(config).interface
+        rules.append(Rule(
+            '-A PUBLIC_SNAT ! -o %s -j MASQUERADE' % mgt_if.ifname,
+            ip_version=4
+        ))
 
         return rules
 
