@@ -62,6 +62,8 @@ class Manager(object):
         mgr.update(self.config)
 
     def update_interfaces(self):
+        for network in self.config.networks:
+            self.ip_mgr.disable_duplicate_address_detection(network)
         self.ip_mgr.update_interfaces(self.config.interfaces)
 
     def update_dhcp(self):
