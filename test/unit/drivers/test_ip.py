@@ -14,12 +14,15 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import logging
 import re
+from cStringIO import StringIO
 
 from unittest2 import TestCase
 import mock
 import netaddr
 
+from akanda.router import models
 from akanda.router.drivers import ip
 
 SAMPLE_OUTPUT = """1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue state UNKNOWN
@@ -368,6 +371,79 @@ class IPTestCase(TestCase):
                 mock.call([cmd, 'link', 'set', 'eth0', 'up'], 'sudo')
             ]
 
+
+class TestDisableDAD(TestCase):
+    """
+    Duplicate Address Detection should be auto-disabled for non-external
+    networks.
+    """
+
+    def setUp(self):
+        self.execute_patch = mock.patch('akanda.router.utils.execute')
+        self.mock_execute = self.execute_patch.start()
+
+    def tearDown(self):
+        self.execute_patch.stop()
+
+    def test_dad_for_external(self):
+        mgr = ip.IPManager()
+        with mock.patch.object(mgr, 'generic_to_host', lambda x: x):
+            mgr.disable_duplicate_address_detection(models.Network(
+                'ABC123',
+                models.Interface('eth1'),
+                network_type=models.Network.TYPE_EXTERNAL
+            ))
+            assert self.mock_execute.call_count == 0
+
+    def test_dad_for_management(self):
+        mgr = ip.IPManager()
+        with mock.patch.object(mgr, 'generic_to_host', lambda x: x):
+            mgr.disable_duplicate_address_detection(models.Network(
+                'ABC123',
+                models.Interface('eth0'),
+                network_type=models.Network.TYPE_MANAGEMENT
+            ))
+        assert self.mock_execute.call_count == 1
+        assert self.mock_execute.call_args_list == [
+            mock.call([
+                'sysctl', '-w', 'net.ipv6.conf.eth0.accept_dad=0'
+            ], 'sudo'),
+        ]
+
+    def test_dad_for_internal(self):
+        mgr = ip.IPManager()
+        with mock.patch.object(mgr, 'generic_to_host', lambda x: x):
+            mgr.disable_duplicate_address_detection(models.Network(
+                'ABC123',
+                models.Interface('eth2'),
+                network_type=models.Network.TYPE_INTERNAL
+            ))
+        assert self.mock_execute.call_count == 1
+        assert self.mock_execute.call_args_list == [
+            mock.call([
+                'sysctl', '-w', 'net.ipv6.conf.eth2.accept_dad=0'
+            ], 'sudo'),
+        ]
+
+    def test_sysctl_failure(self):
+        logger = ip.LOG
+        logger.level = logging.DEBUG
+        buff = StringIO()
+        handler = logging.StreamHandler(buff)
+
+        self.mock_execute.side_effect = RuntimeError
+        mgr = ip.IPManager()
+        with mock.patch.object(mgr, 'generic_to_host', lambda x: x):
+            try:
+                logger.addHandler(handler)
+                mgr.disable_duplicate_address_detection(models.Network(
+                    'ABC123',
+                    models.Interface('eth0'),
+                    network_type=models.Network.TYPE_MANAGEMENT
+                ))
+                assert 'Failed to disable v6 dad on eth0' in buff.getvalue()
+            finally:
+                logger.removeHandler(handler)
 
 class ParseTestCase(TestCase):
     def test_parse_interfaces(self):

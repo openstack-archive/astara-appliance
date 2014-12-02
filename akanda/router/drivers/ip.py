@@ -440,6 +440,28 @@ class IPManager(base.Manager):
             LOG.warn('Route could not be %sed: %s' % (action, unicode(e)))
             return False
 
+    def disable_duplicate_address_detection(self, network):
+        """
+        Disabled duplicate address detection for a specific interface.
+
+        :type network: akanda.models.Network
+        """
+        # For non-external networks, duplicate address detection isn't
+        # necessary (and it sometimes results in race conditions for services
+        # that attempt to bind to addresses before they're ready).
+
+        if network.network_type != network.TYPE_EXTERNAL:
+            real_ifname = self.generic_to_host(network.interface.ifname)
+            try:
+                utils.execute([
+                    'sysctl', '-w', 'net.ipv6.conf.%s.accept_dad=0'
+                    % real_ifname
+                ], self.root_helper)
+            except RuntimeError:
+                LOG.debug(
+                    'Failed to disable v6 dad on %s' % real_ifname
+                )
+
     def _delete_conntrack_state(self, ip):
         """
         Explicitly remove an IP from in-kernel connection tracking.
