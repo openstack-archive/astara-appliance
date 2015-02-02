@@ -196,7 +196,7 @@ class IPManager(base.Manager):
             """
             family = {4: 'inet', 6: 'inet6'}[address[0].version]
             args = ['addr', cmd, '%s/%s' % (address[0], address[1])]
-            if cmd == 'add':
+            if family == 'inet' and cmd == 'add':
                 args += ['brd', '+']
             args += ['dev', real_ifname]
             if family == 'inet6':
