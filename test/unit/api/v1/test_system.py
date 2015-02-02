@@ -18,7 +18,8 @@
 """
 Base classes for System Router API tests.
 """
-from unittest import TestCase
+import unittest
+import distutils
 
 from dogpile.cache import make_region
 import flask
@@ -28,7 +29,7 @@ import mock
 from akanda.router.api import v1
 
 
-class SystemAPITestCase(TestCase):
+class SystemAPITestCase(unittest.TestCase):
     """
     This test case contains the unit tests for the Python server implementation
     of the Router API. The focus of these tests is to ensure that the server is
@@ -48,6 +49,10 @@ class SystemAPITestCase(TestCase):
         v1.system._cache = self._old_cache
         super(SystemAPITestCase, self).tearDown()
 
+    @unittest.skipIf(
+        not distutils.spawn.find_executable('ip'),
+        'unsupported platform'
+    )
     def test_get_interface(self):
         with mock.patch.object(v1.system.manager, 'get_interface') as get_if:
             get_if.return_value = 'ge1'
@@ -58,6 +63,10 @@ class SystemAPITestCase(TestCase):
                 {'interface': 'ge1'}
             )
 
+    @unittest.skipIf(
+        not distutils.spawn.find_executable('ip'),
+        'unsupported platform'
+    )
     def test_get_interfaces(self):
         with mock.patch.object(v1.system.manager, 'get_interfaces') as get_ifs:
             get_ifs.return_value = ['ge0', 'ge1']
@@ -68,6 +77,10 @@ class SystemAPITestCase(TestCase):
                 {'interfaces': ['ge0', 'ge1']}
             )
 
+    @unittest.skipIf(
+        not distutils.spawn.find_executable('ip'),
+        'unsupported platform'
+    )
     def test_get_configuration(self):
         result = self.test_app.get('/v1/system/config')
         expected = {
@@ -112,6 +125,10 @@ class SystemAPITestCase(TestCase):
                 'The config failed to validate.\nerror1'
             )
 
+    @unittest.skipIf(
+        not distutils.spawn.find_executable('ip'),
+        'unsupported platform'
+    )
     def test_put_configuration_returns_200(self):
         with mock.patch.object(v1.system.manager, 'update_config') as update:
             result = self.test_app.put(
