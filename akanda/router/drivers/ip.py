@@ -195,13 +195,10 @@ class IPManager(base.Manager):
             Generates an `ip addr (add|del) <cidr> dev <ifname>` command.
             """
             family = {4: 'inet', 6: 'inet6'}[address[0].version]
-            args = [
-                'addr',
-                cmd,
-                '%s/%s' % (address[0], address[1]),
-                'dev',
-                real_ifname
-            ]
+            args = ['addr', cmd, '%s/%s' % (address[0], address[1])]
+            if cmd == 'add':
+                args += ['brd', '+']
+            args += ['dev', real_ifname]
             if family == 'inet6':
                 args = ['-6'] + args
             return args

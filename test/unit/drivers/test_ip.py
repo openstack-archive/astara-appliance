@@ -254,13 +254,15 @@ class IPTestCase(TestCase):
             mgr._update_addresses('em0', iface, old_iface)
             assert self.mock_execute.call_args_list == [
                 mock.call([
-                    cmd, 'addr', 'add', '192.168.105.2/24', 'dev', 'em0'
+                    cmd, 'addr', 'add', '192.168.105.2/24', 'brd', '+', 'dev',
+                    'em0'
                 ], 'sudo'),
                 mock.call([cmd, 'link', 'set', 'em0', 'up'], 'sudo'),
                 mock.call([cmd, 'addr', 'show', 'em0']),
                 mock.call([
                     cmd, '-6', 'addr', 'add',
-                    'fdca:3ba5:a17a:acda:20c:29ff:fe94:723d/64', 'dev', 'em0'
+                    'fdca:3ba5:a17a:acda:20c:29ff:fe94:723d/64', 'brd', '+',
+                    'dev', 'em0'
                 ], 'sudo'),
                 mock.call([cmd, 'link', 'set', 'em0', 'up'], 'sudo'),
                 mock.call([cmd, 'addr', 'show', 'em0'])
@@ -365,8 +367,8 @@ class IPTestCase(TestCase):
                 mock.call([cmd, 'link', 'set', 'eth0', 'up'], 'sudo'),
                 mock.call([
                     cmd, '-6', 'addr', 'add',
-                    'fdca:3ba5:a17a:acda:f816:3eff:fe34:ba28/64', 'dev',
-                    'eth0'
+                    'fdca:3ba5:a17a:acda:f816:3eff:fe34:ba28/64', 'brd', '+',
+                    'dev', 'eth0'
                 ], 'sudo'),
                 mock.call([cmd, 'link', 'set', 'eth0', 'up'], 'sudo')
             ]
