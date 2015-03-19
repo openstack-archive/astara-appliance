@@ -25,7 +25,7 @@ setup(
     author='DreamHost',
     author_email='dev-community@dreamhost.com',
     url='http://github.com/dreamhost/akanda',
-    license='BSD',
+    license='Apache2',
     install_requires=[
         'flask>=0.9',
         'dogpile.cache>=0.5.4',
