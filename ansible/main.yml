@@ -1,0 +1,26 @@
+---
+- hosts: all
+  sudo: true
+
+  vars:
+    bird_enable: True
+    bird6_enable: True
+    bird_enable_service: False
+    dnsmasq_conf_dir: /etc/dnsmasq.d
+    dnsmasq_conf_file: /etc/dnsmasq.conf
+    install_extras: False
+    do_cleanup: True
+    router_appliance: True
+    update_kernel: False
+
+  tasks:
+    - include: tasks/debian_backports.yml
+      when: ansible_distribution == "Debian" and ansible_distribution_release == "wheezy"
+    - include: tasks/update_kernel.yml
+      when: update_kernel
+    - include: tasks/base.yml
+    - include: tasks/akanda.yml
+    - include: tasks/bird.yml
+    - include: tasks/dnsmasq.yml
+    - include: tasks/extras.yml
+      when: install_extras
