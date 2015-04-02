@@ -1,17 +1,17 @@
 ---
 - hosts: all
-  sudo: true
+  sudo: True
 
   vars:
-    bird_enable: True
+    bird_enable: False
     bird6_enable: True
-    bird_enable_service: False
+    bird_enable_service: True
     dnsmasq_conf_dir: /etc/dnsmasq.d
     dnsmasq_conf_file: /etc/dnsmasq.conf
     install_extras: False
     do_cleanup: True
     router_appliance: True
-    update_kernel: False
+    update_kernel: True
 
   tasks:
     - include: tasks/debian_backports.yml
