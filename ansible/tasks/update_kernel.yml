@@ -1,0 +1,21 @@
+---
+
+- stat: path=/boot/grub
+  register: grub_dir
+
+- stat: path=/boot
+  register: boot_dir
+
+- name: install kernel (Debian)
+  apt: name=linux-image-amd64 state=latest install_recommends=no
+
+- name: update grub conf
+  when: grub_dir.stat.exists == True
+  template: src=default_grub dest=/etc/default/grub
+
+- stat: path=/boot
+  register: boot_dir_after
+
+- name: update-grub
+  when: boot_dir_after.stat.mtime > boot_dir.stat.mtime
+  command: update-grub
