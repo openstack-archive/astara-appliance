@@ -63,8 +63,8 @@ EOF
 echo "[*] APT Update"
 apt-get update || exit 1
 
-echo "[*] Upgrade to the 3.14 backport kernel and update bash to fix CVE-2014-6271"
-apt-get -y install linux-image-3.14-0.bpo.2-amd64 bash
+echo "[*] Upgrade to the 3.14 (or greater) backport kernel and update bash to fix CVE-2014-6271"
+apt-get -y install linux-image-3.16.0-0.bpo.4-amd64 bash
 
 echo "[*] Creating motd file..."
 cat >/etc/motd <<EOF
@@ -144,6 +144,8 @@ net.ipv6.conf.eth0.accept_dad=0
 net.ipv6.conf.eth1.accept_dad=1
 net.ipv6.conf.eth2.accept_dad=0
 net.ipv4.conf.all.arp_announce=2
+net.ipv4.conf.default.arp_notify=1
+net.ipv4.conf.all.arp_notify=1
 EOF
 
 echo "[*] Disable fsck on boot"
