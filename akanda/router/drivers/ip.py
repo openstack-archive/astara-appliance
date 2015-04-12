@@ -234,30 +234,6 @@ class IPManager(base.Manager):
             if ip.version == 4:
                 self._delete_conntrack_state(ip)
 
-    def get_management_address(self, ensure_configuration=False):
-        """
-        Get the network interface address that will be used for management
-        traffic.
-
-        :param ensure_configuration: when `True`, this method will ensure that
-                                     the management address if configured on
-                                     `ge0`.
-        :rtype: str
-        """
-        primary = self.get_interface(GENERIC_IFNAME + '0')
-        prefix, prefix_len = ULA_PREFIX.split('/', 1)
-        eui = netaddr.EUI(primary.lladdr)
-        ip_str = str(eui.ipv6_link_local()).replace('fe80::', prefix[:-1])
-
-        if not primary.is_up:
-            self.up(primary)
-
-        ip = netaddr.IPNetwork('%s/%s' % (ip_str, prefix_len))
-        if ensure_configuration and ip not in primary.addresses:
-            primary.addresses.append(ip)
-            self.update_interface(primary)
-        return ip_str
-
     def update_default_gateway(self, config):
         """
         Sets the default gateway for v4 and v6 via the use of `ip route add`.

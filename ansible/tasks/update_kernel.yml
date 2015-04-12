@@ -7,7 +7,7 @@
   register: boot_dir
 
 - name: install kernel (Debian)
-  apt: name=linux-image-amd64 state=latest install_recommends=no
+  apt: name=linux-image-amd64 state=latest install_recommends=no default_release=wheezy-backports
 
 - name: update grub conf
   when: grub_dir.stat.exists == True
@@ -17,5 +17,5 @@
   register: boot_dir_after
 
 - name: update-grub
-  when: boot_dir_after.stat.mtime > boot_dir.stat.mtime
+  when: boot_dir_after.stat.mtime > boot_dir.stat.mtime and grub_dir.stat.exists == True
   command: update-grub

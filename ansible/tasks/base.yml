@@ -30,3 +30,14 @@
 - name: disable fsck on boot via fastboot
   file: path=/fastboot state=touch
 
+- name: reset v4 persistent table rules
+  template: src=rules_v4.j2 dest=/etc/iptables/rules.v4
+
+- name: reset v6 persistent table rules
+  template: src=rules_v6.j2 dest=/etc/iptables/rules.v6
+
+- name: clear out network interfaces.d
+  shell: rm -f /etc/network/interfaces.d/*
+
+- name: reset network interfaces
+  file: content="auto lo\niface lo inet loopback" dest=/etc/network/interfaces

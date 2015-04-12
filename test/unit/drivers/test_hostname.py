@@ -23,6 +23,7 @@ from akanda.router.drivers import hostname, ip
 
 CONFIG = mock.Mock()
 CONFIG.hostname = 'akanda'
+CONFIG.management_address = 'fdca:3ba5:a17a:acda:f816:3eff:fe66:33b6'
 
 
 class HostnameTestCase(TestCase):
@@ -44,14 +45,12 @@ class HostnameTestCase(TestCase):
             mock.call(['mv', '/tmp/hostname', '/etc/hostname'], 'sudo')
         ])
 
-    @mock.patch.object(ip.IPManager, 'get_management_address')
-    def test_update_hosts(self, addr):
+    def test_update_hosts(self):
         expected = [
             '127.0.0.1  localhost',
             '::1  localhost ip6-localhost ip6-loopback',
             'fdca:3ba5:a17a:acda:f816:3eff:fe66:33b6  akanda'
         ]
-        addr.return_value = 'fdca:3ba5:a17a:acda:f816:3eff:fe66:33b6'
         self.mgr.update_hosts(CONFIG)
         self.mock_execute.assert_has_calls([
             mock.call(['mv', '/tmp/hosts', '/etc/hosts'], 'sudo')
