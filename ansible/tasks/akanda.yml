@@ -18,6 +18,9 @@
 - name: install akanda-appliance
   command: python setup.py install chdir=/tmp/akanda-appliance
 
+- name: install gunicorn config file
+  template: src=gunicorn.j2 dest=/etc/akanda_gunicorn_config
+
 - name: install init.d files
   copy: src={{playbook_dir}}/../scripts/etc/init.d/{{item}} dest=/etc/init.d/{{item}} mode=0555
   with_items:

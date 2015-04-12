@@ -396,6 +396,10 @@ class Network(ModelBase):
         return self._network_type == self.TYPE_EXTERNAL
 
     @property
+    def is_management_network(self):
+        return self._network_type == self.TYPE_MANAGEMENT
+
+    @property
     def network_type(self):
         return self._network_type
 
@@ -560,3 +564,15 @@ class Configuration(ModelBase):
     @property
     def interfaces(self):
         return [n.interface for n in self.networks if n.interface]
+
+    @property
+    def management_address(self):
+        addrs = []
+        for net in self.networks:
+            if net.is_management_network:
+                addrs.extend((net.interface.first_v4, net.interface.first_v6))
+
+        addrs = sorted(a for a in addrs if a)
+
+        if addrs:
+            return addrs[0]

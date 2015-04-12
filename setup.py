@@ -1,6 +1,5 @@
 # Copyright 2014 DreamHost, LLC
-#
-# Author: DreamHost, LLC
+# Copyright 2015 Akanda, Inc
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -20,11 +19,11 @@ from setuptools import setup, find_packages
 
 setup(
     name='akanda-router',
-    version='0.2.0',
+    version='0.3.0',
     description='A packet filter based router appliance',
-    author='DreamHost',
-    author_email='dev-community@dreamhost.com',
-    url='http://github.com/dreamhost/akanda',
+    author='Akanda',
+    author_email='dev-community@akanda.io',
+    url='http://github.com/akanda/akanda',
     license='Apache2',
     install_requires=[
         'flask>=0.9',
@@ -40,10 +39,8 @@ setup(
     zip_safe=False,
     entry_points={
         'console_scripts': [
-            'akanda-configure-ssh ='
-            'akanda.router.commands.management:configure_ssh',
-            'akanda-configure-gunicorn = '
-            'akanda.router.commands.management:configure_gunicorn',
+            'akanda-configure-management ='
+            'akanda.router.commands.management:configure_management',
             'akanda-api-dev-server = akanda.router.api.server:main',
             'akanda-metadata-proxy = akanda.router.metadata_proxy:main',
         ]
