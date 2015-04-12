@@ -335,42 +335,6 @@ class IPTestCase(TestCase):
         mgr._update_set('em0', iface, old_iface, 'all_addresses', add, delete)
         self.assertEqual(self.mock_execute.call_count, 0)
 
-    def test_get_management_address(self):
-        # Mark eth0 as DOWN
-        output = """2: eth0: <BROADCAST,MULTICAST> mtu 1500 qdisc pfifo_fast state DOWN qlen 1000
-    link/ether fa:16:3e:34:ba:28 brd ff:ff:ff:ff:ff:ff
-       valid_lft forever preferred_lft forever"""  # noqa
-
-        fake_output = lambda *x: output
-        with mock.patch.object(ip.IPManager, 'do', fake_output):
-            mgr = ip.IPManager()
-            addr = mgr.get_management_address()
-            assert addr == 'fdca:3ba5:a17a:acda:f816:3eff:fe34:ba28'
-            assert self.mock_execute.call_args_list == [
-                mock.call(['/sbin/ip', 'link', 'set', 'eth0', 'up'], 'sudo'),
-            ]
-
-    def test_get_management_address_with_autoconfiguration(self):
-        cmd = '/sbin/ip'
-        # Mark eth0 as DOWN
-        output = """2: eth0: <BROADCAST,MULTICAST> mtu 1500 qdisc pfifo_fast state DOWN qlen 1000
-    link/ether fa:16:3e:34:ba:28 brd ff:ff:ff:ff:ff:ff
-       valid_lft forever preferred_lft forever"""  # noqa
-
-        fake_output = lambda *x: output
-        with mock.patch.object(ip.IPManager, 'do', fake_output):
-            mgr = ip.IPManager()
-            addr = mgr.get_management_address(ensure_configuration=True)
-            assert addr == 'fdca:3ba5:a17a:acda:f816:3eff:fe34:ba28'
-            assert self.mock_execute.call_args_list == [
-                mock.call([cmd, 'link', 'set', 'eth0', 'up'], 'sudo'),
-                mock.call([
-                    cmd, '-6', 'addr', 'add',
-                    'fdca:3ba5:a17a:acda:f816:3eff:fe34:ba28/64', 'dev', 'eth0'
-                ], 'sudo'),
-                mock.call([cmd, 'link', 'set', 'eth0', 'up'], 'sudo')
-            ]
-
 
 class TestDisableDAD(TestCase):
     """

@@ -20,13 +20,8 @@ test -x $DAEMON || exit 0
 
 . /lib/lsb/init-functions
 
-akanda_configure_gunicorn() {
-        /usr/local/bin/akanda-configure-gunicorn
-}
-
 case "$1" in
   start)
-        akanda_configure_gunicorn
 	log_daemon_msg "Starting akanda-router-api-server" $NAME
 	start_daemon -p $PIDFILE $DAEMON $OPTIONS
 	log_end_msg $?
