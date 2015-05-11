@@ -1,4 +1,0 @@
-unittest2
-nose
-coverage
-mock>=0.8.0
