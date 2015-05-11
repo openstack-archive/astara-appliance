@@ -58,6 +58,7 @@ class IPTablesManager(base.Manager):
         rules = itertools.chain(
             self._build_filter_table(config),
             self._build_nat_table(config),
+            self._build_mangle_table(config),
             self._build_raw_table(config)
         )
 
@@ -358,6 +359,22 @@ class IPTablesManager(base.Manager):
             ip_version=4
         ))
 
+        return rules
+
+    def _build_mangle_table(self, config):
+        rules = [
+            Rule('*mangle', ip_version=4),
+            Rule(':INPUT - [0:0]', ip_version=4),
+            Rule(':OUTPUT - [0:0]', ip_version=4),
+            Rule(':FORWARD - [0:0]', ip_version=4),
+            Rule(':PREROUTING - [0:0]', ip_version=4),
+            Rule(':POSTROUTING - [0:0]', ip_version=4),
+            Rule(
+                ('-A POSTROUTING -p udp -m udp --dport 68 '
+                 '-j CHECKSUM --checksum-fill'),
+                ip_version=4),
+            Rule('COMMIT', ip_version=4)
+        ]
         return rules
 
     def _build_raw_table(self, config):
