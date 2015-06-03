@@ -1,11 +1,11 @@
 ---
 
 - name: install bird
-  apt: name=bird state=installed install_recommends=no default_release=wheezy-backports
+  apt: name=bird state=installed install_recommends=no
   when: bird_enable
 
 - name: install bird6
-  apt: name=bird6 state=installed install_recommends=no default_release=wheezy-backports
+  apt: name=bird6 state=installed install_recommends=no
   when: bird6_enable
 
 # Debian version does not support status ensure that it exists
