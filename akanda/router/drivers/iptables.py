@@ -16,7 +16,7 @@
 
 import re
 import itertools
-
+import os
 
 from akanda.router.drivers import base
 from akanda.router.models import Network
@@ -84,10 +84,19 @@ class IPTablesManager(base.Manager):
 
     def restart(self):
         '''
-        Reload firewall rules via iptables-persistent
+        Reload firewall rules via [netfilter/iptables]-persistent
+        Note that at some point iptables-persistent merged into
+        netfilter-persistent as a plugin, so use that instead if it is
+        available
         '''
+        _init = '/etc/init.d/%s-persistent'
+        if os.path.isfile(_init % 'netfilter'):
+            init = _init % 'netfilter'
+        else:
+            init = _init % 'iptables'
+
         utils.execute(
-            ['/etc/init.d/iptables-persistent', 'restart'],
+            [init, 'restart'],
             self.root_helper
         )
 

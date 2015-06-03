@@ -171,11 +171,22 @@ class TestIPTablesConfiguration(TestCase):
             )
         ]
 
-    def test_restart(self):
+    @mock.patch('os.path.isfile')
+    def test_restart_iptables_persistent(self, mock_isfile):
+        mock_isfile.return_value = False
         mgr = iptables.IPTablesManager()
         mgr.restart()
         assert self.execute.call_args_list == [
             mock.call(['/etc/init.d/iptables-persistent', 'restart'], 'sudo')
+        ]
+
+    @mock.patch('os.path.isfile')
+    def test_restart_netfilter_persistent(self, mock_isfile):
+        mock_isfile.return_value = True
+        mgr = iptables.IPTablesManager()
+        mgr.restart()
+        assert self.execute.call_args_list == [
+            mock.call(['/etc/init.d/netfilter-persistent', 'restart'], 'sudo')
         ]
 
     def test_mixed_floating_ip_versions(self):
