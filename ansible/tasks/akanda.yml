@@ -5,6 +5,7 @@
   with_items:
     - python-pip
     - python-dev
+    - logrotate
 
 - name: copy akanda-appliance code
   synchronize: src={{ playbook_dir }}/.. dest=/tmp/akanda-appliance
@@ -17,6 +18,12 @@
 
 - name: install akanda-appliance
   command: python setup.py install chdir=/tmp/akanda-appliance
+
+- name: install akanda gunicorn logging directory
+  file: path=/var/log/akanda state=directory
+
+- name: install akanda logrotate config
+  template: src=logrotate.j2 dest=/etc/logrotate.d/akanda
 
 - name: install gunicorn config file
   template: src=gunicorn.j2 dest=/etc/akanda_gunicorn_config
