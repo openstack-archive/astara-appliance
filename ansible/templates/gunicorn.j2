@@ -2,6 +2,7 @@ import multiprocessing
 
 bind = '[::]:5000'
 workers = workers = multiprocessing.cpu_count() * 2 + 1
+timeout=60
 backlog = 2048
 worker_class ="sync"
 debug = False
