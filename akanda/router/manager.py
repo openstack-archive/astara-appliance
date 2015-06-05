@@ -101,6 +101,10 @@ class Manager(object):
 
     def update_arp(self):
         mgr = arp.ARPManager()
+        mgr.send_gratuitous_arp_for_floating_ips(
+            self.config,
+            self.ip_mgr.generic_to_host
+        )
         mgr.remove_stale_entries(self.config)
 
     def get_interfaces(self):

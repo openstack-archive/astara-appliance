@@ -16,6 +16,7 @@
 
 import logging
 import re
+import socket
 from cStringIO import StringIO
 
 from unittest2 import TestCase
@@ -260,9 +261,6 @@ class IPTestCase(TestCase):
                 mock.call([cmd, 'link', 'set', 'em0', 'up'], 'sudo'),
                 mock.call([cmd, 'addr', 'show', 'em0']),
                 mock.call([
-                    'arping', '-A', '-c', '1', '-I', 'em0', '192.168.105.2'
-                ], 'sudo'),
-                mock.call([
                     cmd, '-6', 'addr', 'add',
                     'fdca:3ba5:a17a:acda:20c:29ff:fe94:723d/64', 'dev', 'em0'
                 ], 'sudo'),
@@ -317,9 +315,6 @@ class IPTestCase(TestCase):
                 ], 'sudo'),
                 mock.call(['/sbin/ip', 'link', 'set', 'em0', 'up'], 'sudo'),
                 mock.call(['/sbin/ip', 'addr', 'show', 'em0']),
-                mock.call([
-                    'arping', '-A', '-c', '1', '-I', 'em0', str(a.ip)
-                ], 'sudo'),
                 mock.call([
                     '/sbin/ip', 'addr', 'del', str(c), 'dev', 'em0'
                 ], 'sudo'),
