@@ -17,8 +17,11 @@
 
 import logging
 import re
+import socket
+import struct
 
 from akanda.router.drivers import base
+from akanda.router.models import Network
 
 
 LOG = logging.getLogger(__name__)
@@ -30,6 +33,71 @@ class ARPManager(base.Manager):
     provides support for deleting stuff from the cache.
     """
     EXECUTABLE = '/usr/sbin/arp'
+
+    def send_gratuitous_arp_for_floating_ips(self, config, generic_to_host):
+        """
+        Send a gratuitous ARP for every Floating IP.
+        :type config: akanda.router.models.Configuration
+        :param config: An akanda.router.models.Configuration object containing
+                       configuration information for the system's network
+                       setup.
+        :type generic_to_host: callable
+        :param generic_to_host: A callable which translates a generic interface
+                                name (e.g., "ge0") to a physical name (e.g.,
+                                "eth0")
+        """
+        external_nets = filter(
+            lambda n: n.network_type == Network.TYPE_EXTERNAL,
+            config.networks
+        )
+        for net in external_nets:
+            for fip in net.floating_ips:
+                self.send_gratuitous_arp(
+                    generic_to_host(net.interface.ifname),
+                    str(fip.floating_ip)
+                )
+
+    def send_gratuitous_arp(self, ifname, address):
+        """
+        Send a gratuitous ARP reply.  Generally used when Floating IPs are
+        associated.
+        :type ifname: str
+        :param ifname: The real name of the interface to send an ARP on
+        :type address: str
+        :param address: The source IPv4 address
+        """
+        HTYPE_ARP = 0x0806
+        PTYPE_IPV4 = 0x0800
+
+        # Bind to the socket
+        sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW)
+        sock.bind((ifname, HTYPE_ARP))
+        hwaddr = sock.getsockname()[4]
+
+        # Build a gratuitous ARP packet
+        gratuitous_arp = [
+            struct.pack("!h", 1),  # HTYPE Ethernet
+            struct.pack("!h", PTYPE_IPV4),  # PTYPE IPv4
+            struct.pack("!B", 6),  # HADDR length, 6 for IEEE 802 MAC addresses
+            struct.pack("!B", 4),  # PADDR length, 4 for IPv4
+            struct.pack("!h", 2),  # OPER, 2 = ARP Reply
+
+            # Sender's hardware and protocol address are duplicated in the
+            # target fields
+
+            hwaddr,  # Sender MAC
+            socket.inet_aton(address),  # Sender IP address
+            hwaddr,  # Target MAC
+            socket.inet_aton(address)  # Target IP address
+        ]
+        frame = [
+            '\xff\xff\xff\xff\xff\xff',  # Broadcast destination
+            hwaddr,  # Source address
+            struct.pack("!h", HTYPE_ARP),
+            ''.join(gratuitous_arp)
+        ]
+        sock.send(''.join(frame))
+        sock.close()
 
     def remove_stale_entries(self, config):
         """
