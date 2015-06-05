@@ -228,13 +228,6 @@ class IPManager(base.Manager):
             self.sudo(*fmt_args_add(item))
             self.up(interface)
 
-            # Send a gratuitous ARP for new v4 addressees
-            ip, prefix = item
-            if ip.version == 4:
-                utils.execute([
-                    'arping', '-A', '-c', '1', '-I', real_ifname, str(ip)
-                ], self.root_helper)
-
         for item in (prev_set - next_set):
             self.sudo(*fmt_args_delete(item))
             ip, prefix = item
