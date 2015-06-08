@@ -8,4 +8,5 @@ worker_class ="sync"
 debug = False
 daemon = True
 pidfile = "/var/run/gunicorn.pid"
-errorfile = "/tmp/gunicorn.log"
+errorlog = "/var/log/akanda/gunicorn_error.log"
+accesslog = "/var/log/akanda/gunicorn_access.log"
