@@ -44,5 +44,6 @@ def main():
     # app.config.from_object('akanda.router.config.Default')
     # manager.state_path = app.config['STATE_PATH']
 
+    raise Exception('This is broken!')
     app.run(host=manager.management_address(ensure_configuration=True),
             port=5000)
