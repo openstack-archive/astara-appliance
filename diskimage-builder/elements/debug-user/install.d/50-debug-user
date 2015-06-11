@@ -1,0 +1,21 @@
+#!/bin/bash
+
+DIB_AKANDA_APPLIANCE_DEBUG_USER=${DIB_AKANDA_APPLIANCE_DEBUG_USER:-akanda-debug}
+DIB_AKANDA_APPLIANCE_DEBUG_PASSWORD=${DIB_AKANDA_APPLIANCE_DEBUG_PASSWORD:-akanda}
+
+set -eu
+set -o xtrace
+
+useradd -m $DIB_AKANDA_APPLIANCE_DEBUG_USER -s /bin/bash
+
+passwd $DIB_AKANDA_APPLIANCE_DEBUG_USER <<EOF
+$DIB_AKANDA_APPLIANCE_DEBUG_PASSWORD
+$DIB_AKANDA_APPLIANCE_DEBUG_PASSWORD
+EOF
+
+cat > /etc/sudoers.d/akanda-debug-user <<eof
+$DIB_AKANDA_APPLIANCE_DEBUG_USER ALL=(ALL) NOPASSWD:ALL
+eof
+
+chmod 0440 /etc/sudoers.d/akanda-debug-user
+visudo -c
