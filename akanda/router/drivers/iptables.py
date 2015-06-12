@@ -107,7 +107,7 @@ class IPTablesManager(base.Manager):
         '''
         Returns the external network
 
-        :rtype: akanda.router.models.Interface
+        :rtype: akanda.router.models.Network
         '''
         return self.networks_by_type(config, Network.TYPE_EXTERNAL)[0]
 
@@ -115,9 +115,17 @@ class IPTablesManager(base.Manager):
         '''
         Returns the management network
 
-        :rtype: akanda.router.models.Interface
+        :rtype: akanda.router.models.Network
         '''
         return self.networks_by_type(config, Network.TYPE_MANAGEMENT)[0]
+
+    def get_internal_networks(self, config):
+        '''
+        Returns the internal networks
+
+        :rtype: [akanda.router.models.Network]
+        '''
+        return self.networks_by_type(config, Network.TYPE_INTERNAL)
 
     def networks_by_type(self, config, type):
         '''
@@ -203,7 +211,7 @@ class IPTablesManager(base.Manager):
         rules = []
         ext_if = self.get_external_network(config).interface
 
-        for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
+        for network in self.get_internal_networks(config):
 
             for version, address, dhcp_port in (
                 (4, network.interface.first_v4, defaults.DHCP),
@@ -261,7 +269,7 @@ class IPTablesManager(base.Manager):
     def _build_v4_nat(self, config):
         rules = []
 
-        for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
+        for network in self.get_internal_networks(config):
             if network.interface.first_v4:
                 # Forward metadata requests on the management interface
                 rules.append(Rule(
@@ -302,11 +310,6 @@ class IPTablesManager(base.Manager):
             # people create these accidentally, just ignore them (because
             # iptables will barf if it encounters them)
             if fip.fixed_ip.version == fip.floating_ip.version:
-                rules.append(
-                    Rule('-A POSTROUTING -s %s -j PUBLIC_SNAT' % (
-                        fip.fixed_ip
-                    ), ip_version=4)
-                )
                 rules.append(Rule(
                     '-A PREROUTING -i %s -d %s -j DNAT --to-destination %s' % (
                         ext_if.ifname,
@@ -314,9 +317,7 @@ class IPTablesManager(base.Manager):
                         fip.fixed_ip
                     ), ip_version=4
                 ))
-                for network in self.networks_by_type(
-                    config, Network.TYPE_INTERNAL
-                ):
+                for network in self.get_internal_networks(config):
                     rules.append(Rule(
                         '-A PREROUTING -i %s -d %s -j DNAT '
                         '--to-destination %s' % (
@@ -325,6 +326,16 @@ class IPTablesManager(base.Manager):
                             fip.fixed_ip
                         ), ip_version=4
                     ))
+
+        if rules:
+            for network in self.get_internal_networks(config):
+                for subnet in network.subnets:
+                    if subnet.cidr.version == 4:
+                        rules.append(
+                            Rule('-A POSTROUTING -s %s -j PUBLIC_SNAT' % (
+                                subnet.cidr
+                            ), ip_version=4)
+                        )
 
         return rules
 
@@ -341,8 +352,10 @@ class IPTablesManager(base.Manager):
             )
         ]
 
+        external_network = self.get_external_network(config)
+
         # NAT floating IP addresses
-        for fip in self.get_external_network(config).floating_ips:
+        for fip in external_network.floating_ips:
 
             if fip.fixed_ip.version == fip.floating_ip.version:
                 rules.append(
@@ -352,10 +365,13 @@ class IPTablesManager(base.Manager):
                     ), ip_version=4)
                 )
 
-        # Add a masquerade catch-all for VMs without floating IPs
+        # Add source NAT for VMs without floating IPs
         mgt_if = self.get_management_network(config).interface
         rules.append(Rule(
-            '-A PUBLIC_SNAT ! -o %s -j MASQUERADE' % mgt_if.ifname,
+            '-A PUBLIC_SNAT ! -o %s -j SNAT --to %s' % (
+                mgt_if.ifname,
+                str(external_network.interface.first_v4)
+            ),
             ip_version=4
         ))
 
