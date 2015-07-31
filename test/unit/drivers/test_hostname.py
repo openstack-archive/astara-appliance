@@ -46,16 +46,13 @@ class HostnameTestCase(TestCase):
         ])
 
     def test_update_hosts(self):
-        expected = [
+        expected = mock.call('/tmp/hosts', '\n'.join([
             '127.0.0.1  localhost',
             '::1  localhost ip6-localhost ip6-loopback',
             'fdca:3ba5:a17a:acda:f816:3eff:fe66:33b6  akanda'
-        ]
+        ]))
         self.mgr.update_hosts(CONFIG)
         self.mock_execute.assert_has_calls([
             mock.call(['mv', '/tmp/hosts', '/etc/hosts'], 'sudo')
         ])
-        self.mock_replace_file.assert_has_calls(mock.call(
-            '/tmp/hosts',
-            '\n'.join(expected))
-        )
+        self.mock_replace_file.assert_has_calls([expected])
