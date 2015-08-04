@@ -417,6 +417,14 @@ class ParseTestCase(TestCase):
             retval = ip._parse_interfaces(SAMPLE_OUTPUT)
             self.assertEqual(len(retval), 3)
 
+    def test_parse_over_many_interfaces(self):
+        out = SAMPLE_OUTPUT
+        for i in range(150):
+            out += """\n%d: eth%d: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN qlen 1000
+    link/ether fa:16:3e:de:ad:be brd ff:ff:ff:ff:ff:ff""" % (i+4, i+2)
+        retval = ip._parse_interfaces(out, ['eth'])
+        self.assertEqual(len(retval), 152)
+
     def test_parse_interfaces_with_filter(self):
         with mock.patch.object(ip, '_parse_interface') as parse:
             parse.side_effect = lambda x: x
