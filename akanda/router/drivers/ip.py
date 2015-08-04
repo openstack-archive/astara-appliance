@@ -475,7 +475,7 @@ def _parse_interfaces(data, filters=None):
     :rtype: list of akanda.router.models.Interface
     """
     retval = []
-    for iface_data in re.split('(^|\n)(?=[0-9]: \w+\d{0,3}:)', data, re.M):
+    for iface_data in re.split('(^|\n)(?=[0-9]+: \w+\d{0,3}:)', data):
         if not iface_data.strip():
             continue
         number, interface = iface_data.split(': ', 1)
