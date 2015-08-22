@@ -1,6 +1,6 @@
 # Akanda Appliance
 
-*Part of the [Akanda Project](https://github.com/dreamhost/akanda).*
+*Part of the [Akanda Project](https://github.com/stackforge/akanda).*
 
 A Linux-based L3 software router.  Includes a REST API to monitor, configure,
 and manage the router.
