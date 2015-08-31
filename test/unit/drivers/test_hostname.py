@@ -55,7 +55,7 @@ class HostnameTestCase(TestCase):
         self.mock_execute.assert_has_calls([
             mock.call(['mv', '/tmp/hosts', '/etc/hosts'], 'sudo')
         ])
-        self.mock_replace_file.assert_has_calls(mock.call(
+        self.mock_replace_file.assert_has_calls([mock.call(
             '/tmp/hosts',
             '\n'.join(expected))
-        )
+        ])
