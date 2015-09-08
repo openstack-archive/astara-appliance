@@ -2,8 +2,8 @@
 # of appearance. Changing the order has an impact on the overall integration
 # process, which may cause wedges in the gate later.
 Flask<1.0,>=0.10
-dogpile.cache>=0.5.3
-netaddr>=0.7.12
+dogpile.cache>=0.5.4
+netaddr!=0.7.16,>=0.7.12
 eventlet>=0.17.4
 requests>=2.5.2
 greenlet>=0.3.2

@@ -4,4 +4,4 @@
 unittest2
 nose
 coverage>=3.6
-mock>=1.0
+mock>=1.2
