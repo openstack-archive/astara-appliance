@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# This is intended to provide an easier way for developers to iterate on
+# code thats run in live service VMs. We mount the akanda-appliance code
+# via NFS from another host (devstack), install it and re-start the service.
+# We still need to keep the local installation from 70-akanda to get networking
+# up, then we mount+replace+restart from rc.local.
+#
+# To enable this, set DIB_AKANDA_NFS_DEV and specify the ipv6 address of the
+# NFS server and the NFS export as DIB_AKANDA_NFS_DEV_SERVER +
+# DIB_AKANDA_NFS_DEV_EXPORT.
+#
+# Rather than having two install paths for dev and non-dev, just undo
+# the non-dev code install and setup the nfs dev env ontop.
+
+set -eux
+set -o pipefail
+
+# By default point back to devstack's default
+DIB_AKANDA_NFS_DEV=${DIB_AKANDA_NFS_DEV:-""}
+DIB_AKANDA_NFS_DEV_SERVER=${DIB_AKANDA_NFS_DEV_SERVER:-"fdca:3ba5:a17a:acda::1"}
+DIB_AKANDA_NFS_DEV_EXPORT=${DIB_AKANDA_NFS_DEV_EXPORT:-"/opt/stack/akanda-appliance"}
+
+if [[ -z "$DIB_AKANDA_NFS_DEV" ]]; then
+  echo "Akanda NFS dev env disabled"
+  exit 0
+fi
+
+apt-get -y install nfs-common
+
+echo "[$DIB_AKANDA_NFS_DEV_SERVER]:/ $DIB_AKANDA_NFS_DEV_EXPORT nfs4" >>/etc/fstab
+
+pip install "pbr>=1.3"
+
+cat >/etc/rc.local <<END
+#!/bin/bash
+
+# Wait till cloud-init's boot_cmd runs and we have networking
+while ! ip addr | grep fdca ; do
+    echo "Waiting on network to come up..." >/dev/kmsg
+    sleep 1
+done
+
+# Mount the code from devstack host
+mkdir -p $DIB_AKANDA_NFS_DEV_EXPORT
+echo "Mounting $DIB_AKANDA_NFS_DEV_EXPORT" >/dev/kmsg
+mount $DIB_AKANDA_NFS_DEV_EXPORT >/dev/kmsg 2>&1
+
+# Forcefully clean out all existing akanda-appliance code. We need to boot
+# with a regularly installed version since we depend on it to bring up
+# network interfaces.
+echo "Cleaning previous akanda-appliance install" >/dev/kmsg 2>&1
+pip uninstall -y akanda-appliance >/dev/kmsg 2>&1
+rm -rf /usr/local/lib/python2.7/dist-packages/akanda*
+
+# Reinstall from remote and restart the service.
+echo "Installing new akanda-appliance from $DIB_AKANDA_NFS_DEV_EXPORT" >/dev/kmsg
+pip install --editable $DIB_AKANDA_NFS_DEV_EXPORT >/dev/kmsg 2>&1
+echo "Restarting the akanda-router-api-server" >/dev/kmsg
+/etc/init.d/akanda-router-api-server restart >/dev/kmsg 2>&1
+END
+
+chmod +x /etc/rc.local
