@@ -17,11 +17,14 @@
 
 import textwrap
 
+import copy
 import mock
 import netaddr
+
 from unittest2 import TestCase
 
 from akanda.router import models
+from test.unit import fakes
 
 
 class InterfaceModelTestCase(TestCase):
@@ -360,7 +363,7 @@ class NetworkTestCase(TestCase):
             n = models.Network('id', None, v6_conf_service='invalid')
 
 
-class ConfigurationTestCase(TestCase):
+class RouterConfigurationTestCase(TestCase):
     def test_init_only_networks(self):
         subnet = dict(
             cidr='192.168.1.0/24',
@@ -375,28 +378,28 @@ class ConfigurationTestCase(TestCase):
             allocations=[],
             subnets=[subnet])
 
-        c = models.Configuration(dict(networks=[network]))
+        c = models.RouterConfiguration(dict(networks=[network]))
         self.assertEqual(len(c.networks), 1)
         self.assertEqual(c.networks[0],
                          models.Network.from_dict(network))
 
     def test_init_tenant_id(self):
-        c = models.Configuration({'tenant_id': 'abc123'})
+        c = models.RouterConfiguration({'tenant_id': 'abc123'})
         self.assertEqual(c.tenant_id, 'abc123')
 
     def test_no_default_v4_gateway(self):
-        c = models.Configuration({})
+        c = models.RouterConfiguration({})
         self.assertIsNone(c.default_v4_gateway)
 
     def test_valid_default_v4_gateway(self):
-        c = models.Configuration({'default_v4_gateway': '172.16.77.1'})
+        c = models.RouterConfiguration({'default_v4_gateway': '172.16.77.1'})
         self.assertEqual(c.default_v4_gateway.version, 4)
         self.assertEqual(str(c.default_v4_gateway), '172.16.77.1')
 
     def test_init_only_static_routes(self):
         routes = [('0.0.0.0/0', '192.168.1.1'),
                   ('172.16.77.0/16', '192.168.1.254')]
-        c = models.Configuration(dict(networks=[], static_routes=routes))
+        c = models.RouterConfiguration(dict(networks=[], static_routes=routes))
 
         self.assertEqual(len(c.static_routes), 2)
         self.assertEqual(
@@ -406,7 +409,7 @@ class ConfigurationTestCase(TestCase):
     def test_init_address_book(self):
         ab = {"webservers": ["192.168.57.101/32", "192.168.57.230/32"]}
 
-        c = models.Configuration(dict(networks=[], address_book=ab))
+        c = models.RouterConfiguration(dict(networks=[], address_book=ab))
         self.assertEqual(
             c.address_book.get('webservers'),
             models.AddressBookEntry('webservers', ab['webservers']))
@@ -414,7 +417,7 @@ class ConfigurationTestCase(TestCase):
     def test_init_label(self):
         labels = {"external": ["192.168.57.0/24"]}
 
-        c = models.Configuration(dict(networks=[], labels=labels))
+        c = models.RouterConfiguration(dict(networks=[], labels=labels))
         self.assertEqual(
             c.labels[0],
             models.Label('external', ['192.168.57.0/24']))
@@ -424,30 +427,30 @@ class ConfigurationTestCase(TestCase):
             name='theanchor',
             rules=[])
 
-        c = models.Configuration(dict(networks=[], anchors=[anchor_dict]))
+        c = models.RouterConfiguration(dict(networks=[], anchors=[anchor_dict]))
         self.assertEqual(len(c.anchors), 1)
 
     def test_init_anchor(self):
         test_rule = dict(action='block', source='192.168.1.1/32')
         anchor_dict = dict(name='theanchor', rules=[test_rule])
 
-        c = models.Configuration(dict(networks=[], anchors=[anchor_dict]))
+        c = models.RouterConfiguration(dict(networks=[], anchors=[anchor_dict]))
         self.assertEqual(len(c.anchors), 1)
         self.assertEqual(len(c.anchors[0].rules), 1)
         self.assertEqual(c.anchors[0].rules[0].action, 'block')
 
     def test_asn_default(self):
-        c = models.Configuration({'networks': []})
+        c = models.RouterConfiguration({'networks': []})
         self.assertEqual(c.asn, 64512)
         self.assertEqual(c.neighbor_asn, 64512)
 
     def test_asn_provided_with_neighbor_fallback(self):
-        c = models.Configuration({'networks': [], 'asn': 12345})
+        c = models.RouterConfiguration({'networks': [], 'asn': 12345})
         self.assertEqual(c.asn, 12345)
         self.assertEqual(c.neighbor_asn, 12345)
 
     def test_asn_provided_with_neighbor_different(self):
-        c = models.Configuration(
+        c = models.RouterConfiguration(
             {'networks': [], 'asn': 12, 'neighbor_asn': 34}
         )
         self.assertEqual(c.asn, 12)
@@ -463,7 +466,7 @@ class ConfigurationTestCase(TestCase):
         ab = {"webservers": ["192.168.57.101/32", "192.168.57.230/32"]}
         anchor_dict = dict(name='theanchor', rules=[rule_dict])
 
-        c = models.Configuration(
+        c = models.RouterConfiguration(
             dict(networks=[network], anchors=[anchor_dict], address_book=ab))
 
         errors = c.validate()
@@ -517,10 +520,163 @@ class ConfigurationTestCase(TestCase):
         self.assertEqual(len(errors), 1)
 
     def test_to_dict(self):
-        c = models.Configuration({'networks': []})
+        c = models.RouterConfiguration({'networks': []})
         expected = dict(networks=[],
                         address_book={},
                         static_routes=[],
                         anchors=[])
 
         self.assertEqual(c.to_dict(), expected)
+
+
+
+class LBListenerTest(TestCase):
+    def test_from_dict(self):
+        ldict = copy.copy(fakes.FAKE_LISTENER_DICT)
+        listener = models.Listener.from_dict(ldict)
+        for k in ldict.keys():
+            self.assertEqual(getattr(listener, k), ldict[k])
+
+    def test_from_dict_with_pool(self):
+        ldict = copy.copy(fakes.FAKE_LISTENER_DICT)
+        pdict = copy.copy(fakes.FAKE_POOL_DICT)
+        ldict['default_pool'] = pdict
+        listener = models.Listener.from_dict(ldict)
+        keys = ldict.keys()
+        keys.remove('default_pool')
+        for k in keys:
+            self.assertEqual(getattr(listener, k), ldict[k])
+        self.assertTrue(isinstance(listener.default_pool, models.Pool))
+
+    def test_to_dict(self):
+        ldict = copy.copy(fakes.FAKE_LISTENER_DICT)
+        listener = models.Listener.from_dict(ldict)
+        l_to_dict = listener.to_dict()
+        for k in ldict.keys():
+            self.assertEqual(l_to_dict[k], ldict[k])
+
+    def test_to_dict_with_pool(self):
+        ldict = copy.copy(fakes.FAKE_LISTENER_DICT)
+        pdict = copy.copy(fakes.FAKE_POOL_DICT)
+        ldict['default_pool'] = pdict
+        listener = models.Listener.from_dict(ldict).to_dict()
+        self.assertEqual(listener['default_pool']['id'], pdict['id'])
+
+
+class LBPoolTest(TestCase):
+    def test_from_dict(self):
+        pdict = copy.copy(fakes.FAKE_POOL_DICT)
+        pool = models.Pool.from_dict(pdict)
+        for k in pdict.keys():
+            self.assertEqual(getattr(pool, k), pdict[k])
+
+    def test_from_dict_with_member(self):
+        pdict = copy.copy(fakes.FAKE_POOL_DICT)
+        mdict = copy.copy(fakes.FAKE_MEMBER_DICT)
+        pdict['members'] = [mdict]
+        pool = models.Pool.from_dict(pdict)
+        keys = pdict.keys()
+        keys.remove('members')
+        for k in keys:
+            self.assertEqual(getattr(pool, k), pdict[k])
+        self.assertTrue(isinstance(pool.members[0], models.Member))
+
+    def test_to_dict(self):
+        pdict = copy.copy(fakes.FAKE_POOL_DICT)
+        pool = models.Pool.from_dict(pdict)
+        p_to_dict = pool.to_dict()
+        for k in pdict.keys():
+            self.assertEqual(p_to_dict[k], pdict[k])
+
+    def test_to_dict_with_member(self):
+        pdict = copy.copy(fakes.FAKE_POOL_DICT)
+        mdict = copy.copy(fakes.FAKE_MEMBER_DICT)
+        pdict['members'] = [mdict]
+        pool = models.Pool.from_dict(pdict)
+        pool_to_dict = pool.to_dict()
+        self.assertEqual(pool_to_dict['members'][0]['id'], mdict['id'])
+
+
+class LBMemberTest(TestCase):
+    def test_from_dict(self):
+        mdict = copy.copy(fakes.FAKE_MEMBER_DICT)
+        member = models.Member.from_dict(mdict)
+        for k in mdict.keys():
+            self.assertEqual(getattr(member, k), mdict[k])
+
+    def test_to_dict(self):
+        mdict = copy.copy(fakes.FAKE_MEMBER_DICT)
+        member = models.Member.from_dict(mdict)
+        m_to_dict = member.to_dict()
+        for k in mdict.keys():
+            self.assertEqual(m_to_dict[k], mdict[k])
+
+
+class LoadBalancerTest(TestCase):
+    def test_from_dict_lb(self):
+        lb_dict = fakes.fake_loadbalancer_dict()
+        lb = models.LoadBalancer.from_dict(lb_dict)
+        for k in lb_dict.keys():
+            self.assertEqual(getattr(lb, k), lb_dict[k])
+
+    def test_from_dict_lb_listener(self):
+        lb_dict = fakes.fake_loadbalancer_dict(listener=True)
+        expected_listener_id = lb_dict['listeners'][0]['id']
+        lb = models.LoadBalancer.from_dict(lb_dict)
+        for k in lb_dict.keys():
+            self.assertEqual(getattr(lb, k), lb_dict[k])
+        self.assertTrue(isinstance(lb.listeners[0], models.Listener))
+        self.assertEqual(lb.listeners[0].id, expected_listener_id)
+
+    def test_from_dict_lb_listener_pool(self):
+        lb_dict = fakes.fake_loadbalancer_dict(listener=True, pool=True)
+        expected_listener_id = lb_dict['listeners'][0]['id']
+        expected_pool_id = lb_dict['listeners'][0]['default_pool']['id']
+        lb = models.LoadBalancer.from_dict(lb_dict)
+        for k in lb_dict.keys():
+            self.assertEqual(getattr(lb, k), lb_dict[k])
+        self.assertTrue(isinstance(lb.listeners[0], models.Listener))
+        self.assertTrue(isinstance(lb.listeners[0].default_pool,
+                        models.Pool))
+        self.assertEqual(lb.listeners[0].id, expected_listener_id)
+        self.assertEqual(lb.listeners[0].default_pool.id, expected_pool_id)
+
+    def test_from_dict_lb_listener_pool_members(self):
+        lb_dict = fakes.fake_loadbalancer_dict(listener=True, pool=True,
+                                               members=True)
+        expected_listener_id = lb_dict['listeners'][0]['id']
+        expected_pool_id = lb_dict['listeners'][0]['default_pool']['id']
+        expected_member = lb_dict['listeners'][0]['default_pool']['members'][0]
+        lb = models.LoadBalancer.from_dict(lb_dict)
+        for k in lb_dict.keys():
+            self.assertEqual(getattr(lb, k), lb_dict[k])
+        self.assertTrue(isinstance(lb.listeners[0], models.Listener))
+        self.assertTrue(isinstance(lb.listeners[0].default_pool,
+                        models.Pool))
+        self.assertTrue(isinstance(lb.listeners[0].default_pool.members[0],
+                        models.Member))
+        self.assertEqual(lb.listeners[0].id, expected_listener_id)
+        self.assertEqual(lb.listeners[0].default_pool.id, expected_pool_id)
+        self.assertEqual(lb.listeners[0].default_pool.members[0].id,
+                         expected_member['id'])
+
+
+class LoadBalancerConfigurationTest(TestCase):
+    def setUp(self):
+        super(LoadBalancerConfigurationTest, self).setUp()
+        self.conf_dict = fakes.fake_loadbalancer_dict(
+            listener=True, pool=True, members=True
+        )
+
+    def test_loadbalancer_config(self):
+        lb_conf = models.LoadBalancerConfiguration(self.conf_dict)
+        errors = lb_conf.validate()
+        lb_conf.to_dict()
+        self.assertEqual(errors, [])
+
+    def test_loadbalancer_config_validation_failed(self):
+        self.conf_dict.pop('id')
+        lb_conf = models.LoadBalancerConfiguration({})
+        errors = lb_conf.validate()
+        # id is required
+        self.assertEqual(len(errors), 1)
