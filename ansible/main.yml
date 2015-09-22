@@ -12,7 +12,7 @@
     do_cleanup: True
     router_appliance: True
     update_kernel: True
-
+    enabled_advanced_services: "router"
   tasks:
     - include: tasks/debian_backports.yml
       when: ansible_distribution == "Debian" and ansible_distribution_release == "wheezy"

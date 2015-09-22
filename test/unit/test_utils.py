@@ -129,4 +129,3 @@ class ExecuteTest(TestCase):
             utils.execute(['/bin/ls', '/no-such-directory'])
         except RuntimeError as e:
             self.assertIn('cannot access', str(e))
-        

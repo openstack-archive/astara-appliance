@@ -34,6 +34,15 @@
     - metadata
     - akanda-router-api-server
 
+- name: create /usr/local/share/akanda/
+  file: path=/usr/local/share/akanda state=directory
+
+- name: make /usr/local/share/akanda/ importable
+  copy: dest=/usr/local/share/akanda/__init__.py content=''
+
+- name: install akanda_local_settings.py
+  copy: dest=/usr/local/share/akanda/akanda_local_settings.py content='ENABLED_SERVICES = {{enabled_advanced_services.split(',')}}\n'
+
 - name: update-rc
   command: update-rc.d akanda-router-api-server start
 
