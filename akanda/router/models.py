@@ -463,8 +463,43 @@ class Network(ModelBase):
             subnets=[Subnet.from_dict(s) for s in d.get('subnets', [])])
 
 
-class Configuration(ModelBase):
+class SystemConfiguration(ModelBase):
+    service_name = 'system'
+
     def __init__(self, conf_dict={}):
+        self.tenant_id = conf_dict.get('tenant_id')
+        self.hostname = conf_dict.get('hostname')
+        self.networks = [
+            Network.from_dict(n) for n in conf_dict.get('networks', [])]
+
+
+    def validate(self):
+        # TODO: Improve this interface, it currently sucks.
+        errors = []
+        for attr in ['tenant_id', 'hostname']:
+            if not getattr(self, attr):
+                errors.append((attr, 'Config does not contain a %s' % attr))
+        return errors
+
+    @property
+    def management_address(self):
+        addrs = []
+        for net in self.networks:
+            if net.is_management_network:
+                addrs.extend((net.interface.first_v4, net.interface.first_v6))
+
+        addrs = sorted(a for a in addrs if a)
+
+        if addrs:
+            return addrs[0]
+
+
+class RouterConfiguration(ModelBase):
+    service_name = 'router'
+
+    def __init__(self, conf_dict={}):
+        self.tenant_id = conf_dict.get('tenant_id')
+        self.hostname = conf_dict.get('hostname')
         gw = conf_dict.get('default_v4_gateway')
         self.default_v4_gateway = netaddr.IPAddress(gw) if gw else None
         self.asn = conf_dict.get('asn', DEFAULT_AS)
@@ -491,17 +526,13 @@ class Configuration(ModelBase):
             FloatingIP.from_dict(fip)
             for fip in conf_dict.get('floating_ips', [])
         ]
-        self.tenant_id = conf_dict.get('tenant_id')
-
-        self.hostname = conf_dict.get('hostname')
 
         self._attach_floating_ips(self.floating_ips)
 
     def validate(self):
         """Validate anchor rules to ensure that ifaces and tables exist."""
-        errors = []
-
         interfaces = set(n.interface.ifname for n in self.networks)
+        errors = []
         for anchor in self.anchors:
             for rule in anchor.rules:
                 for iface in (rule.interface, rule.destination_interface):
@@ -576,3 +607,26 @@ class Configuration(ModelBase):
 
         if addrs:
             return addrs[0]
+
+
+class LoadBalancerConfiguration(ModelBase):
+    service_name = 'loadbalancer'
+    def __init__(self, conf_dict={}):
+        self._config = conf_dict
+        self.id = conf_dict.get('id')
+
+    def validate(self):
+        errors = []
+        if not self._config.get('id'):
+            errors.append(['id', 'Missing in config id'])
+        return errors
+
+
+SERVICE_MAP = {
+    RouterConfiguration.service_name: RouterConfiguration,
+    LoadBalancerConfiguration.service_name: LoadBalancerConfiguration,
+}
+
+
+def get_config_model(service):
+    return SERVICE_MAP[service]

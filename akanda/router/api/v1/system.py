@@ -32,6 +32,12 @@ blueprint = utils.blueprint_factory(__name__)
 _cache = None
 
 
+# This needs to move to config
+ADVANCED_SERVICES = [
+    'loadbalancer',
+]
+
+
 def _get_cache():
     global _cache
     if _cache is None:
@@ -51,7 +57,7 @@ def get_interface(ifname):
     Show interface parameters given an interface name.
     For example ge1, ge2 for generic ethernet
     '''
-    return dict(interface=manager.get_interface(ifname))
+    return dict(interface=manager.router.get_interface(ifname))
 
 
 @blueprint.route('/interfaces')
@@ -60,14 +66,15 @@ def get_interfaces():
     '''
     Show all interfaces and parameters
     '''
-    return dict(interfaces=manager.get_interfaces())
+    return dict(interfaces=manager.router.get_interfaces())
 
 
 @blueprint.route('/config', methods=['GET'])
 @utils.json_response
 def get_configuration():
     """Return the current router configuration."""
-    return dict(configuration=manager.config)
+    return dict(configuration=manager.router.config)
+
 
 
 @blueprint.route('/config', methods=['PUT'])
@@ -77,17 +84,69 @@ def put_configuration():
         abort(415)
 
     try:
-        config_candidate = models.Configuration(request.json)
+        system_config_candidate = models.SystemConfiguration(request.json)
     except ValueError, e:
         return Response(
-            'The config failed to deserialize.\n' + str(e),
+            'The system config failed to deserialize.\n' + str(e),
             status=422)
 
-    errors = config_candidate.validate()
+    errors = system_config_candidate.validate()
     if errors:
         return Response(
             'The config failed to validate.\n' + '\n'.join(errors),
             status=422)
 
-    manager.update_config(config_candidate, _get_cache())
-    return dict(configuration=manager.config)
+    # Config requests to a router appliance will always contain a default ASN,
+    # so we can key on that for now.  Later on we need to move router stuff
+    # to the extensible list of things the appliance can handle
+    if request.json.get('asn'):
+        try:
+            router_config_candidate = models.RouterConfiguration(request.json)
+        except ValueError, e:
+            return Response(
+                'The router config failed to deserialize.\n' + str(e),
+                status=422)
+
+        errors = router_config_candidate.validate()
+        if errors:
+            return Response(
+                'The config failed to validate.\n' + '\n'.join(errors),
+                status=422)
+    else:
+        router_config_candidate = None
+
+    if router_config_candidate:
+        advanced_service_configs = [router_config_candidate]
+    else:
+        advanced_service_configs = []
+
+    for svc in ADVANCED_SERVICES:
+        if not request.json.get(svc):
+            continue
+
+        config_model = models.get_config_model(service=svc)
+        if not config_model:
+            continue
+
+        try:
+            svc_config_candidate = config_model(request.json.get(svc))
+        except ValueError, e:
+            return Response(
+                'The %s config failed to deserialize.\n' + str(e) %
+                config_model.service_name, status=422)
+
+        errors = svc_config_candidate.validate()
+        if errors:
+            return Response(
+                'The %s config failed to validate.\n' + '\n'.join(errors),
+                config_model.service_name, status=422)
+
+        advanced_service_configs.append(svc_config_candidate)
+
+    manager.update_config(
+        system_config=system_config_candidate,
+        service_configs=advanced_service_configs,
+        cache=_get_cache())
+
+    # XXX need to fix this and serialize config in repsonse
+    return dict(configuration={})
