@@ -14,7 +14,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-
 import functools
 import json
 import os
@@ -26,6 +25,9 @@ import flask
 import netaddr
 
 from akanda.router import models
+
+DEFAULT_ENABLED_SERVICES = ['router']
+VALID_SERVICES = ['router', 'loadbalancer']
 
 
 def execute(args, root_helper=None):

@@ -161,7 +161,7 @@ class RouteTest(unittest2.TestCase):
                 )
 
     def test_update_default_no_inputs(self):
-        c = models.Configuration({})
+        c = models.RouterConfiguration({})
         with mock.patch.object(self.mgr, '_set_default_gateway') as set:
             set.side_effect = AssertionError(
                 'should not try to set default gw'
@@ -169,7 +169,7 @@ class RouteTest(unittest2.TestCase):
             self.mgr.update_default_gateway(c)
 
     def test_update_default_v4_from_gateway(self):
-        c = models.Configuration({'default_v4_gateway': '172.16.77.1'})
+        c = models.RouterConfiguration({'default_v4_gateway': '172.16.77.1'})
         with mock.patch.object(self.mgr, '_set_default_gateway') as set:
             self.mgr.update_default_gateway(c)
             set.assert_called_once_with(c.default_v4_gateway, None)
@@ -189,7 +189,7 @@ class RouteTest(unittest2.TestCase):
             subnets=[subnet],
             network_type='external',
         )
-        c = models.Configuration({'networks': [network]})
+        c = models.RouterConfiguration({'networks': [network]})
         with mock.patch.object(self.mgr, '_set_default_gateway') as set:
             self.mgr.update_default_gateway(c)
             net = c.networks[0]
@@ -217,7 +217,7 @@ class RouteTest(unittest2.TestCase):
             subnets=[subnet, subnet2],
             network_type='external',
         )
-        c = models.Configuration({'networks': [network]})
+        c = models.RouterConfiguration({'networks': [network]})
         with mock.patch.object(self.mgr, '_set_default_gateway') as set:
             self.mgr.update_default_gateway(c)
             net = c.networks[0]
@@ -239,7 +239,7 @@ class RouteTest(unittest2.TestCase):
             subnets=[subnet],
             network_type='external',
         )
-        c = models.Configuration({'networks': [network]})
+        c = models.RouterConfiguration({'networks': [network]})
         with mock.patch.object(self.mgr, '_set_default_gateway') as set:
             self.mgr.update_default_gateway(c)
             net = c.networks[0]
@@ -267,7 +267,7 @@ class RouteTest(unittest2.TestCase):
             subnets=[subnet, subnet2],
             network_type='external',
         )
-        c = models.Configuration({'networks': [network]})
+        c = models.RouterConfiguration({'networks': [network]})
         with mock.patch.object(self.mgr, '_set_default_gateway') as set:
             self.mgr.update_default_gateway(c)
             net = c.networks[0]
@@ -292,7 +292,7 @@ class RouteTest(unittest2.TestCase):
             interface=dict(ifname='ge0', addresses=['fe80::2']),
             subnets=[subnet]
         )
-        c = models.Configuration({'networks': [network]})
+        c = models.RouterConfiguration({'networks': [network]})
 
         cache = make_region().configure('dogpile.cache.memory')
         with mock.patch.object(self.mgr, 'sudo') as sudo:
@@ -319,7 +319,7 @@ class RouteTest(unittest2.TestCase):
             # Empty the host_routes list
             sudo.reset_mock()
             subnet['host_routes'] = []
-            c = models.Configuration({'networks': [network]})
+            c = models.RouterConfiguration({'networks': [network]})
             self.mgr.update_host_routes(c, cache)
             sudo.assert_called_once_with(
                 '-4', 'route', 'del', '192.240.128.0/20', 'via',
@@ -336,7 +336,7 @@ class RouteTest(unittest2.TestCase):
                 'destination': '192.220.128.0/20',
                 'nexthop': '192.168.89.3'
             }]
-            c = models.Configuration({'networks': [network]})
+            c = models.RouterConfiguration({'networks': [network]})
             self.mgr.update_host_routes(c, cache)
             self.assertEqual(sudo.call_args_list, [
                 mock.call('-4', 'route', 'add', '192.240.128.0/20',
@@ -354,7 +354,7 @@ class RouteTest(unittest2.TestCase):
                 'destination': '192.185.128.0/20',
                 'nexthop': '192.168.89.4'
             }]
-            c = models.Configuration({'networks': [network]})
+            c = models.RouterConfiguration({'networks': [network]})
             self.mgr.update_host_routes(c, cache)
             self.assertEqual(sudo.call_args_list, [
                 mock.call('-4', 'route', 'del', '192.220.128.0/20',
@@ -376,7 +376,7 @@ class RouteTest(unittest2.TestCase):
                     'nexthop': '192.168.90.1'
                 }]
             ))
-            c = models.Configuration({'networks': [network]})
+            c = models.RouterConfiguration({'networks': [network]})
             self.mgr.update_host_routes(c, cache)
             self.assertEqual(sudo.call_args_list, [
                 mock.call('-4', 'route', 'add', '192.240.128.0/20',
@@ -388,7 +388,7 @@ class RouteTest(unittest2.TestCase):
             sudo.reset_mock()
             network['subnets'][0]['host_routes'] = []
             network['subnets'][1]['host_routes'] = []
-            c = models.Configuration({'networks': [network]})
+            c = models.RouterConfiguration({'networks': [network]})
             self.mgr.update_host_routes(c, cache)
             self.assertEqual(sudo.call_args_list, [
                 mock.call('-4', 'route', 'del', '192.185.128.0/20',
@@ -416,7 +416,7 @@ class RouteTest(unittest2.TestCase):
             interface=dict(ifname='ge0', addresses=['fe80::2']),
             subnets=[subnet]
         )
-        c = models.Configuration({'networks': [network]})
+        c = models.RouterConfiguration({'networks': [network]})
 
         cache = make_region().configure('dogpile.cache.memory')
         with mock.patch.object(self.mgr, 'sudo') as sudo:

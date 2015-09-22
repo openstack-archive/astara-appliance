@@ -94,7 +94,7 @@ class ARPTest(unittest2.TestCase):
             ])
 
     def test_send_gratuitous_arp_for_config(self):
-        config = models.Configuration({
+        config = models.RouterConfiguration({
             'networks': [{
                 'network_id': 'ABC456',
                 'interface': {
