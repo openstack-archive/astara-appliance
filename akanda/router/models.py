@@ -365,6 +365,7 @@ class Network(ModelBase):
     TYPE_INTERNAL = 'internal'
     TYPE_ISOLATED = 'isolated'
     TYPE_MANAGEMENT = 'management'
+    TYPE_LOADBALANCER = 'loadbalancer'
 
     # TODO(mark): add subnet support for Quantum subnet host routes
 
@@ -406,7 +407,8 @@ class Network(ModelBase):
     @network_type.setter
     def network_type(self, value):
         network_types = (self.TYPE_EXTERNAL, self.TYPE_INTERNAL,
-                         self.TYPE_ISOLATED, self.TYPE_MANAGEMENT)
+                         self.TYPE_ISOLATED, self.TYPE_MANAGEMENT,
+                         self.TYPE_LOADBALANCER)
         if value not in network_types:
             msg = ('network must be one of %s not (%s).' %
                    ('|'.join(network_types), value))
@@ -463,15 +465,206 @@ class Network(ModelBase):
             subnets=[Subnet.from_dict(s) for s in d.get('subnets', [])])
 
 
-class Configuration(ModelBase):
+class LoadBalancer(ModelBase):
+    def __init__(self, id_, tenant_id, name, admin_state_up, status,
+                 vip_address, vip_port=None, listeners=()):
+        self.id = id_
+        self.tenant_id = tenant_id
+        self.name = name
+        self.admin_state_up = admin_state_up
+        self.status = status
+        self.vip_address = vip_address
+        self.vip_port = vip_port
+        self.listeners = listeners
+
+    @classmethod
+    def from_dict(cls, d):
+        if d.get('listeners'):
+            d['listeners'] = [
+                Listener.from_dict(l) for l in d.get('listeners', [])
+            ]
+        if d.get('vip_port'):
+            d['vip_port'] = Port.from_dict(d.get('vip_port'))
+        out = cls(
+            d['id'],
+            d['tenant_id'],
+            d['name'],
+            d['admin_state_up'],
+            d['status'],
+            d['vip_address'],
+            d['vip_port'],
+            d['listeners'],
+        )
+        return out
+
+
+class Listener(ModelBase):
+    DICT_ATTRS = ('id', 'tenant_id', 'name', 'admin_state_up', 'protocol',
+                  'protocol_port', 'default_pool')
+
+    def __init__(self, id_, tenant_id, name, admin_state_up, protocol,
+                 protocol_port, default_pool=None):
+        self.id = id_
+        self.tenant_id = tenant_id
+        self.name = name
+        self.admin_state_up = admin_state_up
+        self.protocol = protocol
+        self.protocol_port = protocol_port
+        self.default_pool = default_pool
+
+    @classmethod
+    def from_dict(cls, d):
+        if d.get('default_pool'):
+            def_pool = Pool.from_dict(d['default_pool'])
+        else:
+            def_pool = None
+
+        return cls(
+            d['id'],
+            d['tenant_id'],
+            d['name'],
+            d['admin_state_up'],
+            d['protocol'],
+            d['protocol_port'],
+            def_pool,
+        )
+
+
+class Pool(ModelBase):
+    DICT_ATTRS = (
+        'id', 'tenant_id', 'name', 'admin_state_up', 'lb_algorithm',
+        'protocol', 'healthmonitor', 'session_persistence', 'members')
+
+    def __init__(self, id_, tenant_id, name, admin_state_up, lb_algorithm,
+                 protocol, healthmonitor=None, session_persistence=None,
+                 members=()):
+        self.id = id_
+        self.tenant_id = tenant_id
+        self.name = name
+        self.admin_state_up = admin_state_up
+        self.lb_algorithm = lb_algorithm
+        self.protocol = protocol
+        self.healthmonitor = healthmonitor
+        self.session_persistence = session_persistence
+        self.members = members
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['id'],
+            d['tenant_id'],
+            d['name'],
+            d['admin_state_up'],
+            d['lb_algorithm'],
+            d['protocol'],
+            d.get('healthmonitor'),
+            d.get('session_persistence'),
+            [Member.from_dict(m) for m in d.get('members', [])],
+        )
+
+
+class Member(ModelBase):
+    DICT_ATTRS = ('id', 'tenant_id', 'admin_state_up', 'address',
+                  'protocol_port', 'weight', 'subnet')
+
+    def __init__(self, id_, tenant_id, admin_state_up, address, protocol_port,
+                 weight, subnet=None):
+        self.id = id_
+        self.tenant_id = tenant_id
+        self.admin_state_up = admin_state_up
+        self.address = netaddr.IPAddress(address)
+        self.protocol_port = protocol_port
+        self.weight = weight
+        self.subnet = subnet
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['id'],
+            d['tenant_id'],
+            d['admin_state_up'],
+            d['address'],
+            d['protocol_port'],
+            d['weight'],
+        )
+
+
+class Port(ModelBase):
+    def __init__(self, id_, device_id='', fixed_ips=None, mac_address='',
+                 network_id='', device_owner='', name=''):
+        self.id = id_
+        self.device_id = device_id
+        self.fixed_ips = fixed_ips or []
+        self.mac_address = mac_address
+        self.network_id = network_id
+        self.device_owner = device_owner
+        self.name = name
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['id'],
+            d['device_id'],
+            fixed_ips=[FixedIp.from_dict(fip) for fip in d['fixed_ips']],
+            mac_address=d['mac_address'],
+            network_id=d['network_id'],
+            device_owner=d['device_owner'],
+            name=d['name'])
+
+
+class FixedIp(ModelBase):
+    def __init__(self, subnet_id, ip_address):
+        self.subnet_id = subnet_id
+        self.ip_address = netaddr.IPAddress(ip_address)
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(d['subnet_id'], d['ip_address'])
+
+
+class SystemConfiguration(ModelBase):
+    service_name = 'system'
+
     def __init__(self, conf_dict={}):
+        self.tenant_id = conf_dict.get('tenant_id')
+        self.hostname = conf_dict.get('hostname')
+        self.networks = [
+            Network.from_dict(n) for n in conf_dict.get('networks', [])]
+
+    def validate(self):
+        # TODO: Improve this interface, it currently sucks.
+        errors = []
+        for attr in ['tenant_id', 'hostname']:
+            if not getattr(self, attr):
+                errors.append((attr, 'Config does not contain a %s' % attr))
+        return errors
+
+    @property
+    def management_address(self):
+        addrs = []
+        for net in self.networks:
+            if net.is_management_network:
+                addrs.extend((net.interface.first_v4, net.interface.first_v6))
+
+        addrs = sorted(a for a in addrs if a)
+
+        if addrs:
+            return addrs[0]
+
+    @property
+    def interfaces(self):
+        return [n.interface for n in self.networks if n.interface]
+
+
+class RouterConfiguration(SystemConfiguration):
+    service_name = 'router'
+
+    def __init__(self, conf_dict={}):
+        super(RouterConfiguration, self).__init__(conf_dict)
         gw = conf_dict.get('default_v4_gateway')
         self.default_v4_gateway = netaddr.IPAddress(gw) if gw else None
         self.asn = conf_dict.get('asn', DEFAULT_AS)
         self.neighbor_asn = conf_dict.get('neighbor_asn', self.asn)
-        self.networks = [
-            Network.from_dict(n) for n in conf_dict.get('networks', [])]
-
         self.static_routes = [StaticRoute(*r) for r in
                               conf_dict.get('static_routes', [])]
 
@@ -491,17 +684,13 @@ class Configuration(ModelBase):
             FloatingIP.from_dict(fip)
             for fip in conf_dict.get('floating_ips', [])
         ]
-        self.tenant_id = conf_dict.get('tenant_id')
-
-        self.hostname = conf_dict.get('hostname')
 
         self._attach_floating_ips(self.floating_ips)
 
     def validate(self):
         """Validate anchor rules to ensure that ifaces and tables exist."""
-        errors = []
-
         interfaces = set(n.interface.ifname for n in self.networks)
+        errors = []
         for anchor in self.anchors:
             for rule in anchor.rules:
                 for iface in (rule.interface, rule.destination_interface):
@@ -561,18 +750,31 @@ class Configuration(ModelBase):
         if addrs:
             return addrs[0]
 
-    @property
-    def interfaces(self):
-        return [n.interface for n in self.networks if n.interface]
 
-    @property
-    def management_address(self):
-        addrs = []
-        for net in self.networks:
-            if net.is_management_network:
-                addrs.extend((net.interface.first_v4, net.interface.first_v6))
+class LoadBalancerConfiguration(SystemConfiguration):
+    service_name = 'loadbalancer'
 
-        addrs = sorted(a for a in addrs if a)
+    def __init__(self, conf_dict={}):
+        super(LoadBalancerConfiguration, self).__init__(conf_dict)
+        self.id = conf_dict.get('id')
+        self.name = conf_dict.get('name')
+        self._loadbalancer = LoadBalancer.from_dict(conf_dict)
+        self.vip_port = self._loadbalancer.vip_port
+        self.vip_address = self._loadbalancer.vip_address
+        self.listeners = self._loadbalancer.listeners
 
-        if addrs:
-            return addrs[0]
+    def validate(self):
+        super(LoadBalancerConfiguration, self).validate()
+        errors = []
+        if not self.id:
+            errors.append(['id', 'Missing in config id'])
+        return errors
+
+SERVICE_MAP = {
+    RouterConfiguration.service_name: RouterConfiguration,
+    LoadBalancerConfiguration.service_name: LoadBalancerConfiguration,
+}
+
+
+def get_config_model(service):
+    return SERVICE_MAP[service]
