@@ -2,8 +2,10 @@
 set -eux
 set -o pipefail
 
+DIB_AKANDA_ADVANCED_SERVICES=${DIB_AKANDA_ADVANCED_SERVICES:-"router"}
+
 APP_SRC_DIR="/tmp/akanda-appliance"
 
 [ -d "${APP_SRC_DIR}" ] || exit 0
 
-ansible-playbook -i "localhost," -c local $APP_SRC_DIR/ansible/main.yml
+ansible-playbook -i "localhost," -c local -e enabled_advanced_services="$DIB_AKANDA_ADVANCED_SERVICES" $APP_SRC_DIR/ansible/main.yml

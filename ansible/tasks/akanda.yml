@@ -34,6 +34,8 @@
     - metadata
     - akanda-router-api-server
 
+- name: install /etc/default/akanda-appliance
+  copy: dest=/etc/default/akanda-appliance content='AKANDA_ENABLED_SERVICES="{{enabled_advanced_services}}"\n'
 - name: update-rc
   command: update-rc.d akanda-router-api-server start
 

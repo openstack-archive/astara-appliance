@@ -129,4 +129,20 @@ class ExecuteTest(TestCase):
             utils.execute(['/bin/ls', '/no-such-directory'])
         except RuntimeError as e:
             self.assertIn('cannot access', str(e))
-        
+
+
+    @mock.patch('os.getenv')
+    def test_enabled_services_default(self, fake_getenv):
+        fake_getenv.return_value = None
+        self.assertEqual(
+            utils.enabled_services(), utils.DEFAULT_ENABLED_SERVICES
+        )
+
+    @mock.patch('os.getenv')
+    def test_enabled_services_additional(self, fake_getenv):
+        fake_getenv.return_value = 'router, loadbalancer, foobar'
+        res = utils.enabled_services()
+        self.assertEqual(
+            set(utils.enabled_services()),
+            set(['router', 'loadbalancer', 'foobar']))
+

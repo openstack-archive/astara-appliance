@@ -14,7 +14,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-
 import functools
 import json
 import os
@@ -26,6 +25,9 @@ import flask
 import netaddr
 
 from akanda.router import models
+
+DEFAULT_ENABLED_SERVICES = ['router']
+VALID_SERVICES = ['router', 'loadbalancer']
 
 
 def execute(args, root_helper=None):
@@ -102,3 +104,16 @@ def blueprint_factory(name):
     blueprint_name = "_".join(name_parts)
     url_prefix = "/" + "/".join(name_parts)
     return flask.Blueprint(blueprint_name, name, url_prefix=url_prefix)
+
+
+def enabled_services():
+    """Return a list of configured services this appliance should manage"""
+    # This is a temprorary method of config until we get a better solution
+    # (oslo.cfg?) in place in the appliance.
+    enabled = os.getenv('AKANDA_ENABLED_SERVICES', [])
+    if not enabled:
+        return DEFAULT_ENABLED_SERVICES
+    out = []
+    for s in enabled.split(','):
+        out.append(s.strip())
+    return out

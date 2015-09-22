@@ -20,6 +20,12 @@ test -x $DAEMON || exit 0
 
 . /lib/lsb/init-functions
 
+if [ -e /etc/default/akanda-apliance ]; then
+    # This holds the AKANDA_ENABLED_SERVICES variable which
+    # configures which advanced service drivers are enabled in the appliance.
+    . /etc/default/akanda-appliance
+fi
+
 case "$1" in
   start)
 	log_daemon_msg "Starting akanda-router-api-server" $NAME
