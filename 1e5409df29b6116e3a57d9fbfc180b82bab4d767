@@ -1,0 +1,10 @@
+Verified+2: Jenkins
+Code-Review+2: Adam Gandelman <adamg@ubuntu.com>
+Workflow+1: Adam Gandelman <adamg@ubuntu.com>
+Code-Review+2: David Lenwell <dlenwell@gmail.com>
+Code-Review+1: dylan d <eris.has.a.dad@gmail.com>
+Submitted-by: Jenkins
+Submitted-at: Mon, 28 Sep 2015 23:32:53 +0000
+Reviewed-on: https://review.openstack.org/228580
+Project: stackforge/akanda-appliance
+Branch: refs/heads/master
