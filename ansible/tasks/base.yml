@@ -8,6 +8,7 @@
     - iptables-persistent
     - conntrack
     - ntp
+    - tcpdump
 
 - name: latest bash (CVE-2014-6271)
   apt: name=bash state=latest install_recommends=no

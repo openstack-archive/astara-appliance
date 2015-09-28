@@ -4,5 +4,4 @@
   apt: name={{item}} state=installed install_recommends=no
   with_items:
     - mtr
-    - tcpdump
     - tshark
