@@ -6,6 +6,7 @@
     - wget
     - iptables
     - iptables-persistent
+    - iputils-ping
     - conntrack
     - ntp
     - tcpdump
