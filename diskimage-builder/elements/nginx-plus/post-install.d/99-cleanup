@@ -1,0 +1,4 @@
+#!/bin/bash -e
+
+echo "clearing out default config file"
+rm /etc/nginx/conf.d/default
