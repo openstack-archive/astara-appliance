@@ -1,0 +1,9 @@
+#!/bin/bash -e
+
+if [ -z "${DIB_NGINX_PLUS_CERT_PATH}" ]; then
+    echo "DIB_NGINX_PLUS_CERT_PATH is not set - not importing keys"
+    exit 1
+fi
+
+cat $DIB_NGINX_PLUS_CERT_PATH/nginx-repo.crt >> $TMP_HOOKS_PATH/nginx-repo.crt
+cat $DIB_NGINX_PLUS_CERT_PATH/nginx-repo.key >> $TMP_HOOKS_PATH/nginx-repo.key

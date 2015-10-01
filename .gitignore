@@ -10,3 +10,5 @@ build
 dist
 fpm.log*
 packages/
+.DS_Store
+._.DS_Store
