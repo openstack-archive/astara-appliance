@@ -1,0 +1,25 @@
+#!/bin/bash -e
+# This scripts preps apt with the nginx plus repo
+
+# install required deps for this script
+apt-get install lsb-release ca-certificates krb5-locales libsasl2-modules apt-utils apt-transport-https wget -y
+
+# make nginx ssl dir
+echo "copying in crt and key"
+mkdir -p /etc/ssl/nginx
+cp /tmp/in_target.d/nginx-repo.crt /etc/ssl/nginx/
+cp /tmp/in_target.d/nginx-repo.key /etc/ssl/nginx/
+
+echo "getting ca cert from nginx"
+wget https://cs.nginx.com/static/files/CA.crt -P /etc/ssl/nginx/
+echo "getting key signing cert from nginx"
+wget http://nginx.org/keys/nginx_signing.key -P /etc/ssl/nginx/
+
+echo "add singing key"
+apt-key add /etc/ssl/nginx/nginx_signing.key
+
+printf "deb https://plus-pkgs.nginx.com/debian `lsb_release -cs` nginx-plus\n" >/etc/apt/sources.list.d/nginx-plus.list
+
+wget https://cs.nginx.com/static/files/90nginx -P /etc/apt/apt.conf.d
+
+apt-get update
