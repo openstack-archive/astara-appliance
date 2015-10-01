@@ -1,2 +1,3 @@
 cloud-init-datasources
 source-repositories
+apt-transport-https
