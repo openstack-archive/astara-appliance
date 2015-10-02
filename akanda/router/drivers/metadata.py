@@ -25,7 +25,6 @@ from akanda.router.utils import execute, replace_file
 
 LOG = logging.getLogger(__name__)
 CONF_PATH = '/etc/metadata.conf'
-METADATA_PROXY = '/usr/local/bin/metadata_proxy'
 
 
 class MetadataManager(base.Manager):

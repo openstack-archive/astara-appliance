@@ -25,8 +25,6 @@ from akanda.router import utils
 
 LOG = logging.getLogger(__name__)
 CONF_PATH = '/etc/bird/bird6.conf'
-BIRD = '/usr/local/sbin/bird'
-BIRDC = '/usr/local/bin/birdc'
 DEFAULT_AREA = 0
 
 
