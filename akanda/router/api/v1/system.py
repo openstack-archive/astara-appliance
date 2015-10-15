@@ -24,12 +24,16 @@ from dogpile.cache import make_region
 
 from akanda.router import models
 from akanda.router import utils
+from akanda.router import settings
 from akanda.router.manager import manager
 
 blueprint = utils.blueprint_factory(__name__)
 
 # Managed by _get_cache()
 _cache = None
+
+
+ADVANCED_SERVICES_KEY = 'services'
 
 
 def _get_cache():
@@ -51,7 +55,7 @@ def get_interface(ifname):
     Show interface parameters given an interface name.
     For example ge1, ge2 for generic ethernet
     '''
-    return dict(interface=manager.get_interface(ifname))
+    return dict(interface=manager.router.get_interface(ifname))
 
 
 @blueprint.route('/interfaces')
@@ -60,7 +64,7 @@ def get_interfaces():
     '''
     Show all interfaces and parameters
     '''
-    return dict(interfaces=manager.get_interfaces())
+    return dict(interfaces=manager.router.get_interfaces())
 
 
 @blueprint.route('/config', methods=['GET'])
@@ -77,17 +81,75 @@ def put_configuration():
         abort(415)
 
     try:
-        config_candidate = models.Configuration(request.json)
+        system_config_candidate = models.SystemConfiguration(request.json)
     except ValueError, e:
         return Response(
-            'The config failed to deserialize.\n' + str(e),
+            'The system config failed to deserialize.\n' + str(e),
             status=422)
 
-    errors = config_candidate.validate()
+    errors = system_config_candidate.validate()
     if errors:
         return Response(
             'The config failed to validate.\n' + '\n'.join(errors),
             status=422)
 
-    manager.update_config(config_candidate, _get_cache())
+    # Config requests to a router appliance will always contain a default ASN,
+    # so we can key on that for now.  Later on we need to move router stuff
+    # to the extensible list of things the appliance can handle
+    if request.json.get('asn'):
+        try:
+            router_config_candidate = models.RouterConfiguration(request.json)
+        except ValueError, e:
+            return Response(
+                'The router config failed to deserialize.\n' + str(e),
+                status=422)
+
+        errors = router_config_candidate.validate()
+        if errors:
+            return Response(
+                'The config failed to validate.\n' + '\n'.join(errors),
+                status=422)
+    else:
+        router_config_candidate = None
+
+    if router_config_candidate:
+        advanced_service_configs = [router_config_candidate]
+    else:
+        advanced_service_configs = []
+
+    advanced_services = request.json.get(ADVANCED_SERVICES_KEY, {})
+    for svc in advanced_services.keys():
+        if svc not in settings.ENABLED_SERVICES:
+            return Response(
+                'This appliance cannot service requested advanced '
+                'service: %s' % svc, status=400)
+
+    for svc in settings.ENABLED_SERVICES:
+        if not advanced_services.get(svc):
+            continue
+
+        config_model = models.get_config_model(service=svc)
+        if not config_model:
+            continue
+
+        try:
+            svc_config_candidate = config_model(advanced_services.get(svc))
+        except ValueError, e:
+            return Response(
+                'The %s config failed to deserialize.\n' + str(e) %
+                config_model.service_name, status=422)
+
+        errors = svc_config_candidate.validate()
+        if errors:
+            return Response(
+                'The %s config failed to validate.\n' + '\n'.join(errors),
+                config_model.service_name, status=422)
+
+        advanced_service_configs.append(svc_config_candidate)
+
+    manager.update_config(
+        system_config=system_config_candidate,
+        service_configs=advanced_service_configs,
+        cache=_get_cache())
+
     return dict(configuration=manager.config)

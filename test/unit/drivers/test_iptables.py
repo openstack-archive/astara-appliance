@@ -7,7 +7,7 @@ import netaddr
 from akanda.router import models
 from akanda.router.drivers import iptables
 
-CONFIG = models.Configuration({
+CONFIG = models.RouterConfiguration({
     'networks': [{
         'network_id': 'ABC123',
         'interface': {
@@ -127,16 +127,16 @@ V6_OUTPUT = [
 ]
 
 
-class TestIPTablesConfiguration(TestCase):
+class TestIPTablesRouterConfiguration(TestCase):
 
     def setUp(self):
-        super(TestIPTablesConfiguration, self).setUp()
+        super(TestIPTablesRouterConfiguration, self).setUp()
         self.execute = mock.patch('akanda.router.utils.execute').start()
         self.replace = mock.patch('akanda.router.utils.replace_file').start()
         self.patches = [self.execute, self.replace]
 
     def tearDown(self):
-        super(TestIPTablesConfiguration, self).tearDown()
+        super(TestIPTablesRouterConfiguration, self).tearDown()
         for p in self.patches:
             p.stop()
 

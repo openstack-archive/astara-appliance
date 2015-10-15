@@ -1,0 +1,19 @@
+{%- for listener in loadbalancer.listeners %}
+{%- if listener.default_pool and listener.default_pool.members %}
+
+server {
+    listen {{ loadbalancer.vip_address }}:{{ listener.protocol_port }};
+    location / {
+        proxy_pass {{ listener.protocol.lower() }}://pool_{{ listener.default_pool.id }};
+    }
+}
+
+upstream pool_{{ listener.default_pool.id }} {
+    {%- for member in listener.default_pool.members: %}
+        server {{ member.address }}:{{ member.protocol_port }} weight={{ member.weight }};
+    {%- endfor %}
+}
+
+{%- endif %}
+{%- endfor %}
+
