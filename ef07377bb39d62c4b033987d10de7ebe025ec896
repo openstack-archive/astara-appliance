@@ -1,0 +1,9 @@
+Verified+2: Jenkins
+Code-Review+2: Adam Gandelman <adamg@ubuntu.com>
+Code-Review+2: mark mcclain <mark@mcclain.xyz>
+Workflow+1: mark mcclain <mark@mcclain.xyz>
+Submitted-by: Jenkins
+Submitted-at: Thu, 15 Oct 2015 05:35:47 +0000
+Reviewed-on: https://review.openstack.org/231512
+Project: stackforge/akanda-appliance
+Branch: refs/heads/master
