@@ -12,10 +12,10 @@ the diskimage-builder from the OpenStack project.
  - qemu-utils
 
 3) Add elements to path
-    $ export ELEMENTS_PATH=~/akanda-appliance-builder/diskimage-builder/elements
+    $ export ELEMENTS_PATH=~/akanda-appliance/diskimage-builder/elements
 
 4) Build image
-    $ DIB_RELEASE=wheezy DIB_EXTLINUX=1 disk-image-create debian vm akanda
+    $ DIB_RELEASE=jessie DIB_EXTLINUX=1 disk-image-create debian vm akanda
 
 5) If you're testing with kvm, don't forget to build the nocloud iso image
 
