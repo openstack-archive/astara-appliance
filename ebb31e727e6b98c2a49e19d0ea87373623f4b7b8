@@ -1,0 +1,9 @@
+Verified+2: Jenkins
+Code-Review+2: Adam Gandelman <adamg@ubuntu.com>
+Workflow+1: Adam Gandelman <adamg@ubuntu.com>
+Code-Review+1: Clint Adams <clint@gcfm.net>
+Submitted-by: Jenkins
+Submitted-at: Sun, 18 Oct 2015 00:14:11 +0000
+Reviewed-on: https://review.openstack.org/236258
+Project: openstack/akanda-appliance
+Branch: refs/heads/master
