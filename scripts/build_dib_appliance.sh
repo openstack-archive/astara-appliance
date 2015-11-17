@@ -20,8 +20,8 @@
 # as it is currently checked out in this local repository.
 
 SRC_ROOT="$(dirname $0)/.."
-IMG_OUT=$SRC_ROOT/build/astara_appliance
-
+RELEASE="$($SRC_ROOT/scripts/get-version.py)"
+IMG_OUT=$SRC_ROOT/build/astara_appliance_${RELEASE}
 AKANDA_DEBIAN_RELEASE=${AKANDA_DEBIAN_RELEASE:-"jessie"}
 BASE_ELEMENTS="vm debian astara nginx"
 EXTRA_ELEMENTS="$@"
