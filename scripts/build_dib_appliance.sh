@@ -15,21 +15,22 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-# This builds an akanda appliance VM image at
-# $SRC_ROOT/build/akanda_appliance.qcow2, containing the akanda-appliance code
+# This builds an astara appliance VM image at
+# $SRC_ROOT/build/astara_appliance.qcow2, containing the astara-appliance code
 # as it is currently checked out in this local repository.
 
 SRC_ROOT="$(dirname $0)/.."
-IMG_OUT=$SRC_ROOT/build/akanda_appliance
+IMG_OUT=$SRC_ROOT/build/astara_appliance
 
 AKANDA_DEBIAN_RELEASE=${AKANDA_DEBIAN_RELEASE:-"jessie"}
-BASE_ELEMENTS="vm debian akanda"
+BASE_ELEMENTS="vm debian astara nginx"
 EXTRA_ELEMENTS="$@"
 
 GIT_HEAD="$(cd $SRC_ROOT && git rev-parse HEAD^)"
 
-DIB_REPOLOCATION_akanda=$SRC_ROOT \
-DIB_REPOREF_akanda=$GIT_HEAD \
+DIB_REPOLOCATION_astara=$SRC_ROOT \
+DIB_REPOREF_astara=$GIT_HEAD \
 ELEMENTS_PATH=$SRC_ROOT/diskimage-builder/elements \
 DIB_RELEASE=$AKANDA_DEBIAN_RELEASE DIB_EXTLINUX=1 \
+DIB_ASTARA_ADVANCED_SERVICES="router,loadbalancer" \
 disk-image-create $BASE_ELEMENTS $EXTRA_ELEMENTS -o $IMG_OUT
