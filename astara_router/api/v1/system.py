@@ -22,10 +22,10 @@ from flask import Response
 from flask import abort, request
 from dogpile.cache import make_region
 
-from akanda.router import models
-from akanda.router import utils
-from akanda.router import settings
-from akanda.router.manager import manager
+from astara_router import models
+from astara_router import utils
+from astara_router import settings
+from astara_router.manager import manager
 
 blueprint = utils.blueprint_factory(__name__)
 
@@ -42,7 +42,7 @@ def _get_cache():
         _cache = make_region().configure(
             'dogpile.cache.dbm',
             arguments={
-                "filename": "/etc/akanda-state"
+                "filename": "/etc/astara-state"
             }
         )
     return _cache

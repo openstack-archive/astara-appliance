@@ -19,7 +19,7 @@
     - include: tasks/update_kernel.yml
       when: update_kernel and ansible_distribution_release == "wheezy"
     - include: tasks/base.yml
-    - include: tasks/akanda.yml
+    - include: tasks/astara.yml
     - include: tasks/bird.yml
     - include: tasks/dnsmasq.yml
     - include: tasks/extras.yml

@@ -1,19 +1,19 @@
 #! /bin/sh
 
 ### BEGIN INIT INFO
-# Provides:             akanda-router-api-server
+# Provides:             astara-router-api-server
 # Required-Start:       $all
 # Required-Stop:        $all
 # Default-Start:        2 3 4 5
 # Default-Stop:	
-# Short-Description:    Akanda Router API Server
+# Short-Description:    Astara Router API Server
 ### END INIT INFO
 
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 DAEMON="/usr/local/bin/gunicorn"
-NAME="akanda-router-api-server"
-OPTIONS="--pythonpath /usr/local/share/akanda -c /etc/akanda_gunicorn_config akanda.router.api.server:app"
+NAME="astara-router-api-server"
+OPTIONS="--pythonpath /usr/local/share/astara -c /etc/astara_gunicorn_config astara.router.api.server:app"
 PIDFILE=/var/run/gunicorn.pid
 
 test -x $DAEMON || exit 0
@@ -22,12 +22,12 @@ test -x $DAEMON || exit 0
 
 case "$1" in
   start)
-	log_daemon_msg "Starting akanda-router-api-server" $NAME
+	log_daemon_msg "Starting astara-router-api-server" $NAME
 	start_daemon -p $PIDFILE $DAEMON $OPTIONS
 	log_end_msg $?
     ;;
   stop)
-	log_daemon_msg "Stopping akanda-router-api-server" $NAME
+	log_daemon_msg "Stopping astara-router-api-server" $NAME
 	killproc -p $PIDFILE $DAEMON
 	log_end_msg $?
     ;;
@@ -39,7 +39,7 @@ case "$1" in
     status_of_proc -p $PIDFILE $DAEMON $NAME && exit 0 || exit $?
     ;;
   *)
-    echo "Usage: /etc/init.d/akanda-router-api-server {start|stop|restart|force-reload|status}"
+    echo "Usage: /etc/init.d/astara-router-api-server {start|stop|restart|force-reload|status}"
     exit 1
     ;;
 esac

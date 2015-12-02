@@ -31,8 +31,8 @@ import requests
 from werkzeug import exceptions
 from werkzeug import wrappers
 
-from akanda.router import defaults
-from akanda.router.drivers import ip
+from astara_router import defaults
+from astara_router.drivers import ip
 
 LOG = logging.getLogger(__name__)
 

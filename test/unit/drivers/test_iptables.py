@@ -4,8 +4,8 @@ from unittest import TestCase
 import mock
 import netaddr
 
-from akanda.router import models
-from akanda.router.drivers import iptables
+from astara_router import models
+from astara_router.drivers import iptables
 
 CONFIG = models.RouterConfiguration({
     'networks': [{
@@ -131,8 +131,8 @@ class TestIPTablesRouterConfiguration(TestCase):
 
     def setUp(self):
         super(TestIPTablesRouterConfiguration, self).setUp()
-        self.execute = mock.patch('akanda.router.utils.execute').start()
-        self.replace = mock.patch('akanda.router.utils.replace_file').start()
+        self.execute = mock.patch('astara_router.utils.execute').start()
+        self.replace = mock.patch('astara_router.utils.replace_file').start()
         self.patches = [self.execute, self.replace]
 
     def tearDown(self):
