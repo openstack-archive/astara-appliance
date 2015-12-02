@@ -20,8 +20,8 @@ Blueprint for the "status" portion of the version 1 of the API.
 """
 from flask import request
 
-from akanda.router import utils
-from akanda.router.drivers import ping
+from astara_router import utils
+from astara_router.drivers import ping
 
 blueprint = utils.blueprint_factory(__name__)
 

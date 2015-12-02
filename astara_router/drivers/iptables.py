@@ -18,9 +18,9 @@ import re
 import itertools
 import os
 
-from akanda.router.drivers import base
-from akanda.router.models import Network
-from akanda.router import defaults, utils
+from astara_router.drivers import base
+from astara_router.models import Network
+from astara_router import defaults, utils
 
 
 class Rule(object):
@@ -49,8 +49,8 @@ class IPTablesManager(base.Manager):
         '''
         Save iptables-persistent firewall rules to disk.
 
-        :param config: The akanda configuration to save to disk
-        :type config: akanda.rug.models.Configuration
+        :param config: The astara configuration to save to disk
+        :type config: astara.rug.models.Configuration
         :param interface_map: A mapping of virtual ('ge0') to physical ('eth0')
                               interface names
         :type interface_map: dict
@@ -103,8 +103,8 @@ class IPTablesManager(base.Manager):
     def get_rules(self):
         '''
         Return the output of `iptables` and `ip6tables`.
-        This function is used by akanda-rug -> HTTP as a test for "router
-        aliveness".
+        This function is used by astara orchestrator -> HTTP as a test for
+        "router aliveness".
 
         :rtype: str
         '''
@@ -116,7 +116,7 @@ class IPTablesManager(base.Manager):
         '''
         Returns the external network
 
-        :rtype: akanda.router.models.Network
+        :rtype: astara_router.models.Network
         '''
         return self.networks_by_type(config, Network.TYPE_EXTERNAL)[0]
 
@@ -124,7 +124,7 @@ class IPTablesManager(base.Manager):
         '''
         Returns the management network
 
-        :rtype: akanda.router.models.Network
+        :rtype: astara_router.models.Network
         '''
         return self.networks_by_type(config, Network.TYPE_MANAGEMENT)[0]
 
@@ -132,7 +132,7 @@ class IPTablesManager(base.Manager):
         '''
         Returns the internal networks
 
-        :rtype: [akanda.router.models.Network]
+        :rtype: [astara_router.models.Network]
         '''
         return self.networks_by_type(config, Network.TYPE_INTERNAL)
 
@@ -140,7 +140,7 @@ class IPTablesManager(base.Manager):
         '''
         Returns the external network
 
-        :rtype: akanda.router.models.Interface
+        :rtype: astara_router.models.Interface
         '''
         return filter(lambda n: n.network_type == type, config.networks)
 
@@ -148,10 +148,10 @@ class IPTablesManager(base.Manager):
         '''
         Build a list of iptables and ip6tables rules to be written to disk.
 
-        :param config: the akanda configuration object:
-        :type config: akanda.router.models.Configuration
+        :param config: the astara configuration object:
+        :type config: astara_router.models.Configuration
         :param rules: the list of rules to append to
-        :type rules: a list of akanda.router.drivers.iptables.Rule objects
+        :type rules: a list of astara_router.drivers.iptables.Rule objects
         '''
         return itertools.chain(
             self._build_default_filter_rules(),

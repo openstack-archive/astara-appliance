@@ -21,8 +21,8 @@ import unittest2
 import netaddr
 from dogpile.cache import make_region
 
-from akanda.router import models
-from akanda.router.drivers import ip
+from astara_router import models
+from astara_router.drivers import ip
 
 
 class RouteTest(unittest2.TestCase):

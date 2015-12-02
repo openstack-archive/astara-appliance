@@ -22,7 +22,7 @@ import netaddr
 import re
 import textwrap
 
-from akanda.router.drivers import bird
+from astara_router.drivers import bird
 ext_subnet = mock.Mock()
 ext_subnet.gateway_ip = netaddr.IPAddress('dead:beef::1')
 ext_subnet.cidr = netaddr.IPNetwork('dead:beef::/64')
@@ -65,9 +65,9 @@ class BirdTestCase(TestCase):
     """
     """
     def setUp(self):
-        self.mock_execute = mock.patch('akanda.router.utils.execute').start()
+        self.mock_execute = mock.patch('astara_router.utils.execute').start()
         self.mock_replace_file = mock.patch(
-            'akanda.router.utils.replace_file'
+            'astara_router.utils.replace_file'
         ).start()
         self.addCleanup(mock.patch.stopall)
 
@@ -101,7 +101,7 @@ class BirdTestCase(TestCase):
         ])
 
     def test_restart_failure(self):
-        with mock.patch('akanda.router.utils.execute') as execute:
+        with mock.patch('astara_router.utils.execute') as execute:
             execute.side_effect = [Exception('status failed!'), None]
             self.mgr.restart()
             execute.assert_has_calls([

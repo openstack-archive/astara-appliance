@@ -15,7 +15,7 @@
 # under the License.
 
 
-from akanda.router import utils
+from astara_router import utils
 
 
 class Manager(object):

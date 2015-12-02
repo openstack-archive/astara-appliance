@@ -17,7 +17,7 @@
 
 import sys
 import pdb
-from akanda.router.models import Configuration
+from astara_router.models import Configuration
 
 if __name__ == '__main__':
     # Simple script that helps debug faulty configurations

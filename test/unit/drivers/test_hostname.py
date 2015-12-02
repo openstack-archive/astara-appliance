@@ -19,10 +19,10 @@ from unittest2 import TestCase
 
 import mock
 
-from akanda.router.drivers import hostname, ip
+from astara_router.drivers import hostname, ip
 
 CONFIG = mock.Mock()
-CONFIG.hostname = 'akanda'
+CONFIG.hostname = 'astara'
 CONFIG.management_address = 'fdca:3ba5:a17a:acda:f816:3eff:fe66:33b6'
 
 
@@ -30,9 +30,9 @@ class HostnameTestCase(TestCase):
     """
     """
     def setUp(self):
-        self.mock_execute = mock.patch('akanda.router.utils.execute').start()
+        self.mock_execute = mock.patch('astara_router.utils.execute').start()
         self.mock_replace_file = mock.patch(
-            'akanda.router.utils.replace_file'
+            'astara_router.utils.replace_file'
         ).start()
         self.addCleanup(mock.patch.stopall)
 
@@ -41,7 +41,7 @@ class HostnameTestCase(TestCase):
     def test_update_hostname(self):
         self.mgr.update_hostname(CONFIG)
         self.mock_execute.assert_has_calls([
-            mock.call(['/bin/hostname', 'akanda'], 'sudo'),
+            mock.call(['/bin/hostname', 'astara'], 'sudo'),
             mock.call(['mv', '/tmp/hostname', '/etc/hostname'], 'sudo')
         ])
 
@@ -49,7 +49,7 @@ class HostnameTestCase(TestCase):
         expected = mock.call('/tmp/hosts', '\n'.join([
             '127.0.0.1  localhost',
             '::1  localhost ip6-localhost ip6-loopback',
-            'fdca:3ba5:a17a:acda:f816:3eff:fe66:33b6  akanda'
+            'fdca:3ba5:a17a:acda:f816:3eff:fe66:33b6  astara'
         ]))
         self.mgr.update_hosts(CONFIG)
         self.mock_execute.assert_has_calls([

@@ -1,6 +1,4 @@
-# Copyright 2014 DreamHost, LLC
-#
-# Author: DreamHost, LLC
+# Copyright (c) 2015 Akanda, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -15,4 +13,25 @@
 # under the License.
 
 
-__import__('pkg_resources').declare_namespace(__name__)  # pragma: nocover
+from astara_router.drivers.loadbalancer import nginx
+
+# XXX move to config
+CONFIGURED_LB_DRIVER = 'nginx'
+
+AVAILABLE_DRIVERS = {
+    'nginx': nginx.NginxLB,
+    'nginx+': nginx.NginxPlusLB,
+    # 'haxproxy': HaProxyLB,
+}
+
+
+class InvalidDriverException(Exception):
+    pass
+
+
+def get_loadbalancer_driver(name):
+    try:
+        return AVAILABLE_DRIVERS[name]
+    except KeyError:
+        raise InvalidDriverException(
+            'Could not find LB driver by name %s' % name)

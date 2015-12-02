@@ -22,7 +22,7 @@ from unittest import TestCase
 
 import flask
 
-from akanda.router.api import v1
+from astara_router.api import v1
 
 
 class BaseAPITestCase(TestCase):
@@ -38,5 +38,5 @@ class BaseAPITestCase(TestCase):
 
     def test_root(self):
         rv = self.test_app.get('/v1/base', follow_redirects=True)
-        self.assertEqual(rv.data, 'Akanda appliance API service is active')
+        self.assertEqual(rv.data, 'Astara appliance API service is active')
         self.assertEqual(rv.status_code, 200)

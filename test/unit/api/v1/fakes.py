@@ -15,14 +15,14 @@
 # under the License.
 
 
-from akanda.router import models
+from astara_router import models
 
 
 class FakeIFManager(object):
     """
     The methods implemented here in the fake interface manager should not be
     built using the payloads, since that's what we're using to verify the data.
-    Instead, each method should create akanda objects as needed that will
+    Instead, each method should create astara objects as needed that will
     serialize to the appropriate data to return the proper payload.
     """
     @classmethod

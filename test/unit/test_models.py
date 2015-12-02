@@ -23,7 +23,7 @@ import netaddr
 
 from unittest2 import TestCase
 
-from akanda.router import models
+from astara_router import models
 from test.unit import fakes
 
 
