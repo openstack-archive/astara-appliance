@@ -19,9 +19,9 @@
 """
 import flask
 
-from akanda.router.api import v1
-from akanda.router.debug import handle_traceback
-from akanda.router.manager import manager
+from astara_router.api import v1
+from astara_router.debug import handle_traceback
+from astara_router.manager import manager
 
 app = flask.Flask(__name__)
 app.register_blueprint(v1.base.blueprint)
@@ -41,7 +41,7 @@ def attach_config():
 
 def main():
     # TODO(mark): make this use a config file ie
-    # app.config.from_object('akanda.router.config.Default')
+    # app.config.from_object('astara_router.config.Default')
     # manager.state_path = app.config['STATE_PATH']
 
     app.run(host=manager.management_address(ensure_configuration=True),

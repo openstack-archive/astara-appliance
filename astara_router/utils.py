@@ -24,7 +24,7 @@ import tempfile
 import flask
 import netaddr
 
-from akanda.router import models
+from astara_router import models
 
 DEFAULT_ENABLED_SERVICES = ['router']
 VALID_SERVICES = ['router', 'loadbalancer']

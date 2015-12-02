@@ -26,8 +26,8 @@ import flask
 import json
 import mock
 
-from akanda.router import manager
-from akanda.router.api import v1
+from astara_router import manager
+from astara_router.api import v1
 
 
 SYSTEM_CONFIG = {
@@ -123,7 +123,7 @@ class SystemAPITestCase(unittest.TestCase):
         self.assertEqual(result.status_code, 415)
 
     def test_put_configuration_returns_422_for_ValueError(self):
-        with mock.patch('akanda.router.models.RouterConfiguration') as Config:
+        with mock.patch('astara_router.models.RouterConfiguration') as Config:
             Config.side_effect = ValueError
             result = self.test_app.put(
                 '/v1/system/config',
@@ -133,7 +133,7 @@ class SystemAPITestCase(unittest.TestCase):
             self.assertEqual(result.status_code, 422)
 
     def test_put_configuration_returns_422_for_errors(self):
-        with mock.patch('akanda.router.models.SystemConfiguration') as Config:
+        with mock.patch('astara_router.models.SystemConfiguration') as Config:
             Config.return_value.validate.return_value = ['error1']
             result = self.test_app.put(
                 '/v1/system/config',
@@ -152,8 +152,8 @@ class SystemAPITestCase(unittest.TestCase):
     )
 
 
-    @mock.patch('akanda.router.api.v1.system._get_cache')
-    @mock.patch('akanda.router.models.SystemConfiguration')
+    @mock.patch('astara_router.api.v1.system._get_cache')
+    @mock.patch('astara_router.models.SystemConfiguration')
     @mock.patch.object(v1.system.manager, 'update_config')
     def test_put_configuration_returns_200(self, mock_update,
         fake_system_config, fake_cache):
@@ -177,11 +177,11 @@ class SystemAPITestCase(unittest.TestCase):
         mock_update.assert_called_with(
             cache='fake_cache', service_configs=[], system_config=sys_config_obj)
 
-    @mock.patch('akanda.router.manager.Manager.config',
+    @mock.patch('astara_router.manager.Manager.config',
                 new_callable=mock.PropertyMock, return_value={})
-    @mock.patch('akanda.router.api.v1.system._get_cache')
-    @mock.patch('akanda.router.models.RouterConfiguration')
-    @mock.patch('akanda.router.models.SystemConfiguration')
+    @mock.patch('astara_router.api.v1.system._get_cache')
+    @mock.patch('astara_router.models.RouterConfiguration')
+    @mock.patch('astara_router.models.SystemConfiguration')
     @mock.patch.object(v1.system.manager, 'update_config')
     def test_put_configuration_with_router(self, mock_update,
         fake_system_config, fake_router_config, fake_cache, fake_config):
@@ -213,14 +213,14 @@ class SystemAPITestCase(unittest.TestCase):
             cache='fake_cache', service_configs=[router_config_obj],
             system_config=sys_config_obj)
 
-    @mock.patch('akanda.router.models.get_config_model')
+    @mock.patch('astara_router.models.get_config_model')
     @mock.patch.object(manager, 'settings')
     @mock.patch.object(v1.system, 'settings')
-    @mock.patch('akanda.router.manager.Manager.config',
+    @mock.patch('astara_router.manager.Manager.config',
                 new_callable=mock.PropertyMock, return_value={})
-    @mock.patch('akanda.router.api.v1.system._get_cache')
-    @mock.patch('akanda.router.models.LoadBalancerConfiguration')
-    @mock.patch('akanda.router.models.SystemConfiguration')
+    @mock.patch('astara_router.api.v1.system._get_cache')
+    @mock.patch('astara_router.models.LoadBalancerConfiguration')
+    @mock.patch('astara_router.models.SystemConfiguration')
     @mock.patch.object(v1.system.manager, 'update_config')
     def test_put_configuration_with_adv_services(self, mock_update,
         fake_system_config, fake_lb_config, fake_cache, fake_config,
@@ -257,14 +257,14 @@ class SystemAPITestCase(unittest.TestCase):
             cache='fake_cache', service_configs=[lb_config_obj],
             system_config=sys_config_obj)
 
-    @mock.patch('akanda.router.models.get_config_model')
+    @mock.patch('astara_router.models.get_config_model')
     @mock.patch.object(manager, 'settings')
     @mock.patch.object(v1.system, 'settings')
-    @mock.patch('akanda.router.manager.Manager.config',
+    @mock.patch('astara_router.manager.Manager.config',
                 new_callable=mock.PropertyMock, return_value={})
-    @mock.patch('akanda.router.api.v1.system._get_cache')
-    @mock.patch('akanda.router.models.LoadBalancerConfiguration')
-    @mock.patch('akanda.router.models.SystemConfiguration')
+    @mock.patch('astara_router.api.v1.system._get_cache')
+    @mock.patch('astara_router.models.LoadBalancerConfiguration')
+    @mock.patch('astara_router.models.SystemConfiguration')
     @mock.patch.object(v1.system.manager, 'update_config')
     def test_put_configuration_with_disabled_svc_returns_400(self, mock_update,
         fake_system_config, fake_lb_config, fake_cache, fake_config,

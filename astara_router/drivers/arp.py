@@ -20,9 +20,9 @@ import re
 import socket
 import struct
 
-from akanda.router import utils
-from akanda.router.drivers import base
-from akanda.router.models import Network
+from astara_router import utils
+from astara_router.drivers import base
+from astara_router.models import Network
 
 
 LOG = logging.getLogger(__name__)
@@ -92,8 +92,8 @@ class ARPManager(base.Manager):
     def send_gratuitous_arp_for_floating_ips(self, config, generic_to_host):
         """
         Send a gratuitous ARP for every Floating IP.
-        :type config: akanda.router.models.Configuration
-        :param config: An akanda.router.models.Configuration object containing
+        :type config: astara_router.models.Configuration
+        :param config: An astara_router.models.Configuration object containing
                        configuration information for the system's network
                        setup.
         :type generic_to_host: callable
@@ -108,7 +108,7 @@ class ARPManager(base.Manager):
         for net in external_nets:
             for fip in net.floating_ips:
                 utils.execute([
-                    'akanda-gratuitous-arp',
+                    'astara-gratuitous-arp',
                     generic_to_host(net.interface.ifname),
                     str(fip.floating_ip)
                 ], self.root_helper)
@@ -121,8 +121,8 @@ class ARPManager(base.Manager):
         deletion and makes calls to _mac_address_for_ip to match arp entries
         to network interface IPs.
 
-        :type config: akanda.router.models.Configuration
-        :param config: An akanda.router.models.Configuration object containing
+        :type config: astara_router.models.Configuration
+        :param config: An astara_router.models.Configuration object containing
                        configuration information for the system's network
                        setup.
         """

@@ -21,7 +21,7 @@
   command: ln -s /usr/share/zoneinfo/UTC arg1 creates=/etc/localtime
 
 - name: setting hostname
-  copy: content="akanda-linux" dest=/etc/hostname
+  copy: content="astara-linux" dest=/etc/hostname
 
 - name: set default nameserver
   copy: content="nameserver 8.8.8.8" dest=/etc/resolv.conf

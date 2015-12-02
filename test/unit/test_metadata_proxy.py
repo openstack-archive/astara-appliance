@@ -7,7 +7,7 @@ from collections import OrderedDict
 import eventlet
 import mock
 
-from akanda.router import metadata_proxy
+from astara_router import metadata_proxy
 
 config = json.dumps({
     "tenant_id": "ABC123",

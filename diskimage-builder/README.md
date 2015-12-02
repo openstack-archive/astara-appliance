@@ -1,4 +1,4 @@
-This directory contains elements necessary to build the Akanda appliance with
+This directory contains elements necessary to build the Astara appliance with
 the diskimage-builder from the OpenStack project.
 
 1) Install diskimage-builder via:
@@ -12,10 +12,10 @@ the diskimage-builder from the OpenStack project.
  - qemu-utils
 
 3) Add elements to path
-    $ export ELEMENTS_PATH=~/akanda-appliance/diskimage-builder/elements
+    $ export ELEMENTS_PATH=~/astara-appliance/diskimage-builder/elements
 
 4) Build image
-    $ DIB_RELEASE=jessie DIB_EXTLINUX=1 disk-image-create debian vm akanda
+    $ DIB_RELEASE=jessie DIB_EXTLINUX=1 disk-image-create debian vm astara
 
 5) If you're testing with kvm, don't forget to build the nocloud iso image
 

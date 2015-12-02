@@ -21,9 +21,9 @@ import re
 
 import netaddr
 
-from akanda.router import models
-from akanda.router.drivers import base
-from akanda.router import utils
+from astara_router import models
+from astara_router.drivers import base
+from astara_router import utils
 
 LOG = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class IPManager(base.Manager):
 
         :param ifname: the name of the interface to retrieve, e.g., `eth1`
         :type ifname: str
-        :rtype: akanda.router.model.Interface
+        :rtype: astara_router.model.Interface
         """
         real_ifname = self.generic_to_host(ifname)
         retval = _parse_interface(self.do('addr', 'show', real_ifname))
@@ -141,7 +141,7 @@ class IPManager(base.Manager):
         Sets the administrative mode for the network link on interface
         <interface> to "up".
         :param interface: the interface to mark up
-        :type interface: akanda.router.models.Interface
+        :type interface: astara_router.models.Interface
         """
         real_ifname = self.generic_to_host(interface.ifname)
         self.sudo('link', 'set', real_ifname, 'up')
@@ -152,7 +152,7 @@ class IPManager(base.Manager):
         Sets the administrative mode for the network link on interface
         <interface> to "down".
         :param interface: the interface to mark down
-        :type interface: akanda.router.models.Interface
+        :type interface: astara_router.models.Interface
         """
         real_ifname = self.generic_to_host(interface.ifname)
         self.sudo('link', 'set', real_ifname, 'down')
@@ -161,7 +161,7 @@ class IPManager(base.Manager):
         """
         Updates a network interface, particularly its addresses
         :param interface: the interface to update
-        :type interface: akanda.router.models.Interface
+        :type interface: astara_router.models.Interface
         :param ignore_link_local: When True, link local addresses will not be
                                   added/removed
         :type ignore_link_local: bool
@@ -185,9 +185,9 @@ class IPManager(base.Manager):
         :param real_ifname: the name of the interface to modify
         :param real_ifname: str
         :param interface: the new interface reference
-        :type interface: akanda.router.models.Interface
+        :type interface: astara_router.models.Interface
         :param old_interface: the reference to the current network interface
-        :type old_interface: akanda.router.models.Interface
+        :type old_interface: astara_router.models.Interface
         """
 
         def _gen_cmd(cmd, address):
@@ -238,7 +238,7 @@ class IPManager(base.Manager):
         """
         Sets the default gateway for v4 and v6 via the use of `ip route add`.
 
-        :type config: akanda.router.models.Configuration
+        :type config: astara_router.models.Configuration
         """
         # Track whether we have set the default gateways, by IP
         # version.
@@ -285,7 +285,7 @@ class IPManager(base.Manager):
         Update the network routes.  This is primarily used to support static
         routes that users provide to neutron.
 
-        :type config: akanda.router.models.Configuration
+        :type config: astara_router.models.Configuration
         :param cache: a dbm cache for storing the "last applied routes".
                       Because Linux does not differentiate user-provided routes
                       from, for example, the default gateway, this is necessary
@@ -417,7 +417,7 @@ class IPManager(base.Manager):
         """
         Disabled duplicate address detection for a specific interface.
 
-        :type network: akanda.models.Network
+        :type network: astara.models.Network
         """
         # For non-external networks, duplicate address detection isn't
         # necessary (and it sometimes results in race conditions for services
@@ -472,7 +472,7 @@ def _parse_interfaces(data, filters=None):
     :type data: str
     :param filter: a list of valid interface names to match on
     :type data: list of str
-    :rtype: list of akanda.router.models.Interface
+    :rtype: list of astara_router.models.Interface
     """
     retval = []
     for iface_data in re.split('(^|\n)(?=[0-9]+: \w+\d{0,3}:)', data):
@@ -497,7 +497,7 @@ def _parse_interface(data):
     """
     Parse details for an interface, given its data from `ip addr show <ifname>`
 
-    :rtype: akanda.router.models.Interface
+    :rtype: astara_router.models.Interface
     """
     retval = dict(addresses=[])
     for line in data.split('\n'):
