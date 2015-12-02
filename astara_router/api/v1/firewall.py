@@ -21,8 +21,8 @@ Blueprint for version 1 of the firewall API.
 
 from flask import request
 
-from akanda.router import utils
-from akanda.router.drivers import iptables
+from astara_router import utils
+from astara_router.drivers import iptables
 
 
 blueprint = utils.blueprint_factory(__name__)

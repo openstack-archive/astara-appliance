@@ -19,8 +19,8 @@ import mock
 import socket
 import unittest2
 
-from akanda.router import models
-from akanda.router.drivers import arp
+from astara_router import models
+from astara_router.drivers import arp
 
 config = mock.Mock()
 network = mock.Mock()
@@ -124,23 +124,23 @@ class ARPTest(unittest2.TestCase):
             }]
         })
 
-        with mock.patch('akanda.router.utils.execute') as execute:
+        with mock.patch('astara_router.utils.execute') as execute:
             self.mgr.send_gratuitous_arp_for_floating_ips(
                 config,
                 lambda x: x.replace('ge', 'eth')
             )
             assert execute.call_args_list == [
                 mock.call(
-                    ['akanda-gratuitous-arp', 'eth1', '172.16.77.50'], 'sudo'
+                    ['astara-gratuitous-arp', 'eth1', '172.16.77.50'], 'sudo'
                 ),
                 mock.call(
-                    ['akanda-gratuitous-arp', 'eth1', '172.16.77.51'], 'sudo'
+                    ['astara-gratuitous-arp', 'eth1', '172.16.77.51'], 'sudo'
                 ),
                 mock.call(
-                    ['akanda-gratuitous-arp', 'eth1', '172.16.77.52'], 'sudo'
+                    ['astara-gratuitous-arp', 'eth1', '172.16.77.52'], 'sudo'
                 ),
                 mock.call(
-                    ['akanda-gratuitous-arp', 'eth1', '172.16.77.53'], 'sudo'
+                    ['astara-gratuitous-arp', 'eth1', '172.16.77.53'], 'sudo'
                 )
             ]
 

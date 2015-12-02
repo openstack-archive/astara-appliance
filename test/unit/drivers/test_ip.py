@@ -22,8 +22,8 @@ from unittest2 import TestCase
 import mock
 import netaddr
 
-from akanda.router import models
-from akanda.router.drivers import ip
+from astara_router import models
+from astara_router.drivers import ip
 
 SAMPLE_OUTPUT = """1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue state UNKNOWN
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -50,7 +50,7 @@ SAMPLE_SINGLE_OUTPUT = """3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qd
 class IPTestCase(TestCase):
 
     def setUp(self):
-        self.execute_patch = mock.patch('akanda.router.utils.execute')
+        self.execute_patch = mock.patch('astara_router.utils.execute')
         self.mock_execute = self.execute_patch.start()
 
     def tearDown(self):
@@ -66,7 +66,7 @@ class IPTestCase(TestCase):
 
         iface_b = mock.Mock()
         iface_b.ifname = 'em1'
-        ifaces = 'akanda.router.drivers.ip._parse_interfaces'
+        ifaces = 'astara_router.drivers.ip._parse_interfaces'
         with mock.patch(ifaces) as parse:
             parse.return_value = [iface_a, iface_b]
             mgr = ip.IPManager()
@@ -79,8 +79,8 @@ class IPTestCase(TestCase):
     def test_get_interface(self):
         iface_a = mock.Mock()
         iface_a.ifname = 'em0'
-        iface = 'akanda.router.drivers.ip._parse_interface'
-        ifaces = 'akanda.router.drivers.ip._parse_interfaces'
+        iface = 'astara_router.drivers.ip._parse_interface'
+        ifaces = 'astara_router.drivers.ip._parse_interfaces'
         with mock.patch(iface) as parse:
             with mock.patch(ifaces) as pi:
                 pi.return_value = [iface_a]
@@ -343,7 +343,7 @@ class TestDisableDAD(TestCase):
     """
 
     def setUp(self):
-        self.execute_patch = mock.patch('akanda.router.utils.execute')
+        self.execute_patch = mock.patch('astara_router.utils.execute')
         self.mock_execute = self.execute_patch.start()
 
     def tearDown(self):

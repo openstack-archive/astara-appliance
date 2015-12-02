@@ -33,13 +33,13 @@ run_by_init() {
     ([ "$previous" ] && [ "$runlevel" ]) || [ "$runlevel" = S ]
 }
 
-akanda_configure_ssh() {
-    /usr/local/bin/akanda-configure-ssh
+astara_configure_ssh() {
+    /usr/local/bin/astara-configure-ssh
 }
 
 check_for_no_start() {
     # forget it if we're trying to start, and /etc/ssh/sshd_not_to_be_run exists
-    if [ -e /etc/ssh/sshd_not_to_be_run ]; then 
+    if [ -e /etc/ssh/sshd_not_to_be_run ]; then
 	if [ "$1" = log_end_msg ]; then
 	    log_end_msg 0 || true
 	fi
@@ -83,7 +83,7 @@ case "$1" in
 	check_privsep_dir
 	check_for_no_start
 	check_dev_null
-        akanda_configure_ssh
+        astara_configure_ssh
 	log_daemon_msg "Starting OpenBSD Secure Shell server" "sshd" || true
 	if start-stop-daemon --start --quiet --oknodo --pidfile /var/run/sshd.pid --exec /usr/sbin/sshd -- $SSHD_OPTS; then
 	    log_end_msg 0 || true
@@ -114,7 +114,7 @@ case "$1" in
   restart)
 	check_privsep_dir
 	check_config
-        akanda_configure_ssh
+        astara_configure_ssh
 	log_daemon_msg "Restarting OpenBSD Secure Shell server" "sshd" || true
 	start-stop-daemon --stop --quiet --oknodo --retry 30 --pidfile /var/run/sshd.pid
 	check_for_no_start log_end_msg

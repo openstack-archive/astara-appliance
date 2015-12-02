@@ -19,8 +19,8 @@ import logging
 import random
 import textwrap
 
-from akanda.router.drivers import base
-from akanda.router import utils
+from astara_router.drivers import base
+from astara_router import utils
 
 
 LOG = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ class BirdManager(base.Manager):
         """
         Writes config file for bird daemon.
 
-        :type config: akanda.router.models.Configuration
+        :type config: astara_router.models.Configuration
         :param config:
         :type if_map: dict
         :param if_map: A (dict) mapping of generic to physical hostname, e.g.:
@@ -96,7 +96,7 @@ def _find_external_v4_ip(config):
     """
     Determines the external IPv4 address.
 
-    :type config: akanda.router.models.Configuration
+    :type config: astara_router.models.Configuration
     :param config:
     :rtype: str
     """
@@ -112,7 +112,7 @@ def _build_global_config(config):
     """
     Generate the "global" section of the BIRD daemon configuration.
 
-    :type config: akanda.router.models.Configuration
+    :type config: astara_router.models.Configuration
     :param config:
     :rtype: str
     """
@@ -127,7 +127,7 @@ def _build_kernel_config():
     """
     Generate the "kernel" section of the BIRD daemon configuration.
 
-    :type config: akanda.router.models.Configuration
+    :type config: astara_router.models.Configuration
     :param config:
     :rtype: str
     """
@@ -146,7 +146,7 @@ def _build_device_config():
     """
     Generate the "device" section of the BIRD daemon configuration.
 
-    :type config: akanda.router.models.Configuration
+    :type config: astara_router.models.Configuration
     :param config:
     :rtype: str
     """
@@ -157,7 +157,7 @@ def _build_static_config(config):
     """
     Generate the "static" section of the BIRD daemon configuration.
 
-    :type config: akanda.router.models.Configuration
+    :type config: astara_router.models.Configuration
     :param config:
     :rtype:
     """
@@ -170,7 +170,7 @@ def _build_direct_config(config, interface_map):
     """
     Generate the "direct" section of the BIRD daemon configuration.
 
-    :type config: akanda.router.models.Configuration
+    :type config: astara_router.models.Configuration
     :param config:
     :type interface_map: dict
     :param interface_map:
@@ -187,7 +187,7 @@ def _build_ospf_config(config, interface_map):
     """
     Generate the "ospf" section of the BIRD daemon configuration.
 
-    :type config: akanda.router.models.Configuration
+    :type config: astara_router.models.Configuration
     :param config:
     :type interface_map: dict
     :param interface_map:
@@ -227,7 +227,7 @@ def _build_bgp_config(config, interface_map):
     """
     Generate the "BGP" section of the BIRD daemon configuration.
 
-    :type config: akanda.router.models.Configuration
+    :type config: astara_router.models.Configuration
     :param config:
     :type interface_map: dict
     :param interface_map:
@@ -286,7 +286,7 @@ def _build_radv_config(config, interface_map):
     """
     Generate the "radv" section of the BIRD daemon configuration.
 
-    :type config: akanda.router.models.Configuration
+    :type config: astara_router.models.Configuration
     :param config:
     :type interface_map: dict
     :param interface_map:

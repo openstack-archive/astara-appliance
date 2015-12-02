@@ -18,9 +18,9 @@
 import json
 import logging
 
-from akanda.router.defaults import internal_metadata_port
-from akanda.router.drivers import base
-from akanda.router.utils import execute, replace_file
+from astara_router.defaults import internal_metadata_port
+from astara_router.drivers import base
+from astara_router.utils import execute, replace_file
 
 
 LOG = logging.getLogger(__name__)
@@ -46,8 +46,8 @@ class MetadataManager(base.Manager):
         This function determines if the networks have changed since <config>
         was initialized.
 
-        :type config: akanda.router.models.Configuration
-        :param config: An akanda.router.models.Configuration object containing
+        :type config: astara_router.models.Configuration
+        :param config: An astara_router.models.Configuration object containing
                        the current configuration of the system's networks.
         :rtype: bool
         """
@@ -66,8 +66,8 @@ class MetadataManager(base.Manager):
         """
         Writes <config> to the metadata configuration file (<CONF_PATH>).
 
-        :type config: akanda.router.models.Configuration
-        :param config: An akanda.router.models.Configuration object containing
+        :type config: astara_router.models.Configuration
+        :param config: An astara_router.models.Configuration object containing
                        the configuration of metadata service.
         """
         config_data = build_config(config)
@@ -104,9 +104,9 @@ def build_config(config):
     """
     Determines the configuration of the metadata service.
 
-    :type config: akanda.router.models.Configuration
+    :type config: astara_router.models.Configuration
     :param config:
-    :rtype: akanda.router.models.Configuration
+    :rtype: astara_router.models.Configuration
     """
     config_data = {}
 

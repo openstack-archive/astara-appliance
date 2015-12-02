@@ -1,1 +1,1 @@
-include akanda/router/drivers/loadbalancer/nginx.conf.template
+include astara/router/drivers/loadbalancer/nginx.conf.template

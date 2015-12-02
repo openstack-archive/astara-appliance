@@ -21,8 +21,8 @@ import mock
 import netaddr
 from collections import OrderedDict
 
-from akanda.router import models
-from akanda.router.drivers import dnsmasq
+from astara_router import models
+from astara_router.drivers import dnsmasq
 ext_subnet = mock.Mock()
 ext_subnet.gateway_ip = netaddr.IPAddress('dead:beef::1')
 
@@ -85,9 +85,9 @@ class DnsmasqTestCase(TestCase):
     """
     """
     def setUp(self):
-        self.mock_execute = mock.patch('akanda.router.utils.execute').start()
+        self.mock_execute = mock.patch('astara_router.utils.execute').start()
         self.mock_replace_file = mock.patch(
-            'akanda.router.utils.replace_file'
+            'astara_router.utils.replace_file'
         ).start()
         self.addCleanup(mock.patch.stopall)
 

@@ -16,8 +16,8 @@
 
 import logging
 
-from akanda.router.drivers import base
-from akanda.router import utils
+from astara_router.drivers import base
+from astara_router import utils
 
 
 LOG = logging.getLogger(__name__)
