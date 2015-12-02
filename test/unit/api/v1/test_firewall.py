@@ -23,7 +23,7 @@ import json
 import mock
 from unittest2 import TestCase
 
-from akanda.router.api import v1
+from astara_router.api import v1
 
 
 class FirewallAPITestCase(TestCase):

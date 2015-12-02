@@ -18,9 +18,9 @@
 import os
 import re
 
-from akanda.router import models
-from akanda.router import settings
-from akanda.router.drivers import (bird, dnsmasq, ip, metadata,
+from astara_router import models
+from astara_router import settings
+from astara_router.drivers import (bird, dnsmasq, ip, metadata,
                                    iptables, arp, hostname, loadbalancer)
 
 

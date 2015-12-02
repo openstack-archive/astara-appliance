@@ -12,11 +12,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import jinja2
 import os
 
-from akanda.router.drivers import base
-from akanda.router.utils import execute
+import jinja2
+
+from astara_router.drivers import base
+from astara_router.utils import execute
 
 
 class NginxTemplateNotFound(Exception):
