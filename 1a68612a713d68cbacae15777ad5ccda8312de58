@@ -1,0 +1,10 @@
+Verified+2: Jenkins
+Code-Review+2: Adam Gandelman <adamg@ubuntu.com>
+Code-Review+2: Ryan Petrello <ryan@ryanpetrello.com>
+Workflow+1: Ryan Petrello <ryan@ryanpetrello.com>
+Code-Review+1: venkatamahesh <venkatamaheshkotha@gmail.com>
+Submitted-by: Jenkins
+Submitted-at: Fri, 04 Dec 2015 16:45:11 +0000
+Reviewed-on: https://review.openstack.org/252637
+Project: openstack/astara-appliance
+Branch: refs/heads/master
