@@ -26,7 +26,9 @@ AKANDA_DEBIAN_RELEASE=${AKANDA_DEBIAN_RELEASE:-"jessie"}
 BASE_ELEMENTS="vm debian akanda"
 EXTRA_ELEMENTS="$@"
 
-GIT_HEAD="$(cd $SRC_ROOT && git rev-parse HEAD^)"
+GIT_HEAD="$(cd $SRC_ROOT && git log | head -n1 | awk '{ print $2 }')"
+
+echo "Building astara-appliance from $GIT_HEAD"
 
 DIB_REPOLOCATION_akanda=$SRC_ROOT \
 DIB_REPOREF_akanda=$GIT_HEAD \
