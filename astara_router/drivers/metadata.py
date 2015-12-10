@@ -41,7 +41,7 @@ class MetadataManager(base.Manager):
         """
         super(MetadataManager, self).__init__(root_helper)
 
-    def networks_have_changed(self, config):
+    def should_restart(self, config):
         """
         This function determines if the networks have changed since <config>
         was initialized.
@@ -59,8 +59,14 @@ class MetadataManager(base.Manager):
         except:
             # If we can't read the file, assume networks were added/removed
             return True
-        config_dict.pop('tenant_id')
-        return net_ids != set(config_dict.keys())
+
+        orchestrator_addr = config_dict.get('orchestrator_metadata_address')
+        orchestrator_port = config_dict.get('orchestrator_metadata_port')
+
+        return (
+            net_ids != set(config_dict.get('networks', {}).keys()) and
+            orchestrator_addr != config.metadata_address and
+            orchestrator_port != config.metadata_port)
 
     def save_config(self, config):
         """
@@ -108,7 +114,7 @@ def build_config(config):
     :param config:
     :rtype: astara_router.models.Configuration
     """
-    config_data = {}
+    network_data = {}
 
     for net in config.networks:
         if not net.is_tenant_network:
@@ -119,10 +125,14 @@ def build_config(config):
             for ip in a.ip_addresses:
                 ip_instance_map[ip] = a.device_id
 
-        config_data[net.id] = {
+        network_data[net.id] = {
             'listen_port': internal_metadata_port(net.interface.ifname),
             'ip_instance_map': ip_instance_map
         }
 
-    config_data['tenant_id'] = config.tenant_id
-    return config_data
+    return {
+        'tenant_id': config.tenant_id,
+        'orchestrator_metadata_address': config.metadata_address,
+        'orchestrator_metadata_port': config.metadata_port,
+        'networks': network_data,
+    }

@@ -196,7 +196,8 @@ class IPTablesManager(base.Manager):
 
             # Open SSH, the HTTP API (5000) and the Nova metadata proxy (9697)
             for port in (
-                defaults.SSH, defaults.API_SERVICE, defaults.RUG_META_PORT
+                defaults.SSH, defaults.API_SERVICE,
+                defaults.ORCHESTRATOR_METADATA_PORT
             ):
                 rules.append(Rule(
                     '-A INPUT -i %s -p tcp -m tcp --dport %s -j ACCEPT' % (
