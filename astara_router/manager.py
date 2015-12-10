@@ -97,7 +97,7 @@ class RouterManager(ServiceManagerBase):
 
     def update_metadata(self):
         mgr = metadata.MetadataManager()
-        should_restart = mgr.networks_have_changed(self._config)
+        should_restart = mgr.should_restart(self._config)
         mgr.save_config(self._config)
         if should_restart:
             mgr.restart()
