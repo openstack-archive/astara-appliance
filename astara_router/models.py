@@ -20,6 +20,8 @@ import re
 
 import netaddr
 
+from astara_router import defaults
+
 GROUP_NAME_LENGTH = 15
 DEFAULT_AS = 64512
 
@@ -714,6 +716,12 @@ class RouterConfiguration(SystemConfiguration):
         self.labels = [
             Label(name, cidr) for name, cidr in
             conf_dict.get('labels', {}).iteritems()]
+
+        orchestrator_conf = conf_dict.get('orchestrator', {})
+        self.metadata_address = orchestrator_conf.get(
+            'address', defaults.ORCHESTRATOR_METADATA_ADDRESS)
+        self.metadata_port = orchestrator_conf.get(
+            'metadata_port', defaults.ORCHESTRATOR_METADATA_PORT)
 
         self.floating_ips = [
             FloatingIP.from_dict(fip)

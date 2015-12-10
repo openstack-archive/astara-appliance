@@ -39,8 +39,11 @@ METADATA_DEST_ADDRESS = '169.254.169.254'
 # port for internal network metadata proxy
 BASE_METADATA_PORT = 9600
 
-# port for rug metadata service
-RUG_META_PORT = 9697
+# default address of orchestrator metadata service
+ORCHESTRATOR_METADATA_ADDRESS = 'fdca:3ba5:a17a:acda::1'
+
+# default port for orchestrator metadata service
+ORCHESTRATOR_METADATA_PORT = 9697
 
 
 def internal_metadata_port(ifname):

@@ -11,8 +11,14 @@ from astara_router import metadata_proxy
 
 config = json.dumps({
     "tenant_id": "ABC123",
-    "net1": {"listen_port": 9602, 'ip_instance_map': {'10.10.10.2': 'VM1'}},
-    "net2": {"listen_port": 9603, 'ip_instance_map': {'10.10.10.2': 'VM2'}},
+    "orchestrator_metadata_address": "192.168.25.30",
+    "orchestrator_metadata_port": 9697,
+    "networks": {
+        "net1": {
+            "listen_port": 9602, 'ip_instance_map': {'10.10.10.2': 'VM1'}},
+        "net2": {
+            "listen_port": 9603, 'ip_instance_map': {'10.10.10.2': 'VM2'}},
+    }
 })
 
 class TestMetadataProxy(unittest.TestCase):
@@ -66,7 +72,7 @@ class TestMetadataProxy(unittest.TestCase):
             get.return_value.status_code = 200
             wsgi._proxy_request('10.10.10.2', '/', '')
             get.assert_called_once_with(
-                'http://[fdca:3ba5:a17a:acda::1]:9697/',
+                'http://[192.168.25.30]:9697/',
                 headers={
                     'X-Quantum-Network-ID': 'net1',
                     'X-Forwarded-For': '10.10.10.2',
