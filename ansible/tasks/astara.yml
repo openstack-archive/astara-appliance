@@ -3,6 +3,7 @@
 - name: install base packages
   apt: name={{item}} state=installed install_recommends=no
   with_items:
+    - gunicorn
     - python-pip
     - python-dev
     - logrotate
