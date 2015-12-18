@@ -5,7 +5,5 @@ Flask<1.0,>=0.10
 dogpile.cache>=0.5.4
 netaddr!=0.7.16,>=0.7.12
 eventlet>=0.17.4
-requests>=2.5.2
+requests!=2.9.0,>=2.8.1
 greenlet>=0.3.2
-
-gunicorn>=0.14.6,<1  # Not in global-requirements.txt

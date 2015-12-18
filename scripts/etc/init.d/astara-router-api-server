@@ -11,9 +11,9 @@
 
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
-DAEMON="/usr/local/bin/gunicorn"
+DAEMON="/usr/bin/gunicorn"
 NAME="astara-router-api-server"
-OPTIONS="--pythonpath /usr/local/share/astara -c /etc/astara_gunicorn_config astara_router.api.server:app"
+OPTIONS="--pythonpath /usr/local/share/astara -c /etc/astara_gunicorn_config.py astara_router.api.server:app"
 PIDFILE=/var/run/gunicorn.pid
 
 test -x $DAEMON || exit 0

@@ -56,11 +56,11 @@ def configure_gunicorn(listen_ip):
     else:
         bind = "'%s:%d'" % (listen_ip, defaults.API_SERVICE)
 
-    config = open('/etc/astara_gunicorn_config', 'r').read()
+    config = open('/etc/astara_gunicorn_config.py', 'r').read()
     config = re.sub('\nbind(\s)?\=(\s)?.*', '\nbind = %s' % bind, config)
 
     try:
-        open('/etc/astara_gunicorn_config', 'w+').write(config)
+        open('/etc/astara_gunicorn_config.py', 'w+').write(config)
         sys.stderr.write('http configured to listen on %s\n' % listen_ip)
     except:
         sys.stderr.write('Unable to write gunicorn configuration file.')
