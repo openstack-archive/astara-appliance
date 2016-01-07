@@ -51,10 +51,9 @@ class IPManager(base.Manager):
     def ensure_mapping(self):
         """
         Creates a mapping of generic interface names (e.g., ge0, ge1) to
-        physical interface names (eth1, eth2) if one does not already exist.
+        physical interface names (eth1, eth2).
         """
-        if not self.host_mapping:
-            self.get_interfaces()
+        self.get_interfaces()
 
     def get_interfaces(self):
         """

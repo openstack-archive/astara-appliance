@@ -93,7 +93,7 @@ class IPTestCase(TestCase):
         self.mock_execute.assert_has_calls(
             [mock.call(['/sbin/ip', 'addr', 'show'])])
 
-    def test_ensure_mapping_uninitialized(self):
+    def test_ensure_mapping(self):
         attr = 'get_interfaces'
         with mock.patch.object(ip.IPManager, attr) as get_ifaces:
             mgr = ip.IPManager()
@@ -101,29 +101,23 @@ class IPTestCase(TestCase):
 
             get_ifaces.assert_called_once_with()
 
-    def test_ensure_mapping_initialized(self):
-        attr = 'get_interfaces'
-        with mock.patch.object(ip.IPManager, attr) as get_ifaces:
-            mgr = ip.IPManager()
-            mgr.host_mapping['em0'] = 'ge0'
-            mgr.ensure_mapping()
-
-            self.assertEqual(get_ifaces.call_count, 0)
-
-    def test_is_valid(self):
+    @mock.patch.object(ip.IPManager, 'ensure_mapping')
+    def test_is_valid(self, mock_ensure):
         mgr = ip.IPManager()
         mgr.host_mapping = {'em0': 'ge0'}
         mgr.generic_mapping = {'ge0': 'em0'}
         self.assertTrue(mgr.is_valid('ge0'))
 
-    def test_generic_to_host(self):
+    @mock.patch.object(ip.IPManager, 'ensure_mapping')
+    def test_generic_to_host(self, mock_ensure):
         mgr = ip.IPManager()
         mgr.host_mapping = {'em0': 'ge0'}
         mgr.generic_mapping = {'ge0': 'em0'}
         self.assertEqual(mgr.generic_to_host('ge0'), 'em0')
         self.assertIsNone(mgr.generic_to_host('ge1'))
 
-    def test_host_to_generic(self):
+    @mock.patch.object(ip.IPManager, 'ensure_mapping')
+    def test_host_to_generic(self, ensure_mapping):
         mgr = ip.IPManager()
         mgr.host_mapping = {'em0': 'ge0'}
         mgr.generic_mapping = {'ge0': 'em0'}
@@ -144,12 +138,12 @@ class IPTestCase(TestCase):
         iface = mock.Mock()
         iface.ifname = 'ge0'
 
-        mgr = ip.IPManager()
-        mgr.host_mapping = {'em0': 'ge0'}
-        mgr.generic_mapping = {'ge0': 'em0'}
-
-        mgr.up(iface)
-
+        attr = 'ensure_mapping'
+        with mock.patch.object(ip.IPManager, attr) as ensure:
+            mgr = ip.IPManager()
+            mgr.host_mapping = {'em0': 'ge0'}
+            mgr.generic_mapping = {'ge0': 'em0'}
+            mgr.up(iface)
         self.mock_execute.assert_has_calls(
             [mock.call(['/sbin/ip', 'link', 'set', 'em0', 'up'], 'sudo')])
 
@@ -157,11 +151,13 @@ class IPTestCase(TestCase):
         iface = mock.Mock()
         iface.ifname = 'ge0'
 
-        mgr = ip.IPManager()
-        mgr.host_mapping = {'em0': 'ge0'}
-        mgr.generic_mapping = {'ge0': 'em0'}
+        attr = 'ensure_mapping'
+        with mock.patch.object(ip.IPManager, attr) as ensure:
+            mgr = ip.IPManager()
+            mgr.host_mapping = {'em0': 'ge0'}
+            mgr.generic_mapping = {'ge0': 'em0'}
 
-        mgr.down(iface)
+            mgr.down(iface)
 
         self.mock_execute.assert_has_calls(
             [mock.call(['/sbin/ip', 'link', 'set', 'em0', 'down'], 'sudo')])
