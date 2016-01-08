@@ -40,7 +40,7 @@ class InterfaceModelTestCase(TestCase):
         expected = [
             'addresses', 'description', 'groups', 'ifname', 'lladdr',
             'media', 'mtu', 'state']
-        self.assertTrue(isinstance(result, dict))
+        self.assertIsInstance(result, dict)
         self.assertItemsEqual(result.keys(), expected)
 
     def test_to_dict_extended(self):
@@ -49,7 +49,7 @@ class InterfaceModelTestCase(TestCase):
         expected = [
             'addresses', 'description', 'groups', 'ifname', 'lladdr',
             'media', 'mtu', 'state', 'flags', 'extra_params']
-        self.assertTrue(isinstance(result, dict))
+        self.assertIsInstance(result, dict)
         self.assertItemsEqual(result.keys(), expected)
 
     def test_repr(self):
@@ -546,7 +546,7 @@ class LBListenerTest(TestCase):
         keys.remove('default_pool')
         for k in keys:
             self.assertEqual(getattr(listener, k), ldict[k])
-        self.assertTrue(isinstance(listener.default_pool, models.Pool))
+        self.assertIsInstance(listener.default_pool, models.Pool)
 
     def test_to_dict(self):
         ldict = copy.copy(fakes.FAKE_LISTENER_DICT)
@@ -579,7 +579,7 @@ class LBPoolTest(TestCase):
         keys.remove('members')
         for k in keys:
             self.assertEqual(getattr(pool, k), pdict[k])
-        self.assertTrue(isinstance(pool.members[0], models.Member))
+        self.assertIsInstance(pool.members[0], models.Member)
 
     def test_to_dict(self):
         pdict = copy.copy(fakes.FAKE_POOL_DICT)
@@ -625,7 +625,7 @@ class LoadBalancerTest(TestCase):
         lb = models.LoadBalancer.from_dict(lb_dict)
         for k in lb_dict.keys():
             self.assertEqual(getattr(lb, k), lb_dict[k])
-        self.assertTrue(isinstance(lb.listeners[0], models.Listener))
+        self.assertIsInstance(lb.listeners[0], models.Listener)
         self.assertEqual(lb.listeners[0].id, expected_listener_id)
 
     def test_from_dict_lb_listener_pool(self):
@@ -635,9 +635,9 @@ class LoadBalancerTest(TestCase):
         lb = models.LoadBalancer.from_dict(lb_dict)
         for k in lb_dict.keys():
             self.assertEqual(getattr(lb, k), lb_dict[k])
-        self.assertTrue(isinstance(lb.listeners[0], models.Listener))
-        self.assertTrue(isinstance(lb.listeners[0].default_pool,
-                        models.Pool))
+        self.assertIsInstance(lb.listeners[0], models.Listener)
+        self.assertIsInstance(lb.listeners[0].default_pool,
+                              models.Pool)
         self.assertEqual(lb.listeners[0].id, expected_listener_id)
         self.assertEqual(lb.listeners[0].default_pool.id, expected_pool_id)
 
@@ -650,11 +650,11 @@ class LoadBalancerTest(TestCase):
         lb = models.LoadBalancer.from_dict(lb_dict)
         for k in lb_dict.keys():
             self.assertEqual(getattr(lb, k), lb_dict[k])
-        self.assertTrue(isinstance(lb.listeners[0], models.Listener))
-        self.assertTrue(isinstance(lb.listeners[0].default_pool,
-                        models.Pool))
-        self.assertTrue(isinstance(lb.listeners[0].default_pool.members[0],
-                        models.Member))
+        self.assertIsInstance(lb.listeners[0], models.Listener)
+        self.assertIsInstance(lb.listeners[0].default_pool,
+                              models.Pool)
+        self.assertIsInstance(lb.listeners[0].default_pool.members[0],
+                              models.Member)
         self.assertEqual(lb.listeners[0].id, expected_listener_id)
         self.assertEqual(lb.listeners[0].default_pool.id, expected_pool_id)
         self.assertEqual(lb.listeners[0].default_pool.members[0].id,
