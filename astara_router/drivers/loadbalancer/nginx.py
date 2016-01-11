@@ -61,7 +61,6 @@ class NginxLB(base.Manager):
 
     def restart(self):
         execute(['service', self.INIT, 'restart'], self.root_helper)
-        pass
 
     def update_config(self, config):
         path = os.path.join(
