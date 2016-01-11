@@ -410,7 +410,7 @@ class IPManager(base.Manager):
             # that adding/removing them will fail.  A failure to apply one of
             # these custom rules, however, should *not* cause an overall router
             # failure.
-            LOG.warn('Route could not be %sed: %s' % (action, unicode(e)))
+            LOG.warning('Route could not be %sed: %s' % (action, unicode(e)))
             return False
 
     def disable_duplicate_address_detection(self, network):
