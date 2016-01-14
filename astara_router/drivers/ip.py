@@ -205,21 +205,21 @@ class IPManager(base.Manager):
 
         add = functools.partial(_gen_cmd, 'add')
         delete = functools.partial(_gen_cmd, 'del')
-        mutator = lambda a: (a.ip, a.prefixlen)
 
         self._update_set(real_ifname, interface, old_interface,
-                         'all_addresses', add, delete, mutator)
+                         'all_addresses', add, delete)
 
     def _update_set(self, real_ifname, interface, old_interface, attribute,
-                    fmt_args_add, fmt_args_delete, mutator=lambda x: x):
+                    fmt_args_add, fmt_args_delete):
         """
         Compare the set of addresses (the current set and the desired set)
         for an interface and generate a series of `ip addr add` and `ip addr
         del` commands.
         """
-
-        next_set = set(mutator(i) for i in getattr(interface, attribute))
-        prev_set = set(mutator(i) for i in getattr(old_interface, attribute))
+        next_set = set((i.ip, i.prefixlen)
+                       for i in getattr(interface, attribute))
+        prev_set = set((i.ip, i.prefixlen)
+                       for i in getattr(old_interface, attribute))
 
         if next_set == prev_set:
             return

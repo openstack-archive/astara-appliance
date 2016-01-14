@@ -237,7 +237,6 @@ class IPTestCase(TestCase):
                 'all_addresses',
                 mock.ANY,
                 mock.ANY,
-                mock.ANY
             )
 
     def test_address_add(self):
@@ -299,14 +298,13 @@ class IPTestCase(TestCase):
 
         add = lambda g: ('addr', 'add', '/'.join(map(str, g)), 'dev', 'em0')
         delete = lambda g: ('addr', 'del', '/'.join(map(str, g)), 'dev', 'em0')
-        mutator = lambda x: (x.ip, x.prefixlen)
 
         mgr = ip.IPManager()
         with mock.patch.object(
             mgr, 'generic_to_host', lambda x: x.replace('ge', 'em')
         ):
             mgr._update_set('em0', iface, old_iface, 'all_addresses', add,
-                            delete, mutator=mutator)
+                            delete)
 
             assert self.mock_execute.call_args_list == [
                 mock.call([
@@ -322,11 +320,13 @@ class IPTestCase(TestCase):
             ]
 
     def test_update_set_no_diff(self):
+        a = netaddr.IPNetwork('192.168.101.2/24')
+        b = netaddr.IPNetwork('192.168.102.2/24')
         iface = mock.Mock()
-        iface.all_addresses = ['a', 'b']
+        iface.all_addresses = [a, b]
 
         old_iface = mock.Mock()
-        old_iface.all_addresses = ['a', 'b']
+        old_iface.all_addresses = [a, b]
 
         add = lambda g: ('em0', 'add', g)
         delete = lambda g: ('em0', 'del', g)
