@@ -32,7 +32,7 @@ class InterfaceModelTestCase(TestCase):
     """
     def test_ifname(self):
         iface = models.Interface(ifname="em0")
-        self.assertEquals(iface.ifname, "em0")
+        self.assertEqual(iface.ifname, "em0")
 
     def test_to_dict(self):
         iface = models.Interface()
