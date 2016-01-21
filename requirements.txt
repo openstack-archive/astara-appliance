@@ -1,9 +1,9 @@
 # The order of packages is significant, because pip processes them in the order
 # of appearance. Changing the order has an impact on the overall integration
 # process, which may cause wedges in the gate later.
-Flask<1.0,>=0.10
-dogpile.cache>=0.5.4
-netaddr!=0.7.16,>=0.7.12
-eventlet>=0.17.4
-requests!=2.9.0,>=2.8.1
-greenlet>=0.3.2
+Flask<1.0,>=0.10 # BSD
+dogpile.cache>=0.5.4 # BSD
+netaddr!=0.7.16,>=0.7.12 # BSD
+eventlet>=0.17.4 # MIT
+requests!=2.9.0,>=2.8.1 # Apache-2.0
+greenlet>=0.3.2 # MIT
