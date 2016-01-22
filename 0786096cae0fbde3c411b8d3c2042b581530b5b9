@@ -1,0 +1,9 @@
+Code-Review+2: mark mcclain <mark@mcclain.xyz>
+Workflow+1: mark mcclain <mark@mcclain.xyz>
+Code-Review+1: Clint Adams <clint@gcfm.net>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Fri, 22 Jan 2016 22:55:29 +0000
+Reviewed-on: https://review.openstack.org/268426
+Project: openstack/astara-appliance
+Branch: refs/heads/master
