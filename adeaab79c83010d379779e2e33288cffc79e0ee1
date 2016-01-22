@@ -1,0 +1,10 @@
+Code-Review+1: Manjeet Singh Bhatia <manjeet.s.bhatia@intel.com>
+Code-Review+2: mark mcclain <mark@mcclain.xyz>
+Code-Review+2: Rosario Di Somma <rosario.disomma@gmail.com>
+Workflow+1: Adam Gandelman <adamg@ubuntu.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Fri, 22 Jan 2016 08:26:16 +0000
+Reviewed-on: https://review.openstack.org/264935
+Project: openstack/astara-appliance
+Branch: refs/heads/master
