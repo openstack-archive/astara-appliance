@@ -31,9 +31,6 @@ import requests
 from werkzeug import exceptions
 from werkzeug import wrappers
 
-from astara_router import defaults
-from astara_router.drivers import ip
-
 LOG = logging.getLogger(__name__)
 
 
@@ -48,7 +45,17 @@ class NetworkMetadataProxyHandler(object):
         self.network_id = network_id
         self.config_file = config_file
         self.config_mtime = 0
+        self._config_dict = {}
         self._ip_instance_map = {}
+
+    @property
+    def config_dict(self):
+        config_mtime = os.stat(self.config_file).st_mtime
+        if config_mtime > self.config_mtime:
+            LOG.debug("Metadata proxy configuration has changed; reloading...")
+            self._config_dict = json.load(open(self.config_file))
+            self.config_mtime = config_mtime
+        return self._config_dict
 
     def __call__(self, environ, start_response):
         request = wrappers.Request(environ)
@@ -68,15 +75,15 @@ class NetworkMetadataProxyHandler(object):
 
     @property
     def ip_instance_map(self):
-        config_mtime = os.stat(self.config_file).st_mtime
-        if config_mtime > self.config_mtime:
-            LOG.debug("Metadata proxy configuration has changed; reloading...")
-            config_dict = json.load(open(self.config_file))
-            self._ip_instance_map = config_dict[
-                self.network_id
-            ]['ip_instance_map']
-            self.config_mtime = config_mtime
+        self._ip_instance_map = self.config_dict['networks'][
+            self.network_id]['ip_instance_map']
         return self._ip_instance_map
+
+    @property
+    def orchestrator_loc(self):
+        addr = self.config_dict['orchestrator_metadata_address']
+        port = self.config_dict['orchestrator_metadata_port']
+        return '[%s]:%d' % (addr, port)
 
     def _proxy_request(self, remote_address, path_info, query_string):
         headers = {
@@ -88,7 +95,7 @@ class NetworkMetadataProxyHandler(object):
 
         url = urlparse.urlunsplit((
             'http',
-            '[%s]:%d' % (ip.get_rug_address(), defaults.RUG_META_PORT),
+            self.orchestrator_loc,
             path_info,
             query_string,
             ''))
@@ -172,7 +179,7 @@ def main():
     pool = eventlet.GreenPool(1000)
 
     tenant_id = config_dict.pop('tenant_id')
-    for network_id, config in config_dict.items():
+    for network_id, config in config_dict['networks'].items():
         app = NetworkMetadataProxyHandler(tenant_id,
                                           network_id,
                                           args.config_file)

@@ -23,7 +23,7 @@ import netaddr
 
 from unittest2 import TestCase
 
-from astara_router import models
+from astara_router import defaults, models
 from test.unit import fakes
 
 
@@ -438,6 +438,23 @@ class RouterConfigurationTestCase(TestCase):
         self.assertEqual(len(c.anchors), 1)
         self.assertEqual(len(c.anchors[0].rules), 1)
         self.assertEqual(c.anchors[0].rules[0].action, 'block')
+
+    def test_init_metadata_config(self):
+        c = models.RouterConfiguration({
+            'orchestrator': {
+                'address': '192.168.25.30',
+                'metadata_port': 9697,
+            }
+        })
+        self.assertEqual(c.metadata_address, '192.168.25.30')
+        self.assertEqual(c.metadata_port, 9697)
+
+    def test_init_metadata_config_missing(self):
+        c = models.RouterConfiguration({})
+        self.assertEqual(
+            c.metadata_address, defaults.ORCHESTRATOR_METADATA_ADDRESS)
+        self.assertEqual(
+            c.metadata_port, defaults.ORCHESTRATOR_METADATA_PORT)
 
     def test_asn_default(self):
         c = models.RouterConfiguration({'networks': []})
