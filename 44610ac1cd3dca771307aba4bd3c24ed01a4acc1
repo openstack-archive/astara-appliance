@@ -1,0 +1,10 @@
+Code-Review+1: Ryan Petrello <ryan@ryanpetrello.com>
+Code-Review+2: mark mcclain <mark@mcclain.xyz>
+Code-Review+2: Rosario Di Somma <rosario.disomma@gmail.com>
+Workflow+1: Rosario Di Somma <rosario.disomma@gmail.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Sun, 24 Jan 2016 15:20:01 +0000
+Reviewed-on: https://review.openstack.org/255613
+Project: openstack/astara-appliance
+Branch: refs/heads/master
