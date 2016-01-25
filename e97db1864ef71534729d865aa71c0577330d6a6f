@@ -1,0 +1,9 @@
+Code-Review+2: mark mcclain <mark@mcclain.xyz>
+Code-Review+2: Rosario Di Somma <rosario.disomma@gmail.com>
+Workflow+1: Rosario Di Somma <rosario.disomma@gmail.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Mon, 25 Jan 2016 17:49:10 +0000
+Reviewed-on: https://review.openstack.org/271455
+Project: openstack/astara-appliance
+Branch: refs/heads/stable/liberty
