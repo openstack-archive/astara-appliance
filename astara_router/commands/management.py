@@ -43,7 +43,7 @@ def configure_ssh(listen_ip):
     ])
     try:
         open('/etc/ssh/sshd_config', 'w+').write(config)
-        sys.stderr.write('sshd configured to listen on %s\n' % listen_ip)
+        sys.stdout.write('sshd configured to listen on %s\n' % listen_ip)
     except:
         sys.stderr.write('Unable to write sshd configuration file.')
 
@@ -61,7 +61,7 @@ def configure_gunicorn(listen_ip):
 
     try:
         open('/etc/astara_gunicorn_config.py', 'w+').write(config)
-        sys.stderr.write('http configured to listen on %s\n' % listen_ip)
+        sys.stdout.write('http configured to listen on %s\n' % listen_ip)
     except:
         sys.stderr.write('Unable to write gunicorn configuration file.')
 
