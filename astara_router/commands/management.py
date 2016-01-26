@@ -23,12 +23,13 @@ import netaddr
 from astara_router import defaults
 from astara_router import utils
 from astara_router.drivers import ip
+from astara_router.config import SSHD_CONFIG_FILE, ASTARA_CONFIG_FILE
 
 
 def configure_ssh(listen_ip):
     """
     """
-    config = open('/etc/ssh/sshd_config', 'r').read()
+    config = open(SSHD_CONFIG_FILE, 'r').read()
     config = re.sub(
         '(^|\n)(#)?(ListenAddress|AddressFamily|UseDNS) .*',
         '',
@@ -42,7 +43,7 @@ def configure_ssh(listen_ip):
         'UseDNS no'
     ])
     try:
-        open('/etc/ssh/sshd_config', 'w+').write(config)
+        open(SSHD_CONFIG_FILE, 'w+').write(config)
         sys.stderr.write('sshd configured to listen on %s\n' % listen_ip)
     except:
         sys.stderr.write('Unable to write sshd configuration file.')
@@ -56,11 +57,11 @@ def configure_gunicorn(listen_ip):
     else:
         bind = "'%s:%d'" % (listen_ip, defaults.API_SERVICE)
 
-    config = open('/etc/astara_gunicorn_config.py', 'r').read()
+    config = open(ASTARA_CONFIG_FILE, 'r').read()
     config = re.sub('\nbind(\s)?\=(\s)?.*', '\nbind = %s' % bind, config)
 
     try:
-        open('/etc/astara_gunicorn_config.py', 'w+').write(config)
+        open(ASTARA_CONFIG_FILE, 'w+').write(config)
         sys.stderr.write('http configured to listen on %s\n' % listen_ip)
     except:
         sys.stderr.write('Unable to write gunicorn configuration file.')

@@ -21,6 +21,7 @@ import logging
 from astara_router.defaults import internal_metadata_port
 from astara_router.drivers import base
 from astara_router.utils import execute, replace_file
+from astara_router.config import METADATA_BIN_FILE
 
 
 LOG = logging.getLogger(__name__)
@@ -84,20 +85,20 @@ class MetadataManager(base.Manager):
         determined to be stopped.
         """
         try:
-            execute(['/etc/init.d/metadata', 'status'], self.root_helper)
+            execute([METADATA_BIN_FILE, 'status'], self.root_helper)
         except:
-            execute(['/etc/init.d/metadata', 'start'], self.root_helper)
+            execute([METADATA_BIN_FILE, 'start'], self.root_helper)
 
     def restart(self):
         """
         Restarts the metadata service using the init script.
         """
         try:
-            execute(['/etc/init.d/metadata', 'stop'], self.root_helper)
+            execute([METADATA_BIN_FILE, 'stop'], self.root_helper)
         except:
             # failure is ok here
             pass
-        execute(['/etc/init.d/metadata', 'start'], self.root_helper)
+        execute([METADATA_BIN_FILE, 'start'], self.root_helper)
 
 
 def build_config(config):
