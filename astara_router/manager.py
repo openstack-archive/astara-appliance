@@ -28,6 +28,8 @@ class ServiceManagerBase(object):
     def __init__(self, state_path='.'):
         self._config = None
         self.state_path = os.path.abspath(state_path)
+        self.ip_mgr = ip.IPManager()
+        self.ip_mgr.ensure_mapping()
 
     @property
     def config(self):
@@ -41,13 +43,18 @@ class ServiceManagerBase(object):
     def update_config(self, config, cache):
         pass
 
+    def update_interfaces(self):
+        if self._config is None:
+            return
+        for network in self._config.networks:
+            self.ip_mgr.disable_duplicate_address_detection(network)
+        self.ip_mgr.update_interfaces(self._config.interfaces)
+
 
 class SystemManager(ServiceManagerBase):
     def __init__(self, state_path='.'):
         super(SystemManager, self).__init__(state_path)
         self._config = models.SystemConfiguration()
-        self.ip_mgr = ip.IPManager()
-        self.ip_mgr.ensure_mapping()
 
     def update_config(self, config, cache):
         self._config = config
@@ -58,20 +65,10 @@ class SystemManager(ServiceManagerBase):
         mgr = hostname.HostnameManager()
         mgr.update(self._config)
 
-    def update_interfaces(self):
-        for network in self._config.networks:
-            self.ip_mgr.disable_duplicate_address_detection(network)
-        self.ip_mgr.update_interfaces(self._config.interfaces)
-
 
 class RouterManager(ServiceManagerBase):
-    def __init__(self, state_path='.'):
-        super(RouterManager, self).__init__(state_path)
-        self.ip_mgr = ip.IPManager()
-        self.ip_mgr.ensure_mapping()
 
     def update_config(self, config, cache):
-
         self._config = config
         self.update_interfaces()
         self.update_dhcp()
@@ -81,14 +78,8 @@ class RouterManager(ServiceManagerBase):
         self.update_routes(cache)
         self.update_arp()
 
-    def update_interfaces(self):
-        for network in self._config.networks:
-            self.ip_mgr.disable_duplicate_address_detection(network)
-        self.ip_mgr.update_interfaces(self._config.interfaces)
-
     def update_dhcp(self):
         mgr = dnsmasq.DHCPManager()
-
         mgr.delete_all_config()
         for network in self._config.networks:
             real_ifname = self.ip_mgr.generic_to_host(network.interface.ifname)
