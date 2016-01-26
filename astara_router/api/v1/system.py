@@ -26,6 +26,7 @@ from astara_router import models
 from astara_router import utils
 from astara_router import settings
 from astara_router.manager import manager
+from astara_router.config import ASTARA_STATE_FILE
 
 blueprint = utils.blueprint_factory(__name__)
 
@@ -42,7 +43,7 @@ def _get_cache():
         _cache = make_region().configure(
             'dogpile.cache.dbm',
             arguments={
-                "filename": "/etc/astara-state"
+                "filename": ASTARA_STATE_FILE
             }
         )
     return _cache

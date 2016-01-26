@@ -21,10 +21,10 @@ import textwrap
 
 from astara_router.drivers import base
 from astara_router import utils
+from astara_router.config import BIRD6_CONFIG_FILE, BIRD6_BIN_FILE
 
 
 LOG = logging.getLogger(__name__)
-CONF_PATH = '/etc/bird/bird6.conf'
 DEFAULT_AREA = 0
 
 
@@ -54,18 +54,19 @@ class BirdManager(base.Manager):
         config_data = build_config(config, if_map)
 
         utils.replace_file('/tmp/bird6.conf', config_data)
-        utils.execute(['mv', '/tmp/bird6.conf', CONF_PATH], self.root_helper)
+        utils.execute(['mv', '/tmp/bird6.conf', BIRD6_CONFIG_FILE],
+                      self.root_helper)
 
     def restart(self):
         """
         Restart the BIRD daemon using the system provided init scripts.
         """
         try:
-            utils.execute(['/etc/init.d/bird6', 'status'], self.root_helper)
+            utils.execute([BIRD6_BIN_FILE, 'status'], self.root_helper)
         except:  # pragma no cover
-            utils.execute(['/etc/init.d/bird6', 'start'], self.root_helper)
+            utils.execute([BIRD6_BIN_FILE, 'start'], self.root_helper)
         else:  # pragma no cover
-            utils.execute(['/etc/init.d/bird6', 'reload'], self.root_helper)
+            utils.execute([BIRD6_BIN_FILE, 'reload'], self.root_helper)
 
 
 def build_config(config, interface_map):
