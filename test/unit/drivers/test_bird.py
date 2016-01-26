@@ -23,6 +23,8 @@ import re
 import textwrap
 
 from astara_router.drivers import bird
+from astara_router.config import *
+
 ext_subnet = mock.Mock()
 ext_subnet.gateway_ip = netaddr.IPAddress('dead:beef::1')
 ext_subnet.cidr = netaddr.IPNetwork('dead:beef::/64')
@@ -89,15 +91,15 @@ class BirdTestCase(TestCase):
                 'the_config'
             )
             self.mock_execute.assert_called_once_with(
-                ['mv', '/tmp/bird6.conf', '/etc/bird/bird6.conf'],
+                ['mv', '/tmp/bird6.conf', BIRD6_CONFIG_FILE],
                 'sudo'
             )
 
     def test_restart(self):
         self.mgr.restart()
         self.mock_execute.assert_has_calls([
-            mock.call(['/etc/init.d/bird6', 'status'], 'sudo'),
-            mock.call(['/etc/init.d/bird6', 'reload'], 'sudo'),
+            mock.call([BIRD6_BIN_FILE, 'status'], 'sudo'),
+            mock.call([BIRD6_BIN_FILE, 'reload'], 'sudo'),
         ])
 
     def test_restart_failure(self):
@@ -105,8 +107,8 @@ class BirdTestCase(TestCase):
             execute.side_effect = [Exception('status failed!'), None]
             self.mgr.restart()
             execute.assert_has_calls([
-                mock.call(['/etc/init.d/bird6', 'status'], 'sudo'),
-                mock.call(['/etc/init.d/bird6', 'start'], 'sudo'),
+                mock.call([BIRD6_BIN_FILE, 'status'], 'sudo'),
+                mock.call([BIRD6_BIN_FILE, 'start'], 'sudo'),
             ])
 
     def test_build_config(self):
