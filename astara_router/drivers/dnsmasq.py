@@ -15,7 +15,6 @@
 # under the License.
 
 
-import logging
 import os
 import time
 
@@ -23,7 +22,6 @@ from astara_router.drivers import base
 from astara_router import utils
 
 
-LOG = logging.getLogger(__name__)
 CONF_DIR = '/etc/dnsmasq.d'
 RC_PATH = '/etc/init.d/dnsmasq'
 DEFAULT_LEASE = 86400
@@ -141,7 +139,7 @@ class DHCPManager(base.Manager):
         Restarts dnsmasq service using the system provided init script.
         """
         try:
-            utils.execute(['/etc/init.d/dnsmasq', 'stop'], self.root_helper)
+            utils.execute([RC_PATH, 'stop'], self.root_helper)
         except:
             pass
 
@@ -151,7 +149,7 @@ class DHCPManager(base.Manager):
             remaining -= 1
             try:
                 utils.execute(
-                    ['/etc/init.d/dnsmasq', 'start'], self.root_helper
+                    [RC_PATH, 'start'], self.root_helper
                 )
                 return
             except Exception:

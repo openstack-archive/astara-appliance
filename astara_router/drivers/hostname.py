@@ -14,13 +14,9 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import logging
 
 from astara_router.drivers import base
 from astara_router import utils
-
-
-LOG = logging.getLogger(__name__)
 
 
 class HostnameManager(base.Manager):

@@ -15,7 +15,6 @@
 # under the License.
 
 
-import logging
 import random
 import textwrap
 
@@ -23,7 +22,6 @@ from astara_router.drivers import base
 from astara_router import utils
 
 
-LOG = logging.getLogger(__name__)
 CONF_PATH = '/etc/bird/bird6.conf'
 DEFAULT_AREA = 0
 

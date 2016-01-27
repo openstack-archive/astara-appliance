@@ -15,15 +15,10 @@
 # under the License.
 
 
-import logging
-
 import netaddr
 
 from astara_router.drivers import base
 from astara_router import utils
-
-
-LOG = logging.getLogger(__name__)
 
 
 class PingManager(base.Manager):

@@ -16,14 +16,12 @@
 
 
 import json
-import logging
 
 from astara_router.defaults import internal_metadata_port
 from astara_router.drivers import base
 from astara_router.utils import execute, replace_file
 
 
-LOG = logging.getLogger(__name__)
 CONF_PATH = '/etc/metadata.conf'
 
 

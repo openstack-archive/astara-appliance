@@ -15,7 +15,6 @@
 # under the License.
 
 import argparse
-import logging
 import re
 import socket
 import struct
@@ -23,9 +22,6 @@ import struct
 from astara_router import utils
 from astara_router.drivers import base
 from astara_router.models import Network
-
-
-LOG = logging.getLogger(__name__)
 
 
 def send_gratuitous_arp():
