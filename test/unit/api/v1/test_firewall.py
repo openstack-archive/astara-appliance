@@ -19,7 +19,6 @@
 Base classes for Router API tests.
 """
 import flask
-import json
 import mock
 from unittest2 import TestCase
 

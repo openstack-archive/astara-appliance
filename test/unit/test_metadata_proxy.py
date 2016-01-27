@@ -2,8 +2,6 @@ import argparse
 import json
 import tempfile
 import unittest
-from collections import OrderedDict
-
 import eventlet
 import mock
 
