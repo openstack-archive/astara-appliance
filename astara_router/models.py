@@ -37,7 +37,7 @@ class Interface(ModelBase):
     """
     """
     def __init__(self, ifname=None, addresses=[], groups=None, flags=None,
-                 lladdr=None, mtu=1500, media=None,
+                 lladdr=None, mtu=None, media=None,
                  description=None, **extra_params):
         self.ifname = ifname
         self.description = description
