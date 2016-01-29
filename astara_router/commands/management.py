@@ -72,6 +72,7 @@ def configure_management():
     )
     parser.add_argument('mac_address', metavar='lladdr', type=str)
     parser.add_argument('ip_address', metavar='ipaddr', type=str)
+    parser.add_argument('mtu', metavar='mtu', type=int, default=1280)
     args = parser.parse_args()
 
     ip_addr = netaddr.IPNetwork(args.ip_address)
@@ -82,6 +83,8 @@ def configure_management():
         if args.mac_address == intf.lladdr:
             if not intf.is_up:
                 mgr.up(intf)
+
+            intf.mtu = args.mtu
 
             if ip_addr not in intf.addresses:
                 if ip_addr.version == 6:

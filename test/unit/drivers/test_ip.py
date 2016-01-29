@@ -63,6 +63,7 @@ class IPTestCase(TestCase):
     def test_get_interfaces(self):
         iface_a = mock.Mock()
         iface_a.ifname = 'em0'
+        iface_a.mtu = 1500
 
         iface_b = mock.Mock()
         iface_b.ifname = 'em1'
@@ -79,6 +80,7 @@ class IPTestCase(TestCase):
     def test_get_interface(self):
         iface_a = mock.Mock()
         iface_a.ifname = 'em0'
+        iface_a.mtu = 1500
         iface = 'astara_router.drivers.ip._parse_interface'
         ifaces = 'astara_router.drivers.ip._parse_interfaces'
         with mock.patch(iface) as parse:
@@ -126,7 +128,9 @@ class IPTestCase(TestCase):
 
     def test_update_interfaces(self):
         iface_a = mock.Mock()
+        iface_a.mtu = 1500
         iface_b = mock.Mock()
+        iface_b.mtu = 1500
 
         attr = 'update_interface'
         with mock.patch.object(ip.IPManager, attr) as update:
@@ -162,6 +166,23 @@ class IPTestCase(TestCase):
         self.mock_execute.assert_has_calls(
             [mock.call(['/sbin/ip', 'link', 'set', 'em0', 'down'], 'sudo')])
 
+    def test_set_mtu(self):
+        iface = mock.Mock()
+        iface.ifname = 'ge0'
+        iface.mtu = 1280
+
+        attr = 'ensure_mapping'
+        with mock.patch.object(ip.IPManager, attr) as ensure:
+            mgr = ip.IPManager()
+            mgr.host_mapping = {'em0': 'ge0'}
+            mgr.generic_mapping = {'ge0': 'em0'}
+
+            mgr.set_mtu(iface)
+
+        self.mock_execute.assert_has_calls(
+            [mock.call(['/sbin/ip', 'link', 'set', 'em0', 'mtu', '1280'],
+                       'sudo')])
+
     def _update_interface_test_hlpr(self, new_iface, old_iface,
                                     ignore_link_local=True):
         mock_methods = {
@@ -185,10 +206,12 @@ class IPTestCase(TestCase):
         iface = mock.Mock()
         iface.ifname = 'ge0'
         iface.addresses = []
+        iface.mtu = 1500
 
         old_iface = mock.Mock(name='old')
         old_iface.ifname = 'ge0'
         old_iface.addresses = []
+        old_iface.mtu = 1500
 
         self._update_interface_test_hlpr(iface, old_iface)
 
@@ -196,10 +219,12 @@ class IPTestCase(TestCase):
         iface = mock.Mock()
         iface.ifname = 'ge0'
         iface.addresses = []
+        iface.mtu = 1500
 
         old_iface = mock.Mock(name='old')
         old_iface.ifname = 'ge0'
         old_iface.addresses = [netaddr.IPAddress('fe80::1')]
+        old_iface.mtu = 1500
 
         self._update_interface_test_hlpr(iface, old_iface)
         self.assertEqual(old_iface.addresses, [])
@@ -208,12 +233,14 @@ class IPTestCase(TestCase):
         iface = mock.Mock()
         iface.ifname = 'ge0'
         iface.addresses = []
+        iface.mtu = 1500
 
         link_local = netaddr.IPAddress('fe80::1')
 
         old_iface = mock.Mock(name='old')
         old_iface.ifname = 'ge0'
         old_iface.addresses = [link_local]
+        old_iface.mtu = 1500
 
         self._update_interface_test_hlpr(iface, old_iface, False)
         self.assertEqual(old_iface.addresses, [link_local])

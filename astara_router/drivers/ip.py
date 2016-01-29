@@ -156,6 +156,15 @@ class IPManager(base.Manager):
         real_ifname = self.generic_to_host(interface.ifname)
         self.sudo('link', 'set', real_ifname, 'down')
 
+    def set_mtu(self, interface):
+        """
+        Sets the mtu on interface <interface> to mtu.
+        :param interface: the interface to set mtu
+        :type interface: astara_router.models.Interface
+        """
+        real_ifname = self.generic_to_host(interface.ifname)
+        self.sudo('link', 'set', real_ifname, 'mtu', str(interface.mtu))
+
     def update_interface(self, interface, ignore_link_local=True):
         """
         Updates a network interface, particularly its addresses
@@ -176,6 +185,9 @@ class IPManager(base.Manager):
         # Must update primary before aliases otherwise will lose address
         # in case where primary and alias are swapped.
         self._update_addresses(real_ifname, interface, old_interface)
+
+        if interface.mtu is not None and old_interface.mtu != interface.mtu:
+            self.set_mtu(interface)
 
     def _update_addresses(self, real_ifname, interface, old_interface):
         """
