@@ -1,0 +1,8 @@
+Code-Review+2: Adam Gandelman <adamg@ubuntu.com>
+Workflow+1: Adam Gandelman <adamg@ubuntu.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Mon, 01 Feb 2016 19:56:52 +0000
+Reviewed-on: https://review.openstack.org/274206
+Project: openstack/astara-appliance
+Branch: refs/heads/stable/liberty
