@@ -29,7 +29,8 @@ FAKE_SYSTEM_DICT = {
             "interface": {
                 "ifname": "ge1",
                 "addresses": [
-                    "192.168.0.137/24", "fdd6:a1fa:cfa8:6af6:f816:3eff:fea0:8082/64"
+                    "192.168.0.137/24",
+                    "fdd6:a1fa:cfa8:6af6:f816:3eff:fea0:8082/64"
                 ]
             },
         },
@@ -75,10 +76,11 @@ FAKE_LOADBALANCER_DICT = {
                 "ip_address": "fdd6:a1fa:cfa8:6af6:f816:3eff:fea0:8082"}
         ],
         "id": "352e2867-06c6-4ced-8e81-1c016991fb38",
-        "device_id": "8ac54799-b143-48e5-94d4-e5e989592229"},
-        "vip_address": "192.168.0.137",
-        "id": "8ac54799-b143-48e5-94d4-e5e989592229",
-        "listeners": [],
+        "device_id": "8ac54799-b143-48e5-94d4-e5e989592229"
+    },
+    "vip_address": "192.168.0.137",
+    "id": "8ac54799-b143-48e5-94d4-e5e989592229",
+    "listeners": [],
 }
 
 FAKE_LISTENER_DICT = {
@@ -90,8 +92,6 @@ FAKE_LISTENER_DICT = {
     'protocol_port': 80,
     'tenant_id': 'd22b149cee9b4eac8349c517eda00b89'
 }
-
-
 
 FAKE_POOL_DICT = {
     'admin_state_up': True,
