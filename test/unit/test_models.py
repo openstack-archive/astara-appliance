@@ -15,8 +15,6 @@
 # under the License.
 
 
-import textwrap
-
 import copy
 import mock
 import netaddr
@@ -199,6 +197,7 @@ class FilterRuleModelTestCase(TestCase):
         with self.assertRaises(ValueError):
             models.FilterRule(action='pass', protocol='made_up_proto')
 
+
 class AnchorTestCase(TestCase):
     def test_anchor(self):
         a = models.Anchor('foo', [])
@@ -335,7 +334,7 @@ class NetworkTestCase(TestCase):
 
     def test_network_type_invalid(self):
         with self.assertRaises(ValueError):
-            n = models.Network('id', None, network_type='invalid')
+            models.Network('id', None, network_type='invalid')
 
     def test_v4_conf_service_valid(self):
         n = models.Network('id', None, v4_conf_service='dhcp')
@@ -346,7 +345,7 @@ class NetworkTestCase(TestCase):
 
     def test_v4_conf_service_invalid(self):
         with self.assertRaises(ValueError):
-            n = models.Network('id', None, v4_conf_service='invalid')
+            models.Network('id', None, v4_conf_service='invalid')
 
     def test_v6_conf_service_valid(self):
         n = models.Network('id', None, v6_conf_service='dhcp')
@@ -360,7 +359,7 @@ class NetworkTestCase(TestCase):
 
     def test_v6_conf_service_invalid(self):
         with self.assertRaises(ValueError):
-            n = models.Network('id', None, v6_conf_service='invalid')
+            models.Network('id', None, v6_conf_service='invalid')
 
 
 class RouterConfigurationTestCase(TestCase):
@@ -427,14 +426,16 @@ class RouterConfigurationTestCase(TestCase):
             name='theanchor',
             rules=[])
 
-        c = models.RouterConfiguration(dict(networks=[], anchors=[anchor_dict]))
+        c = models.RouterConfiguration(dict(networks=[],
+                                       anchors=[anchor_dict]))
         self.assertEqual(len(c.anchors), 1)
 
     def test_init_anchor(self):
         test_rule = dict(action='block', source='192.168.1.1/32')
         anchor_dict = dict(name='theanchor', rules=[test_rule])
 
-        c = models.RouterConfiguration(dict(networks=[], anchors=[anchor_dict]))
+        c = models.RouterConfiguration(dict(networks=[],
+                                       anchors=[anchor_dict]))
         self.assertEqual(len(c.anchors), 1)
         self.assertEqual(len(c.anchors[0].rules), 1)
         self.assertEqual(c.anchors[0].rules[0].action, 'block')
@@ -544,7 +545,6 @@ class RouterConfigurationTestCase(TestCase):
                         anchors=[])
 
         self.assertEqual(c.to_dict(), expected)
-
 
 
 class LBListenerTest(TestCase):

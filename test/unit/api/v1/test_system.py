@@ -35,6 +35,7 @@ SYSTEM_CONFIG = {
     'hostname': 'foohostname',
 }
 
+
 class SystemAPITestCase(unittest.TestCase):
     """
     This test case contains the unit tests for the Python server implementation
@@ -60,7 +61,9 @@ class SystemAPITestCase(unittest.TestCase):
         'unsupported platform'
     )
     def test_get_interface(self):
-        with mock.patch.object(v1.system.manager.router, 'get_interface') as get_if:
+        with mock.patch.object(
+            v1.system.manager.router, 'get_interface'
+        ) as get_if:
             get_if.return_value = 'ge1'
             result = self.test_app.get('/v1/system/interface/ge1')
             get_if.assert_called_once_with('ge1')
@@ -74,7 +77,9 @@ class SystemAPITestCase(unittest.TestCase):
         'unsupported platform'
     )
     def test_get_interfaces(self):
-        with mock.patch.object(v1.system.manager.router, 'get_interfaces') as get_ifs:
+        with mock.patch.object(
+            v1.system.manager.router, 'get_interfaces'
+        ) as get_ifs:
             get_ifs.return_value = ['ge0', 'ge1']
             result = self.test_app.get('/v1/system/interfaces')
             get_ifs.assert_called_once_with()
@@ -150,13 +155,12 @@ class SystemAPITestCase(unittest.TestCase):
         not distutils.spawn.find_executable('ip'),
         'unsupported platform'
     )
-
-
     @mock.patch('astara_router.api.v1.system._get_cache')
     @mock.patch('astara_router.models.SystemConfiguration')
     @mock.patch.object(v1.system.manager, 'update_config')
-    def test_put_configuration_returns_200(self, mock_update,
-        fake_system_config, fake_cache):
+    def test_put_configuration_returns_200(
+        self, mock_update, fake_system_config, fake_cache
+    ):
         fake_cache.return_value = 'fake_cache'
         sys_config_obj = mock.Mock()
         sys_config_obj.validate = mock.Mock()
@@ -175,7 +179,8 @@ class SystemAPITestCase(unittest.TestCase):
         self.assertEqual(result.status_code, 200)
         self.assertTrue(json.loads(result.data))
         mock_update.assert_called_with(
-            cache='fake_cache', service_configs=[], system_config=sys_config_obj)
+            cache='fake_cache', service_configs=[],
+            system_config=sys_config_obj)
 
     @mock.patch('astara_router.manager.Manager.config',
                 new_callable=mock.PropertyMock, return_value={})
@@ -183,8 +188,10 @@ class SystemAPITestCase(unittest.TestCase):
     @mock.patch('astara_router.models.RouterConfiguration')
     @mock.patch('astara_router.models.SystemConfiguration')
     @mock.patch.object(v1.system.manager, 'update_config')
-    def test_put_configuration_with_router(self, mock_update,
-        fake_system_config, fake_router_config, fake_cache, fake_config):
+    def test_put_configuration_with_router(
+        self, mock_update, fake_system_config, fake_router_config,
+        fake_cache, fake_config
+    ):
         fake_config.return_value = 'foo'
         fake_cache.return_value = 'fake_cache'
         sys_config_obj = mock.Mock()
@@ -196,7 +203,6 @@ class SystemAPITestCase(unittest.TestCase):
         router_config_obj.validate = mock.Mock()
         router_config_obj.validate.return_value = []
         fake_router_config.return_value = router_config_obj
-
 
         result = self.test_app.put(
             '/v1/system/config',
@@ -222,9 +228,11 @@ class SystemAPITestCase(unittest.TestCase):
     @mock.patch('astara_router.models.LoadBalancerConfiguration')
     @mock.patch('astara_router.models.SystemConfiguration')
     @mock.patch.object(v1.system.manager, 'update_config')
-    def test_put_configuration_with_adv_services(self, mock_update,
+    def test_put_configuration_with_adv_services(
+        self, mock_update,
         fake_system_config, fake_lb_config, fake_cache, fake_config,
-        fake_api_settings, fake_mgr_settings, fake_get_config_model):
+        fake_api_settings, fake_mgr_settings, fake_get_config_model
+    ):
         fake_api_settings.ENABLED_SERVICES = ['loadbalancer']
         fake_mgr_settings.ENABLED_SERVICES = ['loadbalancer']
         fake_config.return_value = 'foo'
@@ -266,9 +274,11 @@ class SystemAPITestCase(unittest.TestCase):
     @mock.patch('astara_router.models.LoadBalancerConfiguration')
     @mock.patch('astara_router.models.SystemConfiguration')
     @mock.patch.object(v1.system.manager, 'update_config')
-    def test_put_configuration_with_disabled_svc_returns_400(self, mock_update,
+    def test_put_configuration_with_disabled_svc_returns_400(
+        self, mock_update,
         fake_system_config, fake_lb_config, fake_cache, fake_config,
-        fake_api_settings, fake_mgr_settings, fake_get_config_model):
+        fake_api_settings, fake_mgr_settings, fake_get_config_model
+    ):
         fake_api_settings.ENABLED_SERVICES = ['foo']
         fake_mgr_settings.ENABLED_SERVICES = ['foo']
         fake_config.return_value = 'foo'

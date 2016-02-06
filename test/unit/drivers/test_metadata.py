@@ -56,7 +56,8 @@ class HostnameTestCase(TestCase):
     def _test_should_restart(self, exp_result):
         config_json = json.dumps(self.config_dict)
         with mock.patch.object(
-            __builtin__, 'open', mock.mock_open(read_data=config_json)):
+            __builtin__, 'open', mock.mock_open(read_data=config_json)
+        ):
             self.assertEqual(
                 self.mgr.should_restart(self.config), exp_result)
 
@@ -78,7 +79,8 @@ class HostnameTestCase(TestCase):
 
     def test_should_restart_true_config_read_err(self):
         with mock.patch.object(
-            __builtin__, 'open', mock.mock_open()) as _o:
+            __builtin__, 'open', mock.mock_open()
+        ) as _o:
             _o.side_effect = IOError()
             self.assertEqual(
                 self.mgr.should_restart(self.config), True)

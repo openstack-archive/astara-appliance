@@ -19,7 +19,7 @@ from unittest2 import TestCase
 
 import mock
 
-from astara_router.drivers import hostname, ip
+from astara_router.drivers import hostname
 
 CONFIG = mock.Mock()
 CONFIG.hostname = 'astara'
