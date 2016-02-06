@@ -22,6 +22,7 @@ import flask
 from astara_router.api import v1
 from astara_router.debug import handle_traceback
 from astara_router.manager import manager
+from astara_router import settings
 
 app = flask.Flask(__name__)
 app.register_blueprint(v1.base.blueprint)
@@ -45,4 +46,4 @@ def main():
     # manager.state_path = app.config['STATE_PATH']
 
     app.run(host=manager.management_address(ensure_configuration=True),
-            port=5000)
+            port=settings.API_SERVICE)
