@@ -1,7 +1,4 @@
-
-# Configures which advanced service drivers are loaded by this
-# instance of the appliance.
-ENABLED_SERVICES = ['router']
+from astara_router.defaults import *  # noqa
 
 # If astara_local_settings.py is located in your python path,
 # it can be used to override the defaults. DIB will install this

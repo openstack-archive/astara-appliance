@@ -48,3 +48,7 @@ ORCHESTRATOR_METADATA_PORT = 9697
 
 def internal_metadata_port(ifname):
     return BASE_METADATA_PORT + int(re.sub('[a-zA-Z]', '', ifname))
+
+# Configures which advanced service drivers are loaded by this
+# instance of the appliance.
+ENABLED_SERVICES = ['router']

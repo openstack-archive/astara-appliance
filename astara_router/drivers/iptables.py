@@ -20,7 +20,7 @@ import os
 
 from astara_router.drivers import base
 from astara_router.models import Network
-from astara_router import defaults, utils
+from astara_router import settings, utils
 
 
 class Rule(object):
@@ -196,8 +196,8 @@ class IPTablesManager(base.Manager):
 
             # Open SSH, the HTTP API (5000) and the Nova metadata proxy (9697)
             for port in (
-                defaults.SSH, defaults.API_SERVICE,
-                defaults.ORCHESTRATOR_METADATA_PORT
+                settings.SSH, settings.API_SERVICE,
+                settings.ORCHESTRATOR_METADATA_PORT
             ):
                 rules.append(Rule(
                     '-A INPUT -i %s -p tcp -m tcp --dport %s -j ACCEPT' % (
@@ -224,8 +224,8 @@ class IPTablesManager(base.Manager):
         for network in self.get_internal_networks(config):
 
             for version, address, dhcp_port in (
-                (4, network.interface.first_v4, defaults.DHCP),
-                (6, network.interface.first_v6, defaults.DHCPV6)
+                (4, network.interface.first_v4, settings.DHCP),
+                (6, network.interface.first_v6, settings.DHCPV6)
             ):
                 if address:
                     # Allow DHCP
@@ -286,10 +286,10 @@ class IPTablesManager(base.Manager):
                     '-A PREROUTING -i %s -d %s -p tcp -m tcp '
                     '--dport %s -j DNAT --to-destination %s:%s' % (
                         network.interface.ifname,
-                        defaults.METADATA_DEST_ADDRESS,
-                        defaults.HTTP,
+                        settings.METADATA_DEST_ADDRESS,
+                        settings.HTTP,
                         network.interface.first_v4,
-                        defaults.internal_metadata_port(
+                        settings.internal_metadata_port(
                             network.interface.ifname
                         )
                     ), ip_version=4
