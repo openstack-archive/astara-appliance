@@ -24,7 +24,7 @@ import netaddr
 from unittest2 import TestCase
 
 from astara_router import defaults, models
-from test.unit import fakes
+from astara_router.test.unit import fakes
 
 
 class InterfaceModelTestCase(TestCase):
