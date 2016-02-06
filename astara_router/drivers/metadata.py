@@ -17,7 +17,7 @@
 
 import json
 
-from astara_router.defaults import internal_metadata_port
+from astara_router.settings import internal_metadata_port
 from astara_router.drivers import base
 from astara_router.utils import execute, replace_file
 
