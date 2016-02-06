@@ -1,2 +1,2 @@
 check:
-	tox -e py26,py27
+	tox -e py27
