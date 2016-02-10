@@ -1,0 +1,30 @@
+{%- for instance in vrrp_instances %}
+vrrp_instance {{ instance.name }} {
+    state {{ instance.state }}
+    interface {{ instance.interface }}
+    virtual_router_id {{ instance.vrrp_id }}
+    priority {{ instance.priority }}
+    garp_master_delay {{ instance.garp_master_delay }}
+    mcast_src_ip {{ instance.mcast_src_ip }}
+
+    {%- if instance.vips %}
+    virtual_ipaddress {
+        {{ instance.vips[0].address }} dev {{ instance.vips[0].interface }}
+    }
+    virtual_ipaddress_excluded {
+        {%- for vip in instance.vips[1:] %}
+        {{ vip.address }} dev {{ vip.interface }}
+        {%- endfor %}
+    }
+    {%- endif %}
+
+    {%- if instance.routes %}
+    virtual_routes {
+        {%- for route in instance.routes %}
+        {{ route.destination }} via {{ route.gateway }} dev {{ instance.interface }}
+        {%- endfor %}
+    }
+    {%- endif %}
+}
+
+{%- endfor %}

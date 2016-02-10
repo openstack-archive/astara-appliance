@@ -38,7 +38,7 @@ class Interface(ModelBase):
     """
     def __init__(self, ifname=None, addresses=[], groups=None, flags=None,
                  lladdr=None, mtu=None, media=None,
-                 description=None, **extra_params):
+                 description=None, management=False, **extra_params):
         self.ifname = ifname
         self.description = description
         self.addresses = addresses
@@ -49,6 +49,7 @@ class Interface(ModelBase):
         self.media = media
         self.extra_params = extra_params
         self._aliases = []
+        self.management = management
 
     def __repr__(self):
         return '<Interface: %s %s>' % (self.ifname,
@@ -375,7 +376,7 @@ class Network(ModelBase):
                  v4_conf_service=SERVICE_STATIC,
                  v6_conf_service=SERVICE_STATIC,
                  address_allocations=None,
-                 subnets=None):
+                 subnets=None, ha=False):
         self.id = id_
         self.interface = interface
         self.name = name
@@ -385,6 +386,7 @@ class Network(ModelBase):
         self.address_allocations = address_allocations or []
         self.subnets = subnets or []
         self.floating_ips = []
+        self.ha = ha
 
     @property
     def is_tenant_network(self):
@@ -462,6 +464,11 @@ class Network(ModelBase):
         if missing:
             raise ValueError('Missing required data: %s.' % missing)
 
+        if d.get('network_type') == cls.TYPE_MANAGEMENT:
+            d['interface']['management'] = True
+        else:
+            d['interface']['management'] = False
+
         return cls(
             d['network_id'],
             interface=Interface.from_dict(d['interface']),
@@ -471,7 +478,8 @@ class Network(ModelBase):
             v4_conf_service=d.get('v4_conf_service', cls.SERVICE_STATIC),
             address_allocations=[
                 Allocation.from_dict(a) for a in d.get('allocations', [])],
-            subnets=[Subnet.from_dict(s) for s in d.get('subnets', [])])
+            subnets=[Subnet.from_dict(s) for s in d.get('subnets', [])],
+            ha=d.get('ha', False))
 
 
 class LoadBalancer(ModelBase):
@@ -663,6 +671,7 @@ class SystemConfiguration(ModelBase):
         self.hostname = conf_dict.get('hostname')
         self.networks = [
             Network.from_dict(n) for n in conf_dict.get('networks', [])]
+        self.ha = conf_dict.get('ha_resource', False)
 
     def validate(self):
         # TODO: Improve this interface, it currently sucks.
