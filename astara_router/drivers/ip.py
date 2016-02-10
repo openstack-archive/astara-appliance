@@ -22,7 +22,7 @@ import re
 import netaddr
 
 from astara_router import models
-from astara_router.drivers import base
+from astara_router.drivers import base, keepalived
 from astara_router import utils
 
 LOG = logging.getLogger(__name__)
@@ -555,3 +555,54 @@ def _parse_lladdr(line):
     """
     tokens = line.split()
     return tokens[1]
+
+
+class VRRPIPManager(IPManager):
+    def __init__(self, root_helper='sudo'):
+        super(VRRPIPManager, self).__init__(root_helper)
+        self.keepalived = keepalived.KeepalivedManager()
+        self.ensure_mapping()
+
+    def set_peers(self, peers):
+        self.keepalived.peers = peers
+
+    def set_priority(self, priority):
+        self.keepalived.set_priority(priority)
+
+    def update_interfaces(self, interfaces):
+        for interface in interfaces:
+            if interface.management:
+                # the mgt interface is not managed as a vip, but
+                # it used for keepalived mcast cluster comms
+                self.update_interface(interface)
+                self.keepalived.set_management_address(
+                    address=interface.first_v4 or interface.first_v6)
+            else:
+                self.up(interface)
+                self.keepalived.add_vrrp_instance(
+                    interface=self.generic_to_host(interface.ifname),
+                    addresses=interface.addresses)
+
+    def _set_default_gateway(self, gateway_ip, ifname):
+        """
+        Sets the default gateway.
+
+        :param gateway_ip: the IP address to set as the default gateway_ip
+        :type gateway_ip: netaddr.IPAddress
+        :param ifname: the interface name (in our case, of the external
+                       network)
+        :type ifname: str
+        """
+        version = 4
+        if gateway_ip.version == 6:
+            version = 6
+        self.keepalived.set_default_gateway(
+            ip_version=version, gateway_ip=gateway_ip,
+            interface=self.generic_to_host(ifname))
+
+    def update_host_routes(self, config, cache):
+        # XXX TODO
+        return
+
+    def reload(self):
+        self.keepalived.reload()
