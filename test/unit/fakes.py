@@ -1,4 +1,7 @@
 from copy import copy
+import netaddr
+
+from astara_router import models
 
 
 FAKE_SYSTEM_DICT = {
@@ -135,3 +138,23 @@ def fake_loadbalancer_dict(listener=False, pool=False, members=False):
         lb_dict['listeners'][0]['default_pool']['members'] = \
             [copy(FAKE_MEMBER_DICT)]
     return lb_dict
+
+
+def _fake_interface(ifname, addresses=None, management=False):
+    addresses = addresses or ['10.0.0.1']
+    return models.Interface(
+        ifname=ifname,
+        description='fake_interface',
+        addresses=[netaddr.IPAddress(addr) for addr in addresses],
+        management=management,
+    )
+
+
+def fake_interface(ifname='ge1', addresses=None):
+    return _fake_interface(
+        ifname=ifname, addresses=(addresses or ['10.0.0.1']), management=False)
+
+
+def fake_mgt_interface(ifname='ge0', addresses=None):
+    return _fake_interface(
+        ifname=ifname, addresses=(addresses or ['11.0.0.1']), management=True)
