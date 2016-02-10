@@ -151,4 +151,9 @@ class ARPManager(base.Manager):
         :type ip: str
         :param ip: IP address to search for in the ARP table.
         """
-        self.sudo('-d', ip)
+        try:
+            self.sudo('-d', ip)
+        except:
+            # We may be attempting to delete from ARP for interfaces which
+            # are managed by keepalived and do not yet have addresses
+            pass
