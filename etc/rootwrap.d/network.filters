@@ -22,6 +22,9 @@ ip: IpFilter, ip, root
 sysctl: CommandFilter, sysctl, root
 conntrack: CommandFilter, conntrack, root
 
+# astara_router/drivers/keepalived.py:
+mv_keepalived: RegExpFilter, mv, root, mv, /tmp/keepalived\.conf, /etc/keepalived/keepalived\.conf
+
 # astara_router/drivers/ping.py:
 ping: CommandFilter, ping, root
 ping6: CommandFilter, ping6, root

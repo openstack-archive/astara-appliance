@@ -44,5 +44,6 @@ def main():
     # app.config.from_object('astara_router.config.Default')
     # manager.state_path = app.config['STATE_PATH']
 
-    app.run(host=manager.management_address(ensure_configuration=True),
+    addr = str(manager.ip_mgr.get_interfaces()[0].addresses[0])
+    app.run(host=addr,
             port=5000)
