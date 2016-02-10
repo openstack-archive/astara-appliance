@@ -22,8 +22,11 @@ from unittest2 import TestCase
 import mock
 import netaddr
 
+from test.unit import fakes
 from astara_router import models
 from astara_router.drivers import ip
+from astara_router.drivers.keepalived import KeepalivedManager
+
 
 SAMPLE_OUTPUT = """1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue state UNKNOWN
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -499,4 +502,82 @@ class ParseTestCase(TestCase):
         self.assertEqual(
             str(retval),
             str(netaddr.IPNetwork('fe80::f816:3eff:fe7a:d864/64'))
+        )
+
+
+class TestVRRPIPManager(TestCase):
+    def setUp(self):
+        super(TestVRRPIPManager, self).setUp()
+        self.fake_keepalived = mock.Mock(
+            spec=KeepalivedManager)
+        p = 'astara_router.drivers.keepalived.KeepalivedManager'
+        with mock.patch(p) as ka:
+                ka.return_value = self.fake_keepalived
+                self.mgr = ip.VRRPIPManager()
+
+    @mock.patch.object(ip.VRRPIPManager, 'ensure_mapping')
+    @mock.patch('astara_router.drivers.keepalived.KeepalivedManager')
+    def test_init(self, fake_keepalived, fake_ensure_map):
+        mgr = ip.VRRPIPManager()
+        self.assertTrue(fake_ensure_map.called)
+        fake_keepalived.return_value = 'fake_keepalived'
+        self.assertTrue(fake_keepalived.called)
+        mgr.keepalived = 'fake_keepalived'
+
+    def test_set_peers(self):
+        self.mgr.set_peers(['foo', 'bar'])
+        self.assertEqual(
+            self.mgr.keepalived.peers, ['foo', 'bar'])
+
+    def test_set_prio(self):
+        self.mgr.set_priority(100)
+        self.mgr.keepalived.set_priority.assert_called_with(100)
+
+    @mock.patch.object(ip.VRRPIPManager, 'generic_to_host')
+    @mock.patch.object(ip.VRRPIPManager, 'update_interface')
+    @mock.patch.object(ip.VRRPIPManager, 'up')
+    def test_update_interfaces(self, fake_up, fake_update_int, fake_gth):
+        interface = fakes.fake_interface()
+        mgt_interface = fakes.fake_mgt_interface()
+        fake_gth.return_value = 'eth1'
+        self.mgr.update_interfaces(
+            interfaces=[interface, mgt_interface],
+        )
+
+        self.assertEqual(len(fake_update_int.call_args_list), 1)
+        fake_update_int.assert_called_with(mgt_interface)
+        self.mgr.keepalived.set_management_address.assert_called_with(
+            address=netaddr.IPAddress(mgt_interface.addresses[0]))
+
+        self.assertEqual(len(fake_up.call_args_list), 1)
+        fake_up.assert_called_with(interface)
+        self.mgr.keepalived.add_vrrp_instance.assert_called_with(
+            addresses=[netaddr.IPNetwork(interface.addresses[0])],
+            interface='eth1')
+
+    def test_reload(self):
+        self.mgr.reload()
+        self.assertTrue(self.mgr.keepalived.reload.called)
+
+    @mock.patch.object(ip.VRRPIPManager, 'generic_to_host')
+    def test__set_default_gateway_v4(self, fake_gth):
+        fake_gth.return_value = 'eth0'
+        ip = netaddr.IPAddress('10.0.0.1')
+        self.mgr._set_default_gateway(gateway_ip=ip, ifname='ge0')
+        self.mgr.keepalived.set_default_gateway.assert_called_with(
+            ip_version=4,
+            gateway_ip=netaddr.IPAddress('10.0.0.1'),
+            interface='eth0',
+        )
+
+    @mock.patch.object(ip.VRRPIPManager, 'generic_to_host')
+    def test__set_default_gateway_v6(self, fake_gth):
+        fake_gth.return_value = 'eth0'
+        v6_ip = 'fdca:3ba5:a17a:acda:f816:3eff:fe5d:84'
+        ip = netaddr.IPAddress(v6_ip)
+        self.mgr._set_default_gateway(gateway_ip=ip, ifname='ge0')
+        self.mgr.keepalived.set_default_gateway.assert_called_with(
+            ip_version=6,
+            gateway_ip=netaddr.IPAddress(v6_ip),
+            interface='eth0',
         )
