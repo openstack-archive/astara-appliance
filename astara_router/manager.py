@@ -28,8 +28,28 @@ class ServiceManagerBase(object):
     def __init__(self, state_path='.'):
         self._config = None
         self.state_path = os.path.abspath(state_path)
-        self.ip_mgr = ip.IPManager()
-        self.ip_mgr.ensure_mapping()
+        self._vrrp_ip_mgr = None
+
+    @property
+    def ip_mgr(self):
+        ip_mgr = ip.IPManager()
+        ip_mgr.ensure_mapping()
+
+        if not self._config:
+            # we do not yet have config, so use standard ip manager for
+            # ensuring initial intrefaces
+            return ip_mgr
+        if self._config and self._config.ha:
+            if not self._vrrp_ip_mgr:
+                self._vrrp_ip_mgr = ip.VRRPIPManager()
+            self._vrrp_ip_mgr.set_peers(
+                self._config.ha_config.get('peers', []))
+            return self._vrrp_ip_mgr
+        else:
+            # we may not yet have config, so use standard ip manager for
+            # ensuring initial interfaces
+            return ip_mgr
+
 
     @property
     def config(self):
@@ -48,6 +68,7 @@ class ServiceManagerBase(object):
             return
         for network in self._config.networks:
             self.ip_mgr.disable_duplicate_address_detection(network)
+
         self.ip_mgr.update_interfaces(self._config.interfaces)
 
 
@@ -106,9 +127,8 @@ class RouterManager(ServiceManagerBase):
         mgr.restart()
 
     def update_routes(self, cache):
-        mgr = ip.IPManager()
-        mgr.update_default_gateway(self._config)
-        mgr.update_host_routes(self._config, cache)
+        self.ip_mgr.update_default_gateway(self._config)
+        self.ip_mgr.update_host_routes(self._config, cache)
 
     def update_arp(self):
         mgr = arp.ARPManager()

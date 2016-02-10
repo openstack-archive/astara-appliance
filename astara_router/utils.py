@@ -22,12 +22,19 @@ import subprocess
 import tempfile
 
 import flask
+import jinja2
 import netaddr
 
 from astara_router import models
 
 DEFAULT_ENABLED_SERVICES = ['router']
 VALID_SERVICES = ['router', 'loadbalancer']
+
+
+class TemplateNotFound(Exception):
+    # TODO(adam_g): These should return 50x errors and not logged
+    # exceptions.
+    pass
 
 
 def execute(args, root_helper=None):
@@ -104,3 +111,11 @@ def blueprint_factory(name):
     blueprint_name = "_".join(name_parts)
     url_prefix = "/" + "/".join(name_parts)
     return flask.Blueprint(blueprint_name, name, url_prefix=url_prefix)
+
+
+
+def load_template(template_file):
+    if not os.path.exists(template_file):
+        raise NginxTemplateNotFound(
+            'Config template not found @ %s' % template_file)
+    return jinja2.Template(open(template_file).read())
