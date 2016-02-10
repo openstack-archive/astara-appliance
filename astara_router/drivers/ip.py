@@ -22,7 +22,7 @@ import re
 import netaddr
 
 from astara_router import models
-from astara_router.drivers import base
+from astara_router.drivers import base, keepalived
 from astara_router import utils
 
 LOG = logging.getLogger(__name__)
@@ -31,6 +31,8 @@ LOG = logging.getLogger(__name__)
 GENERIC_IFNAME = 'ge'
 PHYSICAL_INTERFACES = ['lo', 'eth', 'em', 're', 'en', 'vio', 'vtnet']
 ULA_PREFIX = 'fdca:3ba5:a17a:acda::/64'
+
+
 
 
 class IPManager(base.Manager):
@@ -555,3 +557,24 @@ def _parse_lladdr(line):
     """
     tokens = line.split()
     return tokens[1]
+
+
+
+
+class VRRPIPManager(IPManager):
+    def __init__(self, root_helper='sudo'):
+        super(VRRPIPManager, self).__init__(root_helper)
+        self.keepalived = keepalived.KeepalivedManager()
+
+    def update_interfaces(self, interfaces):
+        for interface in interfaces:
+            if interface.management:
+                # the mgt interface is not managed as a vip, but
+                # it used for keepalived mcast cluster comms
+                self.update_interface(interface)
+                self.keepalived.set_management_address(
+                    address=interface.first_v4 or interface.first_v6)
+            else:
+                self.keepalived.add_vips(
+                    interface=self.generic_to_host(interface.ifname),
+                    addresses=interface.addresses)

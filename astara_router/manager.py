@@ -28,8 +28,25 @@ class ServiceManagerBase(object):
     def __init__(self, state_path='.'):
         self._config = None
         self.state_path = os.path.abspath(state_path)
-        self.ip_mgr = ip.IPManager()
-        self.ip_mgr.ensure_mapping()
+        self._ip_mgr = None
+
+    @property
+    def ip_mgr(self):
+        if self._ip_mgr:
+            return self._ip_mgr
+
+        ip_mgr = ip.IPManager()
+        ip_mgr.ensure_mapping()
+
+        if not self._config:
+            # we do not yet have config, so use standard ip manager for
+            # ensuring initial intrefaces
+            return ip_mgr
+        elif self._config and self._config.ha:
+            self._ip_mgr = ip.VRRPIPManager()
+        else:
+            self._ip_mgr = ip_mgr
+        return self._ip_mgr
 
     @property
     def config(self):
@@ -48,6 +65,7 @@ class ServiceManagerBase(object):
             return
         for network in self._config.networks:
             self.ip_mgr.disable_duplicate_address_detection(network)
+
         self.ip_mgr.update_interfaces(self._config.interfaces)
 
 

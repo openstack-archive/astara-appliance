@@ -44,5 +44,7 @@ def main():
     # app.config.from_object('astara_router.config.Default')
     # manager.state_path = app.config['STATE_PATH']
 
-    app.run(host=manager.management_address(ensure_configuration=True),
+    addr = str(manager.ip_mgr.get_interfaces()[0].addresses[0])
+    from pprint import pprint;     import pdb; pdb.set_trace() ############################## Breakpoint ##############################
+    app.run(host=addr,
             port=5000)
