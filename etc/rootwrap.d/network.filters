@@ -9,6 +9,9 @@ mv_bird: RegExpFilter, mv, root, mv, /tmp/bird6\.conf, /etc/bird/bird6\.conf
 arp: CommandFilter, /usr/sbin/arp, root
 astara_gratuitous_arp: CommandFilter, astara-gratuitous-arp, root
 
+# astara_router/drivers/conntrackd.py:
+mv_conntrackd: RegExpFilter, mv, root, mv, /tmp/conntrackd\.conf, /etc/conntrackd/conntrackd\.conf
+
 # astara_router/drivers/dnsmasq.py:
 mv_dnsmasq: RegExpFilter, mv, root, mv, /tmp/dnsmasq\.conf, /etc/dnsmasq\.d/.*\.conf
 rm: CommandFilter, rm, root
