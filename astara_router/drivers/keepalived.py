@@ -14,7 +14,7 @@
 
 import os
 
-from astara_router.drivers import base
+from astara_router.drivers import base, conntrackd
 from astara_router.utils import hash_file, load_template
 
 
@@ -27,7 +27,7 @@ class KeepalivedVipAddress(object):
 
     def __eq__(self, other):
         return (isinstance(other, KeepalivedVipAddress) and
-                self.address == other.address)
+                self.address.ip == other.address.ip)
 
 
 class KeepalivedRoute(object):
@@ -84,6 +84,7 @@ class KeepalivedManager(base.Manager):
         self.config_tmpl = load_template(self.CONFIG_FILE_TEMPLATE)
         self.peers = []
         self.priority = 0
+        self.notify_script = conntrackd.ConntrackdManager.NOTIFY_SCRIPT
         self._last_config_hash = None
 
     def set_management_address(self, address):
@@ -123,6 +124,7 @@ class KeepalivedManager(base.Manager):
         return self.config_tmpl.render(
             priority=self.priority,
             peers=self.peers,
+            notify_script=self.notify_script,
             vrrp_instances=self.instances.values())
 
     def reload(self):

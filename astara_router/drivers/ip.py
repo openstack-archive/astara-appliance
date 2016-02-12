@@ -571,6 +571,7 @@ class VRRPIPManager(IPManager):
 
     def update_interfaces(self, interfaces):
         for interface in interfaces:
+            print interface.addresses
             if interface.management:
                 # the mgt interface is not managed as a vip, but
                 # it used for keepalived mcast cluster comms
@@ -581,7 +582,7 @@ class VRRPIPManager(IPManager):
                 self.up(interface)
                 self.keepalived.add_vrrp_instance(
                     interface=self.generic_to_host(interface.ifname),
-                    addresses=interface.addresses)
+                    addresses=interface.all_addresses)
 
     def _set_default_gateway(self, gateway_ip, ifname):
         """
