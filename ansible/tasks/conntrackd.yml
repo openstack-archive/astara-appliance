@@ -1,0 +1,7 @@
+---
+
+- name: install conntrackd
+  apt: name=conntrackd state=installed install_recommends=no
+
+- name: install conntrackd notify script to /etc/conntrackd
+  copy: src=/usr/share/doc/conntrackd/examples/sync/primary-backup.sh dest=/etc/conntrackd/primary-backup.sh mode=0755
