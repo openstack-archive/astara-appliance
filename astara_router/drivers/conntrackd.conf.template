@@ -1,0 +1,38 @@
+General {
+    HashSize 8192
+    HashLimit 65535
+    Syslog on
+    LockFile /var/lock/conntrackd.lock
+    UNIX {
+           Path /var/run/conntrackd.sock
+           Backlog 20
+    }
+    SocketBufferSize 262142
+    SocketBufferSizeMaxGrown 655355
+    Filter {
+           Protocol Accept {
+                   TCP
+           }
+          Address Ignore {
+                  IPv4_address 127.0.0.1
+          }
+       }
+}
+Sync {
+    Mode FTFW {
+       }
+    UDP Default {
+           {%- if management_ip_version == 4 %}
+           IPv4_address {{ source_address }}
+           IPv4_Destination_Address {{ destination_address }}
+           {%- else %}
+           IPv6_address {{ source_address }}
+           IPv6_Destination_Address {{ destination_address }}
+           {%- endif %}
+           Port 3780
+           Interface {{ interface }}
+           SndSocketBuffer 24985600
+           RcvSocketBuffer 24985600
+           Checksum on
+    }
+}

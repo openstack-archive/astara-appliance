@@ -1,0 +1,4 @@
+---
+features:
+  - The appliance is now built with conntrackd installed and supports configuring
+    the connection tracking service among pairs of clustered HA router appliances.

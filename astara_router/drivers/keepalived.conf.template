@@ -1,3 +1,14 @@
+vrrp_sync_group astara_vrrp_group {
+    group {
+        {%- for instance in vrrp_instances %}
+        {{ instance.name }}
+        {%- endfor %}
+    }
+    notify_master "{{ notify_script }} primary"
+    notify_backup "{{ notify_script }} backup"
+    notify_fault "{{ notify_script }} fault"
+}
+
 {%- for instance in vrrp_instances %}
 vrrp_instance {{ instance.name }} {
     native_ipv6

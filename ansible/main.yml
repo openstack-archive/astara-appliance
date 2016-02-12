@@ -21,6 +21,7 @@
     - include: tasks/base.yml
     - include: tasks/astara.yml
     - include: tasks/bird.yml
+    - include: tasks/conntrackd.yml
     - include: tasks/dnsmasq.yml
     - include: tasks/extras.yml
       when: install_extras

@@ -20,7 +20,7 @@ import re
 
 from astara_router import models
 from astara_router import settings
-from astara_router.drivers import (bird, dnsmasq, ip, metadata,
+from astara_router.drivers import (bird, conntrackd, dnsmasq, ip, metadata,
                                    iptables, arp, hostname, loadbalancer)
 
 
@@ -113,7 +113,15 @@ class RouterManager(ServiceManagerBase):
         self.update_firewall()
         self.update_routes(cache)
         self.update_arp()
+        self.update_conntrackd()
         self.reload_config()
+
+    def update_conntrackd(self):
+        if not self._config.ha:
+            return
+        mgr = conntrackd.ConntrackdManager()
+        mgr.save_config(self._config, self.ip_mgr.generic_to_host)
+        mgr.restart()
 
     def update_dhcp(self):
         mgr = dnsmasq.DHCPManager()
