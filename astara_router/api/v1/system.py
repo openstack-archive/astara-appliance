@@ -42,7 +42,7 @@ def _get_cache():
         _cache = make_region().configure(
             'dogpile.cache.dbm',
             arguments={
-                "filename": "/etc/astara-state"
+                "filename": "/tmp/astara-state"
             }
         )
     return _cache

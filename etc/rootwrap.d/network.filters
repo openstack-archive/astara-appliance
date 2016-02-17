@@ -1,0 +1,38 @@
+# astara-rootwrap command filters for astara-appliance
+# This file should be owned by (and only-writeable by) the root user
+
+[Filters]
+# astara_router/drivers/bird.py:
+mv_bird: RegExpFilter, mv, root, mv, /tmp/bird6\.conf, /etc/bird/bird6\.conf 
+
+# astara_router/drivers/arp.py: 'arp'..
+arp: CommandFilter, /usr/sbin/arp, root
+
+# astara_router/drivers/dnsmasq.py:
+mv_dnsmasq: RegExpFilter, mv, root, mv, /tmp/dnsmasq\.conf, /etc/dnsmasq\.d/.*\.conf
+rm: CommandFilter, rm, root
+
+# astara_router/drivers/hostname.py:
+hostname: CommandFilter, /bin/hostname, root
+mv_hostname: RegExpFilter, mv, root, mv, /tmp/hostname, /etc/hostname
+mv_hosts: RegExpFilter, mv, root, mv, /tmp/hosts, /etc/hosts
+
+# astara_router/drivers/ip.py:
+ip: IpFilter, ip, root
+sysctl: CommandFilter, sysctl, root
+conntrack: CommandFilter, conntrack, root
+
+# astara_router/drivers/ping.py:
+ping: CommandFilter, ping, root
+ping6: CommandFilter, ping6, root
+
+# astara_router/drivers/iptables.py:
+mv_rules: RegExpFilter, mv, root, mv, /tmp/ip.*tables\.rules, /etc/iptables/rules\.v.*
+iptables: CommandFilter, iptables, root
+ip6tables: CommandFilter, ip6tables, root
+
+# astara_router/drivers/metadata.py:
+mv_metadata: RegExpFilter, mv, root, mv, /tmp/metadata\.conf, /etc/metadata\.conf
+
+# astara services
+services: CommandFilter, service, root

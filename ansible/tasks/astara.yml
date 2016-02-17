@@ -29,11 +29,32 @@
 - name: install gunicorn config file
   template: src=gunicorn.j2 dest=/etc/astara_gunicorn_config.py
 
+- name: add gunicorn user
+  command: useradd -r gunicorn
+
 - name: install init.d files
   copy: src={{playbook_dir}}/../scripts/etc/init.d/{{item}} dest=/etc/init.d/{{item}} mode=0555
   with_items:
     - metadata
     - astara-router-api-server
+
+- name: install rootwrap config file
+  copy: src={{playbook_dir}}/../etc/rootwrap.conf dest=/etc/rootwrap.conf mode=0555
+
+- name: create /etc/rootwrap.d/
+  file: path=/etc/rootwrap.d/ state=directory
+
+- name: install rootwrap rules file
+  copy: src={{playbook_dir}}/../etc/rootwrap.d/ dest=/etc/rootwrap.d/ mode=0555
+  with_items:
+    - network.filters
+
+- stat: path=/etc/sudoers.d
+  register: sudoers_dir
+
+- name: install sudoer file
+  when: sudoers_dir.stat.exists == True
+  template: src=gunicorn dest=/etc/sudoers.d/gunicorn mode=0440
 
 - name: create /usr/local/share/astara/
   file: path=/usr/local/share/astara state=directory

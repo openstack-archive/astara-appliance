@@ -163,11 +163,11 @@ class TestIPTablesRouterConfiguration(TestCase):
         assert self.execute.call_args_list == [
             mock.call(
                 ['mv', '/tmp/ip4tables.rules', '/etc/iptables/rules.v4'],
-                'sudo'
+                'sudo astara-rootwrap /etc/rootwrap.conf'
             ),
             mock.call(
                 ['mv', '/tmp/ip6tables.rules', '/etc/iptables/rules.v6'],
-                'sudo'
+                'sudo astara-rootwrap /etc/rootwrap.conf'
             )
         ]
 
@@ -177,7 +177,8 @@ class TestIPTablesRouterConfiguration(TestCase):
         mgr = iptables.IPTablesManager()
         mgr.restart()
         assert self.execute.call_args_list == [
-            mock.call(['/etc/init.d/iptables-persistent', 'restart'], 'sudo')
+            mock.call(['service', 'iptables-persistent', 'restart'],
+                      'sudo astara-rootwrap /etc/rootwrap.conf')
         ]
 
     @mock.patch('os.path.isfile')
@@ -186,7 +187,8 @@ class TestIPTablesRouterConfiguration(TestCase):
         mgr = iptables.IPTablesManager()
         mgr.restart()
         assert self.execute.call_args_list == [
-            mock.call(['/etc/init.d/netfilter-persistent', 'restart'], 'sudo')
+            mock.call(['service', 'netfilter-persistent', 'restart'],
+                      'sudo astara-rootwrap /etc/rootwrap.conf')
         ]
 
     def test_mixed_floating_ip_versions(self):

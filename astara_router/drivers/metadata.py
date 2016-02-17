@@ -30,7 +30,7 @@ class MetadataManager(base.Manager):
     A class to provide facilities to interact with the Nova metadata service.
     """
 
-    def __init__(self, root_helper='sudo'):
+    def __init__(self, root_helper='sudo astara-rootwrap /etc/rootwrap.conf'):
         """
         Initializes MetataManager class.
 
@@ -88,20 +88,20 @@ class MetadataManager(base.Manager):
         determined to be stopped.
         """
         try:
-            execute(['/etc/init.d/metadata', 'status'], self.root_helper)
+            execute(['service', 'metadata', 'status'], self.root_helper)
         except:
-            execute(['/etc/init.d/metadata', 'start'], self.root_helper)
+            execute(['service', 'metadata', 'start'], self.root_helper)
 
     def restart(self):
         """
         Restarts the metadata service using the init script.
         """
         try:
-            execute(['/etc/init.d/metadata', 'stop'], self.root_helper)
+            execute(['service', 'metadata', 'stop'], self.root_helper)
         except:
             # failure is ok here
             pass
-        execute(['/etc/init.d/metadata', 'start'], self.root_helper)
+        execute(['service', 'metadata', 'start'], self.root_helper)
 
 
 def build_config(config):
