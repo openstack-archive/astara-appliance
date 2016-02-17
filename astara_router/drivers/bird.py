@@ -30,7 +30,7 @@ class BirdManager(base.Manager):
     """
     A class to interact with BIRD, an internet routing protocol daemon.
     """
-    def __init__(self, root_helper='sudo'):
+    def __init__(self, root_helper='sudo astara-rootwrap /etc/rootwrap.conf'):
         """
         Initializes BirdManager class.
 
@@ -59,11 +59,11 @@ class BirdManager(base.Manager):
         Restart the BIRD daemon using the system provided init scripts.
         """
         try:
-            utils.execute(['/etc/init.d/bird6', 'status'], self.root_helper)
+            utils.execute(['service', 'bird6', 'status'], self.root_helper)
         except:  # pragma no cover
-            utils.execute(['/etc/init.d/bird6', 'start'], self.root_helper)
+            utils.execute(['service', 'bird6', 'start'], self.root_helper)
         else:  # pragma no cover
-            utils.execute(['/etc/init.d/bird6', 'reload'], self.root_helper)
+            utils.execute(['service', 'bird6', 'reload'], self.root_helper)
 
 
 def build_config(config, interface_map):
