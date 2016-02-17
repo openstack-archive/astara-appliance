@@ -24,7 +24,7 @@ class Manager(object):
     modules.
     """
 
-    def __init__(self, root_helper='sudo'):
+    def __init__(self, root_helper='sudo astara-rootwrap /etc/rootwrap.conf'):
         """
         Initializes Manager class. <root_helper> provides a facility to specify
         how this class accesses escalated privileges. Defaults to 'sudo'.

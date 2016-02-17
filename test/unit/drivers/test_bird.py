@@ -90,14 +90,16 @@ class BirdTestCase(TestCase):
             )
             self.mock_execute.assert_called_once_with(
                 ['mv', '/tmp/bird6.conf', '/etc/bird/bird6.conf'],
-                'sudo'
+                'sudo astara-rootwrap /etc/rootwrap.conf'
             )
 
     def test_restart(self):
         self.mgr.restart()
         self.mock_execute.assert_has_calls([
-            mock.call(['/etc/init.d/bird6', 'status'], 'sudo'),
-            mock.call(['/etc/init.d/bird6', 'reload'], 'sudo'),
+            mock.call(['service', 'bird6', 'status'],
+                      'sudo astara-rootwrap /etc/rootwrap.conf'),
+            mock.call(['service', 'bird6', 'reload'],
+                      'sudo astara-rootwrap /etc/rootwrap.conf'),
         ])
 
     def test_restart_failure(self):
@@ -105,8 +107,10 @@ class BirdTestCase(TestCase):
             execute.side_effect = [Exception('status failed!'), None]
             self.mgr.restart()
             execute.assert_has_calls([
-                mock.call(['/etc/init.d/bird6', 'status'], 'sudo'),
-                mock.call(['/etc/init.d/bird6', 'start'], 'sudo'),
+                mock.call(['service', 'bird6', 'status'],
+                          'sudo astara-rootwrap /etc/rootwrap.conf'),
+                mock.call(['service', 'bird6', 'start'],
+                          'sudo astara-rootwrap /etc/rootwrap.conf'),
             ])
 
     def test_build_config(self):

@@ -109,7 +109,7 @@ class DnsmasqTestCase(TestCase):
             )
             self.mock_execute.assert_called_once_with(
                 ['mv', '/tmp/dnsmasq.conf', '/etc/dnsmasq.d/em1.conf'],
-                'sudo'
+                'sudo astara-rootwrap /etc/rootwrap.conf'
             )
 
     def test_build_dhcp_config(self):
@@ -136,6 +136,8 @@ class DnsmasqTestCase(TestCase):
     def test_restart(self):
         self.mgr.restart()
         self.mock_execute.assert_has_calls([
-            mock.call(['/etc/init.d/dnsmasq', 'stop'], 'sudo'),
-            mock.call(['/etc/init.d/dnsmasq', 'start'], 'sudo')
+            mock.call(['service', 'dnsmasq', 'stop'],
+                      'sudo astara-rootwrap /etc/rootwrap.conf'),
+            mock.call(['service', 'dnsmasq', 'start'],
+                      'sudo astara-rootwrap /etc/rootwrap.conf')
         ])

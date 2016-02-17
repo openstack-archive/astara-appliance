@@ -39,9 +39,9 @@ class IPManager(base.Manager):
     configuration information.
     """
 
-    EXECUTABLE = '/sbin/ip'
+    EXECUTABLE = 'ip'
 
-    def __init__(self, root_helper='sudo'):
+    def __init__(self, root_helper='sudo astara-rootwrap /etc/rootwrap.conf'):
         """Initializes resources for the IPManager class"""
         super(IPManager, self).__init__(root_helper)
         self.next_generic_index = 0
