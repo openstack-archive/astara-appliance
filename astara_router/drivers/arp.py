@@ -83,7 +83,7 @@ class ARPManager(base.Manager):
     A class to interact with entries in the ARP cache.  Currently only really
     provides support for deleting stuff from the cache.
     """
-    EXECUTABLE = '/usr/sbin/arp'
+    EXECUTABLE = 'arp'
 
     def send_gratuitous_arp_for_floating_ips(self, config, generic_to_host):
         """

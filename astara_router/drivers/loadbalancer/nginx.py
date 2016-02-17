@@ -33,7 +33,7 @@ class NginxLB(base.Manager):
         os.path.dirname(__file__), 'nginx.conf.template')
     INIT = 'nginx'
 
-    def __init__(self, root_helper='sudo'):
+    def __init__(self, root_helper='sudo astara-rootwrap /etc/rootwrap.conf'):
         """
         Initializes DHCPManager class.
 

@@ -89,14 +89,14 @@ class IPTablesManager(base.Manager):
         netfilter-persistent as a plugin, so use that instead if it is
         available
         '''
-        _init = '/etc/init.d/%s-persistent'
-        if os.path.isfile(_init % 'netfilter'):
+        _init = '%s-persistent'
+        if os.path.isfile('/etc/init.d/netfilter-persistent'):
             init = _init % 'netfilter'
         else:
             init = _init % 'iptables'
 
         utils.execute(
-            [init, 'restart'],
+            ['service', init, 'restart'],
             self.root_helper
         )
 
@@ -108,8 +108,8 @@ class IPTablesManager(base.Manager):
 
         :rtype: str
         '''
-        v4 = utils.execute(['iptables', '-L', '-n'])
-        v6 = utils.execute(['ip6tables', '-L', '-n'])
+        v4 = utils.execute(['iptables', '-L', '-n'], self.root_helper)
+        v6 = utils.execute(['ip6tables', '-L', '-n'], self.root_helper)
         return v4 + v6
 
     def get_external_network(self, config):

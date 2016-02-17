@@ -41,8 +41,10 @@ class HostnameTestCase(TestCase):
     def test_update_hostname(self):
         self.mgr.update_hostname(CONFIG)
         self.mock_execute.assert_has_calls([
-            mock.call(['/bin/hostname', 'astara'], 'sudo'),
-            mock.call(['mv', '/tmp/hostname', '/etc/hostname'], 'sudo')
+            mock.call(['hostname', 'astara'],
+                      'sudo astara-rootwrap /etc/rootwrap.conf'),
+            mock.call(['mv', '/tmp/hostname', '/etc/hostname'],
+                      'sudo astara-rootwrap /etc/rootwrap.conf')
         ])
 
     def test_update_hosts(self):
@@ -53,6 +55,7 @@ class HostnameTestCase(TestCase):
         ]))
         self.mgr.update_hosts(CONFIG)
         self.mock_execute.assert_has_calls([
-            mock.call(['mv', '/tmp/hosts', '/etc/hosts'], 'sudo')
+            mock.call(['mv', '/tmp/hosts', '/etc/hosts'],
+                      'sudo astara-rootwrap /etc/rootwrap.conf')
         ])
         self.mock_replace_file.assert_has_calls([expected])

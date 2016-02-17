@@ -29,7 +29,7 @@ DEFAULT_LEASE = 86400
 
 class DHCPManager(base.Manager):
     """A class to manage dnsmasq."""
-    def __init__(self, root_helper='sudo'):
+    def __init__(self, root_helper='sudo astara-rootwrap /etc/rootwrap.conf'):
         """
         Initializes DHCPManager class.
 
@@ -45,7 +45,8 @@ class DHCPManager(base.Manager):
         """
         for f in os.listdir(CONF_DIR):
             if f.endswith('.conf'):
-                os.remove(os.path.join(CONF_DIR, f))
+                utils.execute(['rm', '-f', os.path.join(CONF_DIR, f)],
+                              self.root_helper)
 
     def update_network_dhcp_config(self, ifname, network):
         """
@@ -139,7 +140,7 @@ class DHCPManager(base.Manager):
         Restarts dnsmasq service using the system provided init script.
         """
         try:
-            utils.execute([RC_PATH, 'stop'], self.root_helper)
+            utils.execute(['service', 'dnsmasq', 'stop'], self.root_helper)
         except:
             pass
 
@@ -149,7 +150,7 @@ class DHCPManager(base.Manager):
             remaining -= 1
             try:
                 utils.execute(
-                    [RC_PATH, 'start'], self.root_helper
+                    ['service', 'dnsmasq', 'start'], self.root_helper
                 )
                 return
             except Exception:

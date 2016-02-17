@@ -20,7 +20,7 @@ from astara_router import utils
 
 
 class HostnameManager(base.Manager):
-    EXECUTABLE = '/bin/hostname'
+    EXECUTABLE = 'hostname'
 
     def update(self, config):
         self.update_hostname(config)
