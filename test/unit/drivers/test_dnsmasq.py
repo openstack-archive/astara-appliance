@@ -124,13 +124,38 @@ class DnsmasqTestCase(TestCase):
             'dhcp-host=fa:da:fa:da:fa:da:,192.168.1.2,192-168-1-2.local'
         ]), config
 
+    def test_build_dhcp_config_multiple_ips(self):
+        many_ips = mock.Mock()
+        many_ips.subnets = [ext_subnet]
+        many_ips.is_internal_network = False
+        many_ips.is_external_network = True
+        many_ips.is_tenant_network = False
+        many_ips.interface.ifname = 'ge0'
+        many_ips.address_allocations = [models.Allocation(
+            'fa:da:fa:da:fa:da:',
+            {'192.168.1.2': True, '192.168.1.3': True, '192.168.1.4': True, 'dead:beef::2': True},  # ip: DHCP enabled
+            '192-168-1-2.local',
+            'e3300819-d7b9-4d8d-9d7c-a6380ff78ca7'
+        )]
+
+        config = self.mgr._build_dhcp_config('ge0', many_ips)
+        assert config == '\n'.join([
+            'interface=ge0',
+            'dhcp-range=set:ge0_0,dead:beef::,static,86400s',
+            'dhcp-option=tag:ge0_0,option6:dns-server,8.8.8.8',
+            'dhcp-option=tag:ge0_0,option6:dns-server,8.8.4.4',
+            ('dhcp-option=tag:ge0_0,option6:classless-static-route,'
+             '172.16.0.0/16,192.168.1.1'),
+            'dhcp-host=fa:da:fa:da:fa:da:,192.168.1.2,[dead:beef::2],192-168-1-2.local',
+        ]), config
+
     def test_build_dhcp_config_int(self):
         config = self.mgr._build_dhcp_config('ge1', int_net)
         assert config == '\n'.join([
             'interface=ge1',
             'dhcp-range=set:ge1_0,9.9.9.0,static,86400s',
             'dhcp-range=set:ge1_1,face::,static,86400s',
-            'dhcp-host=fb:db:fb:db:fb:db,[face::2],9.9.9.2,9-9-9-2.local',
+            'dhcp-host=fb:db:fb:db:fb:db,9.9.9.2,[face::2],9-9-9-2.local',
         ]), config
 
     def test_restart(self):
