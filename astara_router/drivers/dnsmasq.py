@@ -15,8 +15,12 @@
 # under the License.
 
 
+import operator
 import os
 import time
+import itertools
+
+import netaddr
 
 from astara_router.drivers import base
 from astara_router import utils
@@ -123,14 +127,17 @@ class DHCPManager(base.Manager):
                 for r in subnet.host_routes
             )
 
-        config.extend(
-            'dhcp-host=%s,%s,%s' % (
-                a.mac_address,
-                ','.join('[%s]' % ip if ':' in ip else ip
-                         for ip in a.dhcp_addresses),
-                a.hostname)
-            for a in network.address_allocations
-        )
+        for a in network.address_allocations:
+            dhcp_addresses = map(netaddr.IPAddress, a.dhcp_addresses)
+            dhcp_addresses = sorted(dhcp_addresses)
+            groups = itertools.groupby(dhcp_addresses, key=operator.attrgetter('version'))
+            dhcp_addresses = [str(next(members)) for k, members in groups]
+            config.extend([
+                'dhcp-host=%s,%s,%s' % ( a.mac_address,
+                    ','.join('[%s]' % ip if ':' in ip else ip
+                             for ip in dhcp_addresses),
+                    a.hostname)
+            ])
 
         return '\n'.join(config)
 
