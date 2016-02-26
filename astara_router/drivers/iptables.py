@@ -375,16 +375,6 @@ class IPTablesManager(base.Manager):
                     ), ip_version=4)
                 )
 
-        # Add source NAT for VMs without floating IPs
-        mgt_if = self.get_management_network(config).interface
-        rules.append(Rule(
-            '-A PUBLIC_SNAT ! -o %s -j SNAT --to %s' % (
-                mgt_if.ifname,
-                str(external_network.interface.first_v4)
-            ),
-            ip_version=4
-        ))
-
         return rules
 
     def _build_mangle_table(self, config):
