@@ -394,7 +394,8 @@ class IPTablesManager(base.Manager):
                     ), ip_version=4)
                 )
 
-        # Add source NAT for VMs without floating IPs
+        # Add source NAT to handle NAT loopback case where external floating IP
+        # is used as the destination from internal endpoint
         mgt_if = self.get_management_network(config).interface
         rules.append(Rule(
             '-A PUBLIC_SNAT ! -o %s -j SNAT --to %s' % (
@@ -433,6 +434,10 @@ class IPTablesManager(base.Manager):
             Rule(':FORWARD - [0:0]', ip_version=4),
             Rule(':PREROUTING - [0:0]', ip_version=4)
         ]
+
+        # do not NAT traffic generated from within the appliance
+        rules.append(Rule('-A OUTPUT -j MARK --set-mark 0xACDA', ip_version=4))
+
         ext_net = self.get_external_network(config)
         if ext_net:
             ext_if = ext_net.interface
