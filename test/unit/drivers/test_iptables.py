@@ -77,7 +77,6 @@ V4_OUTPUT = [
     ':PUBLIC_SNAT - [0:0]',
     '-A PUBLIC_SNAT -m mark --mark 0xACDA -j RETURN',
     '-A PUBLIC_SNAT -s 192.168.0.2 -j SNAT --to 172.16.77.50',
-    '-A PUBLIC_SNAT ! -o eth0 -j SNAT --to 172.16.77.2',
     ':PREROUTING ACCEPT [0:0]',
     ':INPUT ACCEPT [0:0]',
     ':OUTPUT ACCEPT [0:0]',
