@@ -205,3 +205,13 @@ class TestIPTablesRouterConfiguration(TestCase):
             '-A POSTROUTING -s 192.168.0.0/24 -j PUBLIC_SNAT'
         ]
         assert mgr._build_floating_ips(config) == []
+
+    @mock.patch.object(iptables.IPTablesManager, 'get_external_network')
+    def test_no_ext_port(self, fake_get_ext_net):
+        fake_get_ext_net.return_value = None
+        mgr = iptables.IPTablesManager()
+        mgr.save_config(CONFIG, {
+            'ge0': 'eth0',
+            'ge1': 'eth1',
+            'ge2': 'eth2'
+        })
