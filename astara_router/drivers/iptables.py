@@ -118,7 +118,10 @@ class IPTablesManager(base.Manager):
 
         :rtype: astara_router.models.Network
         '''
-        return self.networks_by_type(config, Network.TYPE_EXTERNAL)[0]
+        try:
+            return self.networks_by_type(config, Network.TYPE_EXTERNAL)[0]
+        except IndexError:
+            return None
 
     def get_management_network(self, config):
         '''
@@ -219,7 +222,11 @@ class IPTablesManager(base.Manager):
         Add rules specific to private tenant networks.
         '''
         rules = []
-        ext_if = self.get_external_network(config).interface
+        ext_net = self.get_external_network(config)
+        if ext_net:
+            ext_if = ext_net.interface
+        else:
+            ext_if = None
 
         for network in self.get_internal_networks(config):
 
@@ -245,10 +252,11 @@ class IPTablesManager(base.Manager):
             rules.append(Rule(
                 '-A INPUT -i %s -j ACCEPT' % network.interface.ifname
             ))
-            rules.append(Rule(
-                '-A INPUT -i %s -m state '
-                '--state RELATED,ESTABLISHED -j ACCEPT' % ext_if.ifname
-            ))
+            if ext_if:
+                rules.append(Rule(
+                    '-A INPUT -i %s -m state '
+                    '--state RELATED,ESTABLISHED -j ACCEPT' % ext_if.ifname
+                ))
 
         rules.append(Rule('COMMIT'))
         return rules
@@ -271,6 +279,7 @@ class IPTablesManager(base.Manager):
         ])
 
         rules.extend(self._build_floating_ips(config))
+
         rules.extend(self._build_v4_nat(config))
 
         rules.append(Rule('COMMIT', ip_version=4))
@@ -296,12 +305,14 @@ class IPTablesManager(base.Manager):
                 ))
 
         # Add a masquerade catch-all for VMs without floating IPs
-        ext_if = self.get_external_network(config).interface
-        rules.append(Rule(
-            '-A POSTROUTING -o %s -j MASQUERADE' % (
-                ext_if.ifname
-            ), ip_version=4
-        ))
+        ext_net = self.get_external_network(config)
+        if ext_net:
+            ext_if = ext_net.interface
+            rules.append(Rule(
+                '-A POSTROUTING -o %s -j MASQUERADE' % (
+                    ext_if.ifname
+                ), ip_version=4
+            ))
 
         return rules
 
@@ -310,23 +321,29 @@ class IPTablesManager(base.Manager):
         Add rules for neutron FloatingIPs.
         '''
         rules = []
-        ext_if = self.get_external_network(config).interface
+        ext_net = self.get_external_network(config)
+        if ext_net:
+            ext_if = ext_net.interface
+        else:
+            return []
 
         # NAT floating IP addresses
-        for fip in self.get_external_network(config).floating_ips:
+        for fip in ext_net.floating_ips:
 
             # Neutron has a bug whereby you can create a floating ip that has
             # mixed IP versions between the fixed and floating address.  If
             # people create these accidentally, just ignore them (because
             # iptables will barf if it encounters them)
             if fip.fixed_ip.version == fip.floating_ip.version:
-                rules.append(Rule(
-                    '-A PREROUTING -i %s -d %s -j DNAT --to-destination %s' % (
-                        ext_if.ifname,
-                        fip.floating_ip,
-                        fip.fixed_ip
-                    ), ip_version=4
-                ))
+                if ext_if:
+                    rules.append(Rule(
+                        '-A PREROUTING -i %s -d %s -j DNAT --to-destination %s'
+                        % (
+                            ext_if.ifname,
+                            fip.floating_ip,
+                            fip.fixed_ip
+                        ), ip_version=4
+                    ))
                 for network in self.get_internal_networks(config):
                     rules.append(Rule(
                         '-A PREROUTING -i %s -d %s -j DNAT '
@@ -354,6 +371,10 @@ class IPTablesManager(base.Manager):
         Build a chain for SNAT for neutron FloatingIPs.  This chain ignores NAT
         for traffic marked as private.
         '''
+        external_network = self.get_external_network(config)
+        if not external_network:
+            return []
+
         rules = [
             Rule(':PUBLIC_SNAT - [0:0]', ip_version=4),
             Rule(
@@ -361,8 +382,6 @@ class IPTablesManager(base.Manager):
                 ip_version=4
             )
         ]
-
-        external_network = self.get_external_network(config)
 
         # NAT floating IP addresses
         for fip in external_network.floating_ips:
@@ -414,11 +433,13 @@ class IPTablesManager(base.Manager):
             Rule(':FORWARD - [0:0]', ip_version=4),
             Rule(':PREROUTING - [0:0]', ip_version=4)
         ]
-        ext_if = self.get_external_network(config).interface
-        rules.append(Rule(
-            '-A PREROUTING -i %s -j MARK --set-mark 0xACDA' % ext_if.ifname,
-            ip_version=4
-        ))
+        ext_net = self.get_external_network(config)
+        if ext_net:
+            ext_if = ext_net.interface
+            rules.append(Rule(
+                '-A PREROUTING -i %s -j MARK --set-mark 0xACDA' %
+                ext_if.ifname, ip_version=4
+            ))
 
         for network in self.networks_by_type(config, Network.TYPE_INTERNAL):
             if network.interface.first_v4:
