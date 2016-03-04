@@ -75,7 +75,7 @@ class IPTestCase(TestCase):
             self.assertEqual(interfaces, [iface_a, iface_b])
 
         self.mock_execute.assert_has_calls(
-            [mock.call(['/sbin/ip', 'addr', 'show'])])
+            [mock.call(['ip', 'addr', 'show'])])
 
     def test_get_interface(self):
         iface_a = mock.Mock()
@@ -93,7 +93,7 @@ class IPTestCase(TestCase):
                 self.assertEqual(iface_a.ifname, 'ge0')
 
         self.mock_execute.assert_has_calls(
-            [mock.call(['/sbin/ip', 'addr', 'show'])])
+            [mock.call(['ip', 'addr', 'show'])])
 
     def test_ensure_mapping(self):
         attr = 'get_interfaces'
@@ -149,7 +149,8 @@ class IPTestCase(TestCase):
             mgr.generic_mapping = {'ge0': 'em0'}
             mgr.up(iface)
         self.mock_execute.assert_has_calls(
-            [mock.call(['/sbin/ip', 'link', 'set', 'em0', 'up'], 'sudo')])
+            [mock.call(['ip', 'link', 'set', 'em0', 'up'],
+                       'sudo astara-rootwrap /etc/rootwrap.conf')])
 
     def test_down(self):
         iface = mock.Mock()
@@ -164,7 +165,8 @@ class IPTestCase(TestCase):
             mgr.down(iface)
 
         self.mock_execute.assert_has_calls(
-            [mock.call(['/sbin/ip', 'link', 'set', 'em0', 'down'], 'sudo')])
+            [mock.call(['ip', 'link', 'set', 'em0', 'down'],
+                       'sudo astara-rootwrap /etc/rootwrap.conf')])
 
     def test_set_mtu(self):
         iface = mock.Mock()
@@ -180,8 +182,8 @@ class IPTestCase(TestCase):
             mgr.set_mtu(iface)
 
         self.mock_execute.assert_has_calls(
-            [mock.call(['/sbin/ip', 'link', 'set', 'em0', 'mtu', '1280'],
-                       'sudo')])
+            [mock.call(['ip', 'link', 'set', 'em0', 'mtu', '1280'],
+                       'sudo astara-rootwrap /etc/rootwrap.conf')])
 
     def _update_interface_test_hlpr(self, new_iface, old_iface,
                                     ignore_link_local=True):
@@ -263,7 +265,7 @@ class IPTestCase(TestCase):
             )
 
     def test_address_add(self):
-        cmd = '/sbin/ip'
+        cmd = 'ip'
         v4 = netaddr.IPNetwork('192.168.105.2/24')
         v6 = netaddr.IPNetwork('fdca:3ba5:a17a:acda:20c:29ff:fe94:723d/64')
         iface = mock.Mock(all_addresses=[v4, v6], ifname='em0')
@@ -278,19 +280,21 @@ class IPTestCase(TestCase):
                 mock.call([
                     cmd, 'addr', 'add', '192.168.105.2/24', 'brd', '+', 'dev',
                     'em0'
-                ], 'sudo'),
-                mock.call([cmd, 'link', 'set', 'em0', 'up'], 'sudo'),
+                ], 'sudo astara-rootwrap /etc/rootwrap.conf'),
+                mock.call([cmd, 'link', 'set', 'em0', 'up'],
+                          'sudo astara-rootwrap /etc/rootwrap.conf'),
                 mock.call([cmd, 'addr', 'show', 'em0']),
                 mock.call([
                     cmd, '-6', 'addr', 'add',
                     'fdca:3ba5:a17a:acda:20c:29ff:fe94:723d/64', 'dev', 'em0'
-                ], 'sudo'),
-                mock.call([cmd, 'link', 'set', 'em0', 'up'], 'sudo'),
+                ], 'sudo astara-rootwrap /etc/rootwrap.conf'),
+                mock.call([cmd, 'link', 'set', 'em0', 'up'],
+                          'sudo astara-rootwrap /etc/rootwrap.conf'),
                 mock.call([cmd, 'addr', 'show', 'em0'])
             ]
 
     def test_address_remove(self):
-        cmd = '/sbin/ip'
+        cmd = 'ip'
         v4 = netaddr.IPNetwork('192.168.105.2/24')
         v6 = netaddr.IPNetwork('fdca:3ba5:a17a:acda:20c:29ff:fe94:723d/64')
         iface = mock.Mock(all_addresses=[])
@@ -299,12 +303,15 @@ class IPTestCase(TestCase):
         mgr = ip.IPManager()
         mgr._update_addresses('em0', iface, old_iface)
         assert self.mock_execute.call_args_list == [
-            mock.call([cmd, 'addr', 'del', str(v4), 'dev', 'em0'], 'sudo'),
-            mock.call(['conntrack', '-D', '-d', str(v4.ip)], 'sudo'),
-            mock.call(['conntrack', '-D', '-q', str(v4.ip)], 'sudo'),
+            mock.call([cmd, 'addr', 'del', str(v4), 'dev', 'em0'],
+                      'sudo astara-rootwrap /etc/rootwrap.conf'),
+            mock.call(['conntrack', '-D', '-d', str(v4.ip)],
+                      'sudo astara-rootwrap /etc/rootwrap.conf'),
+            mock.call(['conntrack', '-D', '-q', str(v4.ip)],
+                      'sudo astara-rootwrap /etc/rootwrap.conf'),
             mock.call([
                 cmd, '-6', 'addr', 'del', str(v6), 'dev', 'em0'
-            ], 'sudo'),
+            ], 'sudo astara-rootwrap /etc/rootwrap.conf'),
         ]
 
     def test_update_set(self):
@@ -331,15 +338,18 @@ class IPTestCase(TestCase):
 
             assert self.mock_execute.call_args_list == [
                 mock.call([
-                    '/sbin/ip', 'addr', 'add', str(a), 'dev', 'em0'
-                ], 'sudo'),
-                mock.call(['/sbin/ip', 'link', 'set', 'em0', 'up'], 'sudo'),
-                mock.call(['/sbin/ip', 'addr', 'show', 'em0']),
+                    'ip', 'addr', 'add', str(a), 'dev', 'em0'
+                ], 'sudo astara-rootwrap /etc/rootwrap.conf'),
+                mock.call(['ip', 'link', 'set', 'em0', 'up'],
+                          'sudo astara-rootwrap /etc/rootwrap.conf'),
+                mock.call(['ip', 'addr', 'show', 'em0']),
                 mock.call([
-                    '/sbin/ip', 'addr', 'del', str(c), 'dev', 'em0'
-                ], 'sudo'),
-                mock.call(['conntrack', '-D', '-d', str(c.ip)], 'sudo'),
-                mock.call(['conntrack', '-D', '-q', str(c.ip)], 'sudo'),
+                    'ip', 'addr', 'del', str(c), 'dev', 'em0'
+                ], 'sudo astara-rootwrap /etc/rootwrap.conf'),
+                mock.call(['conntrack', '-D', '-d', str(c.ip)],
+                          'sudo astara-rootwrap /etc/rootwrap.conf'),
+                mock.call(['conntrack', '-D', '-q', str(c.ip)],
+                          'sudo astara-rootwrap /etc/rootwrap.conf'),
             ]
 
     def test_update_set_no_diff(self):
@@ -394,7 +404,7 @@ class TestDisableDAD(TestCase):
         assert self.mock_execute.call_args_list == [
             mock.call([
                 'sysctl', '-w', 'net.ipv6.conf.eth0.accept_dad=0'
-            ], 'sudo'),
+            ], 'sudo astara-rootwrap /etc/rootwrap.conf'),
         ]
 
     def test_dad_for_internal(self):
@@ -409,7 +419,7 @@ class TestDisableDAD(TestCase):
         assert self.mock_execute.call_args_list == [
             mock.call([
                 'sysctl', '-w', 'net.ipv6.conf.eth2.accept_dad=0'
-            ], 'sudo'),
+            ], 'sudo astara-rootwrap /etc/rootwrap.conf'),
         ]
 
     def test_sysctl_failure(self):

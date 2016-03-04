@@ -131,16 +131,20 @@ class ARPTest(unittest2.TestCase):
             )
             assert execute.call_args_list == [
                 mock.call(
-                    ['astara-gratuitous-arp', 'eth1', '172.16.77.50'], 'sudo'
+                    ['astara-gratuitous-arp', 'eth1', '172.16.77.50'],
+                    'sudo astara-rootwrap /etc/rootwrap.conf'
                 ),
                 mock.call(
-                    ['astara-gratuitous-arp', 'eth1', '172.16.77.51'], 'sudo'
+                    ['astara-gratuitous-arp', 'eth1', '172.16.77.51'],
+                    'sudo astara-rootwrap /etc/rootwrap.conf'
                 ),
                 mock.call(
-                    ['astara-gratuitous-arp', 'eth1', '172.16.77.52'], 'sudo'
+                    ['astara-gratuitous-arp', 'eth1', '172.16.77.52'],
+                    'sudo astara-rootwrap /etc/rootwrap.conf'
                 ),
                 mock.call(
-                    ['astara-gratuitous-arp', 'eth1', '172.16.77.53'], 'sudo'
+                    ['astara-gratuitous-arp', 'eth1', '172.16.77.53'],
+                    'sudo astara-rootwrap /etc/rootwrap.conf'
                 )
             ]
 

@@ -28,11 +28,11 @@ class PingManager(base.Manager):
     """
 
     exe_map = {
-        4: '/bin/ping',
-        6: '/bin/ping6'
+        4: 'ping',
+        6: 'ping6'
     }
 
-    def __init__(self, root_helper='sudo'):
+    def __init__(self, root_helper='sudo astara-rootwrap /etc/rootwrap.conf'):
         """
         Initializes PingManager class.
 
