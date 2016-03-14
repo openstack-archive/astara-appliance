@@ -1,0 +1,25 @@
+config setup
+
+conn %default
+        ikelifetime=60m
+        keylife=20m
+        rekeymargin=3m
+        keyingtries=1
+        authby=psk
+        mobike=no
+{% for vpnservice in vpnservices %}
+# Configuration for {{vpnservice.name}}
+{% for ipsec_site_connection in vpnservice.ipsec_site_connections%}
+conn {{ipsec_site_connection.id}}
+    keyexchange=ike{{ipsec_site_connection.ikepolicy.ike_version}}
+    left={{vpnservice.get_external_ip(ipsec_site_connection.peer_address)}}
+    leftsubnet={{ipsec_site_connection.local_ep_group.cidrs|join(',')}}
+    leftid={{vpnservice.get_external_ip(ipsec_site_connection.peer_address)}}
+    leftfirewall=yes
+    right={{ipsec_site_connection.peer_address}}
+    rightsubnet={{ipsec_site_connection.peer_ep_group.cidrs|join(',')}}
+    rightid={{ipsec_site_connection.peer_id}}
+    auto=route
+{% endfor %}
+{% endfor %}
+

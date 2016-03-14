@@ -20,8 +20,10 @@ import re
 
 from astara_router import models
 from astara_router import settings
-from astara_router.drivers import (bird, dnsmasq, ip, metadata,
-                                   iptables, arp, hostname, loadbalancer)
+from astara_router.drivers import (arp, bird, dnsmasq, hostname, ip, iptables,
+                                   loadbalancer, metadata)
+
+from astara_router.drivers.vpn import ipsec
 
 
 class ServiceManagerBase(object):
@@ -77,6 +79,7 @@ class RouterManager(ServiceManagerBase):
         self.update_firewall()
         self.update_routes(cache)
         self.update_arp()
+        self.update_ipsec_vpn()
 
     def update_dhcp(self):
         mgr = dnsmasq.DHCPManager()
@@ -117,6 +120,15 @@ class RouterManager(ServiceManagerBase):
             self.ip_mgr.generic_to_host
         )
         mgr.remove_stale_entries(self._config)
+
+    def update_ipsec_vpn(self):
+        mgr = ipsec.StrongswanManager()
+
+        if self._config.vpn:
+            mgr.save_config(self._config)
+            mgr.restart()
+        else:
+            mgr.stop()
 
     def get_interfaces(self):
         return self.ip_mgr.get_interfaces()

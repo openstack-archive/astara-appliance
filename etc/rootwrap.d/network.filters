@@ -34,5 +34,8 @@ ip6tables: CommandFilter, ip6tables, root
 # astara_router/drivers/metadata.py:
 mv_metadata: RegExpFilter, mv, root, mv, /tmp/metadata\.conf, /etc/metadata\.conf
 
+# astara_router/drivers/vpn/ipsec.py:
+mv_strongswan: RegExpFilter, mv, root, mv, /tmp/ipsec.*, /etc/ipsec.*
+
 # astara services
 services: CommandFilter, service, root

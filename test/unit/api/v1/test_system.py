@@ -114,7 +114,8 @@ class SystemAPITestCase(unittest.TestCase):
                     'interfaces': [],
                     'management_address': None,
                     'tenant_id': None
-                }
+                },
+                'vpn': [],
             }
         }
         self.assertEqual(json.loads(result.data), expected)

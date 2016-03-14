@@ -16,6 +16,7 @@
 
 
 import abc
+import itertools
 import re
 
 import netaddr
@@ -312,8 +313,9 @@ class Label(ModelBase):
 
 
 class Subnet(ModelBase):
-    def __init__(self, cidr, gateway_ip, dhcp_enabled=True,
+    def __init__(self, id_, cidr, gateway_ip, dhcp_enabled=True,
                  dns_nameservers=None, host_routes=None):
+        self.id = id_
         self.cidr = cidr
         self.gateway_ip = gateway_ip
         self.dhcp_enabled = bool(dhcp_enabled)
@@ -352,6 +354,7 @@ class Subnet(ModelBase):
         host_routes = [StaticRoute(r['destination'], r['nexthop'])
                        for r in d.get('host_routes', [])]
         return cls(
+            d['id'],
             d['cidr'],
             d['gateway_ip'],
             d['dhcp_enabled'],
@@ -655,6 +658,211 @@ class FixedIp(ModelBase):
         return dict((f, getattr(self, f)) for f in fields)
 
 
+class DeadPeerDetection(ModelBase):
+    def __init__(self, action, interval, timeout):
+        self.action = action
+        self.interval = interval
+        self.timeout = timeout
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['action'],
+            d['interval'],
+            d['timeout']
+        )
+
+
+class Lifetime(ModelBase):
+    def __init__(self, units, value):
+        self.units = units
+        self.value = value
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['units'],
+            d['value']
+        )
+
+
+class EndpointGroup(ModelBase):
+    def __init__(self, id_, tenant_id, name, type_, endpoints=()):
+        self.id = id_
+        self.tenant_id = tenant_id
+        self.name = name
+        self.type = type_
+        if type_ == 'cidr':
+            self.endpoints = [netaddr.IPNetwork(ep) for ep in endpoints]
+        else:
+            self.endpoints = endpoints
+        self.subnet_map = {}
+
+    @property
+    def cidrs(self):
+        if self.type == 'subnet':
+            return [
+                self.subnet_map[ep].cidr
+                for ep in self.endpoints
+                if ep in self.subnet_map
+            ]
+        else:
+            return self.endpoints
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['id'],
+            d['tenant_id'],
+            d['name'],
+            d['type'],
+            d['endpoints']
+        )
+
+
+class IkePolicy(ModelBase):
+    def __init__(self, id_, tenant_id, name, ike_version, auth_algorithm,
+                 encryption_algorithm, pfs, phase1_negotiation_mode, lifetime):
+        self.id = id_
+        self.tenant_id = tenant_id
+        self.name = name
+        self.ike_version = ike_version
+        self.auth_algorithm = auth_algorithm
+        self.encryption_algorithm = encryption_algorithm
+        self.pfs = pfs
+        self.phase1_negotiation_mode = phase1_negotiation_mode
+        self.lifetime = lifetime
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['id'],
+            d['tenant_id'],
+            d['name'],
+            d['ike_version'],
+            d['auth_algorithm'],
+            d['encryption_algorithm'],
+            d['pfs'],
+            d['phase1_negotiation_mode'],
+            Lifetime.from_dict(d['lifetime'])
+        )
+
+
+class IpsecPolicy(ModelBase):
+    def __init__(self, id_, tenant_id, name, transform_protocol,
+                 auth_algorithm, encryption_algorithm, encapsulation_mode,
+                 lifetime, pfs):
+        self.id = id_
+        self.tenant_id = tenant_id
+        self.name = name
+        self.transform_protocol = transform_protocol
+        self.auth_algorithm = auth_algorithm
+        self.encryption_algorithm = encryption_algorithm
+        self.encapsulation_mode = encapsulation_mode
+        self.lifetime = lifetime
+        self.pfs = pfs
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['id'],
+            d['tenant_id'],
+            d['name'],
+            d['transform_protocol'],
+            d['auth_algorithm'],
+            d['encryption_algorithm'],
+            d['encapsulation_mode'],
+            Lifetime.from_dict(d['lifetime']),
+            d['pfs']
+        )
+
+
+class IpsecSiteConnection(ModelBase):
+    def __init__(self, id_, tenant_id, name, peer_address, peer_id,
+                 admin_state_up, route_mode, mtu, initiator, auth_mode, psk,
+                 dpd, status, vpnservice_id, local_ep_group=None,
+                 peer_ep_group=None, peer_cidrs=[], ikepolicy=None,
+                 ipsecpolicy=None):
+        self.id = id_
+        self.tenant_id = tenant_id
+        self.name = name
+        self.peer_address = netaddr.IPAddress(peer_address)
+        self.peer_id = peer_id
+        self.route_mode = route_mode
+        self.mtu = mtu
+        self.initiator = initiator
+        self.auth_mode = auth_mode
+        self.psk = psk
+        self.dpd = dpd
+        self.status = status
+        self.admin_state_up = admin_state_up
+        self.vpnservice_id = vpnservice_id
+        self.ipsecpolicy = ipsecpolicy
+        self.ikepolicy = ikepolicy
+        self.local_ep_group = local_ep_group
+        self.peer_ep_group = peer_ep_group
+        self.peer_cidrs = [netaddr.IPNetwork(pc) for pc in peer_cidrs]
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['id'],
+            d['tenant_id'],
+            d['name'],
+            d['peer_address'],
+            d['peer_id'],
+            d['admin_state_up'],
+            d['route_mode'],
+            d['mtu'],
+            d['initiator'],
+            d['auth_mode'],
+            d['psk'],
+            DeadPeerDetection.from_dict(d['dpd']),
+            d['status'],
+            d['vpnservice_id'],
+            peer_cidrs=d['peer_cidrs'],
+            ikepolicy=IkePolicy.from_dict(d['ikepolicy']),
+            ipsecpolicy=IpsecPolicy.from_dict(d['ipsecpolicy']),
+            local_ep_group=EndpointGroup.from_dict(d['local_ep_group']),
+            peer_ep_group=EndpointGroup.from_dict(d['peer_ep_group']),
+        )
+
+
+class VpnService(ModelBase):
+    def __init__(self, id_, name, status, admin_state_up, external_v4_ip,
+                 external_v6_ip, router_id, subnet_id=None,
+                 ipsec_site_connections=()):
+        self.id = id_
+        self.name = name
+        self.status = status
+        self.admin_state_up = admin_state_up
+        self.external_v4_ip = netaddr.IPAddress(external_v4_ip)
+        self.external_v6_ip = netaddr.IPAddress(external_v6_ip)
+        self.router_id = router_id
+        self.subnet_id = subnet_id
+        self.ipsec_site_connections = ipsec_site_connections
+
+    def get_external_ip(self, peer_ip):
+        if peer_ip.version == '6':
+            return self.external_v6_ip
+        else:
+            return self.external_v4_ip
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(
+            d['id'],
+            d['name'],
+            d['status'],
+            d['admin_state_up'],
+            d['external_v4_ip'],
+            d['external_v6_ip'],
+            d['router_id'],
+            d.get('subnet_id'),
+            [IpsecSiteConnection.from_dict(c) for c in d['ipsec_connections']]
+        )
+
+
 class SystemConfiguration(ModelBase):
     service_name = 'system'
 
@@ -730,6 +938,13 @@ class RouterConfiguration(SystemConfiguration):
 
         self._attach_floating_ips(self.floating_ips)
 
+        self.vpn = [
+            VpnService.from_dict(s)
+            for s in conf_dict.get('vpn', {}).get('ipsec', [])
+        ]
+
+        self._link_subnets()
+
     def validate(self):
         """Validate anchor rules to ensure that ifaces and tables exist."""
         interfaces = set(n.interface.ifname for n in self.networks)
@@ -778,8 +993,22 @@ class RouterConfiguration(SystemConfiguration):
                 if fip.fixed_ip in int_cidr:
                     fip.network = net
 
+    def _link_subnets(self):
+        subnet_map = {}
+        for n in self.networks:
+            for s in n.subnets:
+                subnet_map[s.id] = s
+
+        vpn_conn_generator = (v.ipsec_site_connections for v in self.vpn)
+
+        for conn in itertools.chain.from_iterable(vpn_conn_generator):
+            if conn.local_ep_group.type == 'subnet':
+                conn.local_ep_group.subnet_map = subnet_map
+
     def to_dict(self):
-        fields = ('networks', 'address_book', 'anchors', 'static_routes')
+        fields = (
+            'networks', 'address_book', 'anchors', 'static_routes', 'vpn'
+        )
         return dict((f, getattr(self, f)) for f in fields)
 
     @property
