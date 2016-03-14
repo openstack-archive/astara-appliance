@@ -29,8 +29,9 @@
 - name: install gunicorn config file
   template: src=gunicorn.j2 dest=/etc/astara_gunicorn_config.py
 
+
 - name: add gunicorn user
-  command: useradd -r gunicorn
+  action: user name=gunicorn state=present
 
 - name: install init.d files
   copy: src={{playbook_dir}}/../scripts/etc/init.d/{{item}} dest=/etc/init.d/{{item}} mode=0555
@@ -89,5 +90,8 @@
 - name: Autoremove unused packages
   command: apt-get -y autoremove
   when: do_cleanup
+
+- name: Ensure gunicorn is restarted
+  service: name=astara-router-api-server state=restarted enabled=yes
 
 

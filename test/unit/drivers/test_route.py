@@ -176,6 +176,7 @@ class RouteTest(unittest2.TestCase):
 
     def test_update_default_v4_from_subnet(self):
         subnet = dict(
+            id='theid',
             cidr='192.168.89.0/24',
             gateway_ip='192.168.89.1',
             dhcp_enabled=True,
@@ -198,12 +199,14 @@ class RouteTest(unittest2.TestCase):
 
     def test_update_multiple_v4_subnets(self):
         subnet = dict(
+            id='id-1',
             cidr='192.168.89.0/24',
             gateway_ip='192.168.89.1',
             dhcp_enabled=True,
             dns_nameservers=[],
         )
         subnet2 = dict(
+            id='id-2',
             cidr='192.168.71.0/24',
             gateway_ip='192.168.71.1',
             dhcp_enabled=True,
@@ -226,6 +229,7 @@ class RouteTest(unittest2.TestCase):
 
     def test_update_default_v6(self):
         subnet = dict(
+            id='theid',
             cidr='fe80::1/64',
             gateway_ip='fe80::1',
             dhcp_enabled=True,
@@ -248,12 +252,14 @@ class RouteTest(unittest2.TestCase):
 
     def test_update_default_multiple_v6(self):
         subnet = dict(
+            id='id-1',
             cidr='fe80::1/64',
             gateway_ip='fe80::1',
             dhcp_enabled=True,
             dns_nameservers=[],
         )
         subnet2 = dict(
+            id='id-2',
             cidr='fe89::1/64',
             gateway_ip='fe89::1',
             dhcp_enabled=True,
@@ -278,6 +284,7 @@ class RouteTest(unittest2.TestCase):
                        lambda *a, **kw: None)
     def test_custom_host_routes(self):
         subnet = dict(
+            id='theid',
             cidr='192.168.89.0/24',
             gateway_ip='192.168.89.1',
             dhcp_enabled=True,
@@ -367,6 +374,7 @@ class RouteTest(unittest2.TestCase):
             self.assertEqual(len(cache.get('host_routes')), 1)
             sudo.reset_mock()
             network['subnets'].append(dict(
+                id='add-1',
                 cidr='192.168.90.0/24',
                 gateway_ip='192.168.90.1',
                 dhcp_enabled=True,
@@ -402,6 +410,7 @@ class RouteTest(unittest2.TestCase):
 
     def test_custom_host_routes_failure(self):
         subnet = dict(
+            id='theid',
             cidr='192.168.89.0/24',
             gateway_ip='192.168.89.1',
             dhcp_enabled=True,

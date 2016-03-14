@@ -31,6 +31,7 @@ CONFIG = models.RouterConfiguration({
         'name': 'ext',
         'network_type': models.Network.TYPE_EXTERNAL,
         'subnets': [{
+            'id': 'theid',
             'cidr': '172.16.77.0/24',
             'gateway_ip': '172.16.77.1',
             'dhcp_enabled': True,
@@ -48,6 +49,7 @@ CONFIG = models.RouterConfiguration({
         'name': 'internal',
         'network_type': models.Network.TYPE_INTERNAL,
         'subnets': [{
+            'id': 'theid',
             'cidr': '192.168.0.0/24',
             'gateway_ip': '192.168.0.1',
             'dhcp_enabled': True,

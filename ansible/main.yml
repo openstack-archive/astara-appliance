@@ -6,6 +6,8 @@
     bird_enable: False
     bird6_enable: True
     bird_enable_service: True
+    strongswan_enable: True
+    strongswan_enable_service: False
     dnsmasq_conf_dir: /etc/dnsmasq.d
     dnsmasq_conf_file: /etc/dnsmasq.conf
     install_extras: False
@@ -22,6 +24,7 @@
     - include: tasks/astara.yml
     - include: tasks/bird.yml
     - include: tasks/conntrackd.yml
+    - include: tasks/strongswan.yml
     - include: tasks/dnsmasq.yml
     - include: tasks/extras.yml
       when: install_extras

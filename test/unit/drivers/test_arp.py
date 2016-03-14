@@ -103,6 +103,7 @@ class ARPTest(unittest2.TestCase):
                     'name': 'ext',
                 },
                 'subnets': [{
+                    'id': 'theid',
                     'cidr': '172.16.77.0/24',
                     'gateway_ip': '172.16.77.1',
                     'dhcp_enabled': True,
