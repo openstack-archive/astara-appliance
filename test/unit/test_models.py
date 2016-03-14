@@ -289,9 +289,16 @@ class StaticRouteTestCase(TestCase):
 
 class SubnetTestCase(TestCase):
     def test_subnet(self):
-        s = models.Subnet('192.168.1.0/24', '192.168.1.1', True, ['8.8.8.8'],
-                          [])
+        s = models.Subnet(
+            'id',
+            '192.168.1.0/24',
+            '192.168.1.1',
+            True,
+            ['8.8.8.8'],
+            []
+        )
 
+        self.assertEqual(s.id, 'id')
         self.assertEqual(s.cidr, netaddr.IPNetwork('192.168.1.0/24'))
         self.assertEqual(s.gateway_ip, netaddr.IPAddress('192.168.1.1'))
         self.assertTrue(s.dhcp_enabled)
@@ -299,12 +306,12 @@ class SubnetTestCase(TestCase):
         self.assertEqual(s.host_routes, [])
 
     def test_gateway_ip_empty(self):
-        s = models.Subnet('192.168.1.0/24', '', True, ['8.8.8.8'],
+        s = models.Subnet('id', '192.168.1.0/24', '', True, ['8.8.8.8'],
                           [])
         self.assertIsNone(s.gateway_ip)
 
     def test_gateway_ip_none(self):
-        s = models.Subnet('192.168.1.0/24', None, True, ['8.8.8.8'],
+        s = models.Subnet('id', '192.168.1.0/24', None, True, ['8.8.8.8'],
                           [])
         self.assertIsNone(s.gateway_ip)
 
@@ -365,6 +372,7 @@ class NetworkTestCase(TestCase):
 class RouterConfigurationTestCase(TestCase):
     def test_init_only_networks(self):
         subnet = dict(
+            id='id',
             cidr='192.168.1.0/24',
             gateway_ip='192.168.1.1',
             dhcp_enabled=True,
@@ -542,7 +550,8 @@ class RouterConfigurationTestCase(TestCase):
         expected = dict(networks=[],
                         address_book={},
                         static_routes=[],
-                        anchors=[])
+                        anchors=[],
+                        vpn=[])
 
         self.assertEqual(c.to_dict(), expected)
 
