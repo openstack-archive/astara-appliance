@@ -28,9 +28,10 @@ alloc = mock.Mock()
 network.address_allocations = [alloc]
 config.networks = [network]
 
+
 def _AF_PACKET_supported():
     try:
-        from socket import AF_PACKET
+        socket.AF_PACKET
         return True
     except:
         return False
@@ -112,13 +113,13 @@ class ARPTest(unittest2.TestCase):
             'floating_ips': [{
                 'fixed_ip': '192.168.0.2',
                 'floating_ip': '172.16.77.50'
-            },{
+            }, {
                 'fixed_ip': '192.168.0.3',
                 'floating_ip': '172.16.77.51'
-            },{
+            }, {
                 'fixed_ip': '192.168.0.4',
                 'floating_ip': '172.16.77.52'
-            },{
+            }, {
                 'fixed_ip': '192.168.0.5',
                 'floating_ip': '172.16.77.53'
             }]

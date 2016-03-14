@@ -19,6 +19,7 @@ config = json.dumps({
     }
 })
 
+
 class TestMetadataProxy(unittest.TestCase):
 
     @mock.patch('eventlet.monkey_patch', mock.Mock())
@@ -41,7 +42,8 @@ class TestMetadataProxy(unittest.TestCase):
                 any_order=True
             )
             # call_args need to be order before we can test it
-            spawn_args = sorted(spawn.call_args_list, key=lambda y: y[0][2].network_id)
+            spawn_args = sorted(spawn.call_args_list,
+                                key=lambda y: y[0][2].network_id)
             server, socket, app = spawn_args[0][0]
             assert server == eventlet.wsgi.server
             assert isinstance(app, metadata_proxy.NetworkMetadataProxyHandler)

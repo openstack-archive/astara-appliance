@@ -143,7 +143,7 @@ class IPTestCase(TestCase):
         iface.ifname = 'ge0'
 
         attr = 'ensure_mapping'
-        with mock.patch.object(ip.IPManager, attr) as ensure:
+        with mock.patch.object(ip.IPManager, attr):
             mgr = ip.IPManager()
             mgr.host_mapping = {'em0': 'ge0'}
             mgr.generic_mapping = {'ge0': 'em0'}
@@ -157,7 +157,7 @@ class IPTestCase(TestCase):
         iface.ifname = 'ge0'
 
         attr = 'ensure_mapping'
-        with mock.patch.object(ip.IPManager, attr) as ensure:
+        with mock.patch.object(ip.IPManager, attr):
             mgr = ip.IPManager()
             mgr.host_mapping = {'em0': 'ge0'}
             mgr.generic_mapping = {'ge0': 'em0'}
@@ -174,7 +174,7 @@ class IPTestCase(TestCase):
         iface.mtu = 1280
 
         attr = 'ensure_mapping'
-        with mock.patch.object(ip.IPManager, attr) as ensure:
+        with mock.patch.object(ip.IPManager, attr):
             mgr = ip.IPManager()
             mgr.host_mapping = {'em0': 'ge0'}
             mgr.generic_mapping = {'ge0': 'em0'}
@@ -326,15 +326,15 @@ class IPTestCase(TestCase):
         old_iface.all_addresses = [b, c]
         old_iface.ifname = 'em0'
 
-        add = lambda g: ('addr', 'add', '/'.join(map(str, g)), 'dev', 'em0')
-        delete = lambda g: ('addr', 'del', '/'.join(map(str, g)), 'dev', 'em0')
-
         mgr = ip.IPManager()
         with mock.patch.object(
             mgr, 'generic_to_host', lambda x: x.replace('ge', 'em')
         ):
-            mgr._update_set('em0', iface, old_iface, 'all_addresses', add,
-                            delete)
+            mgr._update_set(
+                'em0', iface, old_iface, 'all_addresses',
+                lambda g: ('addr', 'add', '/'.join(map(str, g)), 'dev', 'em0'),
+                lambda g: ('addr', 'del', '/'.join(map(str, g)), 'dev', 'em0')
+            )
 
             assert self.mock_execute.call_args_list == [
                 mock.call([
@@ -361,11 +361,11 @@ class IPTestCase(TestCase):
         old_iface = mock.Mock()
         old_iface.all_addresses = [a, b]
 
-        add = lambda g: ('em0', 'add', g)
-        delete = lambda g: ('em0', 'del', g)
-
         mgr = ip.IPManager()
-        mgr._update_set('em0', iface, old_iface, 'all_addresses', add, delete)
+        mgr._update_set(
+            'em0', iface, old_iface, 'all_addresses',
+            lambda g: ('em0', 'add', g), lambda g: ('em0', 'del', g)
+        )
         self.assertEqual(self.mock_execute.call_count, 0)
 
 
@@ -441,6 +441,7 @@ class TestDisableDAD(TestCase):
                 assert 'Failed to disable v6 dad on eth0' in buff.getvalue()
             finally:
                 logger.removeHandler(handler)
+
 
 class ParseTestCase(TestCase):
     def test_parse_interfaces(self):
