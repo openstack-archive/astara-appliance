@@ -20,7 +20,7 @@ import sys
 
 import netaddr
 
-from astara_router import defaults
+from astara_router import settings
 from astara_router import utils
 from astara_router.drivers import ip
 
@@ -52,9 +52,9 @@ def configure_gunicorn(listen_ip):
     """
     """
     if listen_ip.version == 6:
-        bind = "'[%s]:%d'" % (listen_ip, defaults.API_SERVICE)
+        bind = "'[%s]:%d'" % (listen_ip, settings.API_SERVICE)
     else:
-        bind = "'%s:%d'" % (listen_ip, defaults.API_SERVICE)
+        bind = "'%s:%d'" % (listen_ip, settings.API_SERVICE)
 
     config = open('/etc/astara_gunicorn_config.py', 'r').read()
     config = re.sub('\nbind(\s)?\=(\s)?.*', '\nbind = %s' % bind, config)
