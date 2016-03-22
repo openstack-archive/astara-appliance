@@ -1,5 +1,6 @@
-==========================================================
- Astara Appliance Mitaka Series Release Notes (UNRELEASED)
-==========================================================
+===================================
+ Mitaka Series Release Notes
+===================================
 
 .. release-notes::
+   :branch: origin/stable/mitaka
