@@ -706,3 +706,97 @@ class LoadBalancerConfigurationTest(TestCase):
         errors = lb_conf.validate()
         # id is required
         self.assertEqual(len(errors), 1)
+
+
+class VPNModelsTest(TestCase):
+    def _test_model(self, model, config_dict, skip_keys=()):
+        instance = model.from_dict(config_dict)
+        for k in config_dict.keys():
+            if k in skip_keys:
+                continue
+
+            self.assertEqual(getattr(instance, k), config_dict[k])
+
+        return instance
+
+    def test_lifetime_model(self):
+        self._test_model(models.Lifetime, fakes.FAKE_LIFETIME_DICT)
+
+    def test_dead_peer_model(self):
+        self._test_model(
+            models.DeadPeerDetection,
+            fakes.FAKE_DEAD_PEER_DETECTION_DICT
+    )
+
+    def test_endpoint_model_local(self):
+        self._test_model(models.EndpointGroup, fakes.FAKE_LOCAL_ENDPOINT_DICT)
+
+    def test_endpoint_model_peer(self):
+        conf_dict = fakes.FAKE_PEER_ENDPOINT_DICT
+        ep = self._test_model(models.EndpointGroup, conf_dict, ['endpoints'])
+
+        self.assertEqual(
+            ep.endpoints,
+            [netaddr.IPNetwork(conf_dict['endpoints'][0])]
+        )
+
+    def _test_policy_model(self, config_dict, model):
+        with mock.patch.object(models, 'Lifetime') as mock_life:
+            self._test_model(model, config_dict, ['lifetime'])
+        mock_life.from_dict.assert_called_once_with(config_dict['lifetime'])
+
+    def test_ikepolicy_model(self):
+        return self._test_policy_model(
+            fakes.FAKE_IKEPOLICY_DICT,
+            models.IkePolicy
+        )
+
+    def test_ipsecpolicy_model(self):
+        return self._test_policy_model(
+            fakes.FAKE_IPSECPOLICY_DICT,
+            models.IpsecPolicy
+        )
+
+
+    def test_ipsec_site_connection_model(self):
+        config_dict = fakes.FAKE_IPSEC_CONNECTION_DICT
+
+        skip_keys = [
+            'dpd',
+            'ikepolicy',
+            'ipsecpolicy',
+            'local_ep_group',
+            'peer_ep_group',
+            'peer_address'
+        ]
+
+        conn = self._test_model(
+            models.IpsecSiteConnection,
+            config_dict,
+            skip_keys
+        )
+
+        self.assertEqual(
+            conn.peer_address,
+            netaddr.IPAddress(config_dict['peer_address'])
+        )
+
+        self.assertIsInstance(conn.local_ep_group, models.EndpointGroup)
+        self.assertEqual(conn.local_ep_group.name, 'local')
+        self.assertIsInstance(conn.peer_ep_group, models.EndpointGroup)
+        self.assertEqual(conn.peer_ep_group.name, 'peer')
+        self.assertIsInstance(conn.dpd, models.DeadPeerDetection)
+        self.assertIsInstance(conn.ikepolicy, models.IkePolicy)
+        self.assertIsInstance(conn.ipsecpolicy, models.IpsecPolicy)
+
+    def test_vpnservice_model(self):
+        config_dict = fakes.FAKE_IPSEC_VPNSERVICE_DICT
+
+        vpn = self._test_model(
+            models.VpnService,
+            config_dict,
+            ['ipsec_connections', 'external_v4_ip', 'external_v6_ip']
+        )
+
+        self.assertEqual(vpn.external_v4_ip, netaddr.IPAddress('172.24.4.2'))
+        self.assertEqual(vpn.external_v6_ip, netaddr.IPAddress('2001:db8::1'))

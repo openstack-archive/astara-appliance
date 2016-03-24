@@ -16,13 +16,15 @@ FAKE_SYSTEM_DICT = {
             "allocations": [],
             "subnets": [
                 {
+                    "id": "98a6270e-cf5f-4a60-9d7f-0d4524c00606",
                     "host_routes": [],
                     "cidr": "192.168.0.0/24",
                     "gateway_ip": "192.168.0.1",
                     "dns_nameservers": [],
-                    "dhcp_enabled": True
+                    "dhcp_enabled": True,
                 },
                 {
+                    "id": "ext-subnet-id",
                     "host_routes": [],
                     "cidr": "fdd6:a1fa:cfa8:6af6::/64",
                     "gateway_ip": "fdd6:a1fa:cfa8:6af6::1",
@@ -45,6 +47,7 @@ FAKE_SYSTEM_DICT = {
             "allocations": [],
             "subnets": [
                 {
+                    "id": "mgt-subnet-id",
                     "host_routes": [],
                     "cidr": "fdca:3ba5:a17a:acda::/64",
                     "gateway_ip": "fdca:3ba5:a17a:acda::1",
@@ -108,7 +111,6 @@ FAKE_POOL_DICT = {
     'tenant_id': u'd22b149cee9b4eac8349c517eda00b89'
 }
 
-
 FAKE_MEMBER_DICT = {
     'address': u'192.168.0.194',
     'admin_state_up': True,
@@ -118,6 +120,99 @@ FAKE_MEMBER_DICT = {
     'tenant_id': u'd22b149cee9b4eac8349c517eda00b89',
     'weight': 1
 }
+
+FAKE_LIFETIME_DICT = {
+    'units': u'seconds',
+    'value': 3600,
+}
+
+FAKE_DEAD_PEER_DETECTION_DICT = {
+    'action': u'hold',
+    'interval': 30,
+    'timeout': 120
+}
+
+FAKE_IKEPOLICY_DICT = {
+    'auth_algorithm': u'sha1',
+    'encryption_algorithm': u'aes-128',
+    'id': u'2b7dddc7-721f-4b93-bff3-20a7ff765726',
+    'ike_version': u'v1',
+    'lifetime': FAKE_LIFETIME_DICT,
+    'name': u'ikepolicy1',
+    'pfs': u'group5',
+    'phase1_negotiation_mode': u'main',
+    'tenant_id': u'd01558034b144068a4884fa7d8c03cc8'
+}
+
+FAKE_IPSECPOLICY_DICT = {
+    'auth_algorithm': u'sha1',
+    'encapsulation_mode': u'tunnel',
+    'encryption_algorithm': u'aes-128',
+    'id': u'48f7ab18-f900-4ebe-9ef6-b1cc675f4e51',
+    'lifetime': FAKE_LIFETIME_DICT,
+    'name': u'ipsecpolicy1',
+    'pfs': u'group5',
+    'tenant_id': u'd01558034b144068a4884fa7d8c03cc8',
+    'transform_protocol': u'esp'
+}
+
+FAKE_LOCAL_ENDPOINT_DICT = {
+    'endpoints': [u'98a6270e-cf5f-4a60-9d7f-0d4524c00606'],
+    'id': u'3fbb0b1f-3fbe-4f97-9ec7-eba7f6009b94',
+    'name': u'local',
+    'tenant_id': u'd01558034b144068a4884fa7d8c03cc8',
+    'type': u'subnet'
+}
+
+FAKE_PEER_ENDPOINT_DICT = {
+    'endpoints': ['172.31.155.0/24'],
+    'id': u'dc15b31c-54a6-4b83-a4b0-7a6b136bbb5b',
+    'name': u'peer',
+    'tenant_id': u'd01558034b144068a4884fa7d8c03cc8',
+    'type': u'cidr'
+}
+
+FAKE_IPSEC_CONNECTION_DICT = {
+    'admin_state_up': True,
+    'auth_mode': u'psk',
+    'dpd': FAKE_DEAD_PEER_DETECTION_DICT,
+    'id': u'bfb6da63-7979-405d-9193-eda5601cf74b',
+    'ikepolicy': FAKE_IKEPOLICY_DICT,
+    'initiator': u'bi-directional',
+    'ipsecpolicy': FAKE_IPSECPOLICY_DICT,
+    'local_ep_group': FAKE_LOCAL_ENDPOINT_DICT,
+    'mtu': 1420,
+    'name': u'theconn',
+    'peer_address': '172.24.4.129',
+    'peer_cidrs': [],
+    'peer_ep_group': FAKE_PEER_ENDPOINT_DICT,
+    'peer_id': u'172.24.4.129',
+    'psk': u'secrete',
+    'route_mode': u'static',
+    'status': u'PENDING_CREATE',
+    'tenant_id': u'd01558034b144068a4884fa7d8c03cc8',
+    'vpnservice_id': u'1d5ff89a-d03f-4d57-b696-34ef5c53ae28'
+}
+
+FAKE_IPSEC_VPNSERVICE_DICT = {
+    'admin_state_up': True,
+    'external_v4_ip': '172.24.4.2',
+    'external_v6_ip': '2001:db8::1',
+    'id': u'1d5ff89a-d03f-4d57-b696-34ef5c53ae28',
+    'ipsec_connections': [FAKE_IPSEC_CONNECTION_DICT],
+    'name': u'thevpn',
+    'router_id': u'3d6d9ede-9b20-4610-9804-54ce1ef2bb43',
+    'status': u'PENDING_CREATE',
+    'subnet_id': None
+}
+
+FAKE_VPN_DICT = {
+    'vpn': {
+        'ipsec': [FAKE_IPSEC_VPNSERVICE_DICT]
+    }
+}
+
+FAKE_SYSTEM_WITH_VPN_DICT = dict(FAKE_SYSTEM_DICT, vpn=FAKE_VPN_DICT['vpn'])
 
 
 def fake_loadbalancer_dict(listener=False, pool=False, members=False):

@@ -22,6 +22,20 @@ from astara_router import utils
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
 
 
+STRONGSWAN_TRANSLATIONS = {
+    "3des": "3des",
+    "aes-128": "aes128",
+    "aes-256": "aes256",
+    "aes-192": "aes192",
+    "group2": "modp1024",
+    "group5": "modp1536",
+    "group14": "modp2048",
+    "group15": "modp3072",
+    "bi-directional": "start",
+    "response-only": "add",
+}
+
+
 class StrongswanManager(base.Manager):
     """
     A class to interact with strongswan, an IPSEC VPN daemon.
@@ -40,19 +54,21 @@ class StrongswanManager(base.Manager):
         Writes config file for strongswan daemon.
 
         :type config: astara_router.models.Configuration
-        :param config:
-                       {'ge0': 'eth0', 'ge1': 'eth1'}
         """
+
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(TEMPLATE_DIR)
+        )
+
+        env.filters['strongswan'] = lambda v: STRONGSWAN_TRANSLATIONS.get(v, v)
 
         templates = ('ipsec.conf', 'ipsec.secrets')
 
         for template_name in templates:
-            tmpl = jinja2.Template(
-                open(os.path.join(TEMPLATE_DIR, template_name+'.j2')).read()
-            )
+            tmpl = env.get_template(template_name+'.j2')
 
             tmp = os.path.join('/tmp', template_name)
-            open(tmp, 'w').write(tmpl.render(vpnservices=config.vpn))
+            utils.replace_file(tmp, tmpl.render(vpnservices=config.vpn))
 
         for template_name in templates:
             tmp = os.path.join('/tmp', template_name)

@@ -159,7 +159,9 @@ class IPTablesManager(base.Manager):
         return itertools.chain(
             self._build_default_filter_rules(),
             self._build_management_filter_rules(config),
-            self._build_internal_network_filter_rules(config)
+            self._build_internal_network_filter_rules(config),
+            self._build_vpn_filter_rules(config),
+            [Rule('COMMIT')]
         )
 
     def _build_default_filter_rules(self):
@@ -258,7 +260,33 @@ class IPTablesManager(base.Manager):
                     '--state RELATED,ESTABLISHED -j ACCEPT' % ext_if.ifname
                 ))
 
-        rules.append(Rule('COMMIT'))
+        return rules
+
+    def _build_vpn_filter_rules(self, config):
+        rules = []
+        ext_net = self.get_external_network(config)
+        if ext_net:
+            ext_if = ext_net.interface
+        else:
+            ext_net = None
+
+        if ext_net is None or not config.vpn:
+            return rules
+
+        template = (
+            ('-A INPUT -i %%s -p udp -m udp --dport %d -j ACCEPT ' %
+             settings.ISAKMP),
+            ('-A INPUT -i %%s -p udp -m udp --dport %d -j ACCEPT ' %
+             settings.IPSEC_NAT_T),
+            '-A INPUT -i %s -p esp -j ACCEPT',
+            '-A INPUT -i %s -p ah -j ACCEPT'
+        )
+
+        for version in (4, 6):
+            rules.extend(
+                (Rule(t % ext_if.ifname, ip_version=version) for t in template)
+            )
+
         return rules
 
     def _build_nat_table(self, config):
