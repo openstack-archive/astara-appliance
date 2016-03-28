@@ -1,5 +1,5 @@
 ==========================================================
- Astara Appliance Mitaka Series Release Notes (UNRELEASED)
+ Astara Appliance Mitaka Series Release Notes
 ==========================================================
 
 .. release-notes::
