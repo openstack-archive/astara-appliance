@@ -14,3 +14,6 @@
 # under the License.
 
 rm -rf /etc/nginx/sites-enabled/default
+
+# astara API appliance runs as gunicorn user and needs to create files here
+chown gunicorn.gunicorn /etc/nginx/sites-enabled
