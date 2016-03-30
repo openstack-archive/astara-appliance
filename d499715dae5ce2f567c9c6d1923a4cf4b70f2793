@@ -1,0 +1,8 @@
+Code-Review+2: Adam Gandelman <adamg@ubuntu.com>
+Workflow+1: Adam Gandelman <adamg@ubuntu.com>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Wed, 30 Mar 2016 02:39:41 +0000
+Reviewed-on: https://review.openstack.org/299049
+Project: openstack/astara-appliance
+Branch: refs/heads/stable/mitaka
