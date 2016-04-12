@@ -408,6 +408,10 @@ class Network(ModelBase):
         return self._network_type == self.TYPE_MANAGEMENT
 
     @property
+    def is_loadbalancer_network(self):
+	return self._network_type == self.TYPE_LOADBALANCER
+
+    @property
     def network_type(self):
         return self._network_type
 
@@ -881,6 +885,8 @@ class SystemConfiguration(ModelBase):
             Network.from_dict(n) for n in conf_dict.get('networks', [])]
         self.ha = conf_dict.get('ha_resource', False)
         self.ha_config = conf_dict.get('ha_config', {})
+        gw = conf_dict.get('default_v4_gateway')
+        self.default_v4_gateway = netaddr.IPAddress(gw) if gw else None
 
     def validate(self):
         # TODO: Improve this interface, it currently sucks.
@@ -916,8 +922,6 @@ class RouterConfiguration(SystemConfiguration):
 
     def __init__(self, conf_dict={}):
         super(RouterConfiguration, self).__init__(conf_dict)
-        gw = conf_dict.get('default_v4_gateway')
-        self.default_v4_gateway = netaddr.IPAddress(gw) if gw else None
         self.asn = conf_dict.get('asn', DEFAULT_AS)
         self.neighbor_asn = conf_dict.get('neighbor_asn', self.asn)
         self.static_routes = [StaticRoute(*r) for r in
