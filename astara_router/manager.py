@@ -79,6 +79,10 @@ class ServiceManagerBase(object):
 
         self.ip_mgr.update_interfaces(self._config.interfaces)
 
+    def update_routes(self, cache):
+        self.ip_mgr.update_default_gateway(self._config)
+        self.ip_mgr.update_host_routes(self._config, cache)
+
     def reload_config(self):
         """Calls any post-config reload callbacks to reload services
 
@@ -152,10 +156,6 @@ class RouterManager(ServiceManagerBase):
         mgr.save_config(self._config, self.ip_mgr.generic_mapping)
         mgr.restart()
 
-    def update_routes(self, cache):
-        self.ip_mgr.update_default_gateway(self._config)
-        self.ip_mgr.update_host_routes(self._config, cache)
-
     def update_arp(self):
         mgr = arp.ARPManager()
         mgr.send_gratuitous_arp_for_floating_ips(
@@ -208,6 +208,7 @@ class LoadBalancerManager(ServiceManagerBase):
     def update_config(self, config, cache):
         self._config = config
         self.lb_manager.update_config(self.config)
+        self.update_routes(cache)
 
 
 SERVICE_MANAGER_MAP = {

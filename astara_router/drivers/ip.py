@@ -260,7 +260,7 @@ class IPManager(base.Manager):
 
         ifname = None
         for net in config.networks:
-            if not net.is_external_network:
+            if not net.is_external_network and not net.is_loadbalancer_network:
                 continue
             ifname = net.interface.ifname
 
@@ -280,7 +280,7 @@ class IPManager(base.Manager):
         # v4 gateway, this picks the gateway for the first subnet we
         # find, which might be wrong.
         for net in config.networks:
-            if not net.is_external_network:
+            if not net.is_external_network and not net.is_loadbalancer_network:
                 continue
 
             for subnet in net.subnets:
