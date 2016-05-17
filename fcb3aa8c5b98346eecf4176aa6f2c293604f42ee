@@ -1,0 +1,11 @@
+Code-Review+1: David Wahlstrom <david.wahlstrom@gmail.com>
+Code-Review+2: Rosario Di Somma <rosario.disomma@gmail.com>
+Workflow+1: Rosario Di Somma <rosario.disomma@gmail.com>
+Code-Review+2: mark mcclain <mark@mcclain.xyz>
+Workflow+1: mark mcclain <mark@mcclain.xyz>
+Verified+2: Jenkins
+Submitted-by: Jenkins
+Submitted-at: Tue, 17 May 2016 22:20:44 +0000
+Reviewed-on: https://review.openstack.org/317696
+Project: openstack/astara-appliance
+Branch: refs/heads/stable/kilo
