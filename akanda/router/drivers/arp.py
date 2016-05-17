@@ -155,4 +155,8 @@ class ARPManager(base.Manager):
         :type ip: str
         :param ip: IP address to search for in the ARP table.
         """
-        self.sudo('-d', ip)
+        try:
+            self.sudo('-d', ip)
+        except:
+            # It's possible that these have already been cleaned up
+            pass

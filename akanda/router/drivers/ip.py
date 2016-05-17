@@ -205,10 +205,10 @@ class IPManager(base.Manager):
 
         add = functools.partial(_gen_cmd, 'add')
         delete = functools.partial(_gen_cmd, 'del')
-        mutator = lambda a: (a.ip, a.prefixlen)
 
         self._update_set(real_ifname, interface, old_interface,
-                         'all_addresses', add, delete, mutator)
+                         'all_addresses', add, delete,
+                         lambda a: (a.ip, a.prefixlen))
 
     def _update_set(self, real_ifname, interface, old_interface, attribute,
                     fmt_args_add, fmt_args_delete, mutator=lambda x: x):
