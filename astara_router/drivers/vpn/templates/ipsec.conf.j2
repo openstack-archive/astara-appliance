@@ -10,7 +10,7 @@ conn %default
 # Configuration for {{vpnservice.name}}
 {% for ipsec_site_connection in vpnservice.ipsec_site_connections%}
 conn {{ipsec_site_connection.id}}
-    authby=psk
+    authby=secret
     keyexchange=ike{{ipsec_site_connection.ikepolicy.ike_version}}
     left={{vpnservice.get_external_ip(ipsec_site_connection.peer_address)}}
     leftsubnet={{ipsec_site_connection.local_ep_group.cidrs|join(',')}}
