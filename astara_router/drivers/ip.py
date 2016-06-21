@@ -240,7 +240,10 @@ class IPManager(base.Manager):
             self.up(interface)
 
         for item in (prev_set - next_set):
-            self.sudo(*fmt_args_delete(item))
+            try:
+                self.sudo(*fmt_args_delete(item))
+            except RuntimeError as e:
+                LOG.warning('IP could not be deleted: %s' % item)
             ip, prefix = item
             if ip.version == 4:
                 self._delete_conntrack_state(ip)
