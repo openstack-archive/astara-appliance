@@ -65,7 +65,7 @@ class StrongswanManager(base.Manager):
         templates = ('ipsec.conf', 'ipsec.secrets')
 
         for template_name in templates:
-            tmpl = env.get_template(template_name+'.j2')
+            tmpl = env.get_template(template_name + '.j2')
 
             tmp = os.path.join('/tmp', template_name)
             utils.replace_file(tmp, tmpl.render(vpnservices=config.vpn))
