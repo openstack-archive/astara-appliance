@@ -71,7 +71,7 @@ class RouteTest(unittest2.TestCase):
 
     def test_set_default_v4_matches_current(self):
         ip_s = '192.168.122.1'
-        ip = mock.MagicMock()
+        ip = mock.Mock()
         ip.version = 4
         ip.__str__.return_value = ip_s
         with mock.patch.object(self.mgr, '_get_default_gateway') as get:
@@ -82,7 +82,7 @@ class RouteTest(unittest2.TestCase):
 
     def test_set_default_v4_changes_current(self):
         ip_s = '192.168.122.1'
-        ip = mock.MagicMock()
+        ip = mock.Mock()
         ip.version = 4
         ip.__str__.return_value = ip_s
         with mock.patch.object(self.mgr, '_get_default_gateway') as get:
@@ -102,7 +102,7 @@ class RouteTest(unittest2.TestCase):
 
     def test_set_default_v4_no_current(self):
         ip_s = '192.168.122.1'
-        ip = mock.MagicMock()
+        ip = mock.Mock()
         ip.version = 4
         ip.__str__.return_value = ip_s
         with mock.patch.object(self.mgr, '_get_default_gateway') as get:
@@ -116,7 +116,7 @@ class RouteTest(unittest2.TestCase):
 
     def test_set_default_v6_matches_current(self):
         ip_s = 'fe80::5054:ff:fee2:1d4f'
-        ip = mock.MagicMock()
+        ip = mock.Mock()
         ip.version = 6
         ip.__str__.return_value = ip_s
         with mock.patch.object(self.mgr, '_get_default_gateway') as get:
@@ -127,7 +127,7 @@ class RouteTest(unittest2.TestCase):
 
     def test_set_default_v6_changes_current(self):
         ip_s = 'fe80::5054:ff:fee2:1d4f'
-        ip = mock.MagicMock()
+        ip = mock.Mock()
         ip.version = 6
         ip.__str__.return_value = ip_s
         with mock.patch.object(self.mgr, '_get_default_gateway') as get:
@@ -147,7 +147,7 @@ class RouteTest(unittest2.TestCase):
 
     def test_set_default_v6_no_current(self):
         ip_s = 'fe80::5054:ff:fee2:1d4f'
-        ip = mock.MagicMock()
+        ip = mock.Mock()
         ip.version = 6
         ip.__str__.return_value = ip_s
         self.mgr.generic_mapping = {'ge1', 'eth1'}
