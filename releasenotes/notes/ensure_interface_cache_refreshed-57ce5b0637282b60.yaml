@@ -1,3 +1,0 @@
----
-fixes:
-  - Bug `1531651 <https://bugs.launchpad.net/astara/+bug/1531651/>`_ \- Fixes a stale interface cache from preventing additional router interfaces from being attached 

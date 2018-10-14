@@ -1,1 +1,0 @@
-gunicorn ALL = (root) NOPASSWD: /usr/local/bin/astara-rootwrap /etc/rootwrap.conf *

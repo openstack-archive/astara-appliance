@@ -1,9 +1,0 @@
----
-
-- name: install strongswan
-  apt: name=strongswan state=installed install_recommends=yes
-  when: strongswan_enable
-
-- name: Ensure strongswan is started
-  service: name=strongswan state=started enabled=yes
-  when: strongswan_enable and strongswan_enable_service

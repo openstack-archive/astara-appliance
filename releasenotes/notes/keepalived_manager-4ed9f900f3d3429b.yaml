@@ -1,5 +1,0 @@
----
-features:
-  - The appliance is now built with keepalived installed and supports receiving
-    cluster configuration from ``astara-orchestartor``, which allows pairs of
-    appliance VMs to cluster among themselves, providing HA routers.

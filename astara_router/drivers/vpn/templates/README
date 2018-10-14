@@ -1,3 +1,0 @@
-These templates were originally copied from the upstream neutron-vpaas [1].
-
-[1] http://git.openstack.org/cgit/openstack/neutron-vpnaas/tree/neutron_vpnaas/services/vpn/device_drivers/template/strongswan

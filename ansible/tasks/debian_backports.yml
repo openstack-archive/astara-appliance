@@ -1,5 +1,0 @@
-- name: Install Wheezy Backports and update
-  apt_repository: repo="deb http://http.debian.net/debian wheezy-backports main"
-
-- name: Update Cache
-  apt: update_cache=yes cache_valid_time=3600
